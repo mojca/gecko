@@ -1,0 +1,79 @@
+
+
+Installation notes for GECKO
+----------------------------
+
+Date started:  Mon Nov 29 17:34:24 CET 2010
+Last modified: Mon Nov 29 17:34:46 CET 2010
+
+
+Prerequisites
+-------------
+
+GECKO needs a 2.6.x kernel to function. Older kernels are not supported.
+Find out your current kernel version using: uname -a
+
+GECKO depends on the following libraries:
+
+* libgsl
+* libqt4
+* libsamdsp
+* lib_sis3100
+* lib_sis3150
+
+
+libgsl and the Qt4 libraries can usually be installed from the package repositories
+of your linux distribution.
+
+---
+
+libsamdsp can be compiled from source from the svn repository.
+Pleaser refer to the documentation in 
+
+svn/taggersoftware/trunk/samdsp
+
+---
+
+lib_sis3100 and lib_sis3150 can be compiled from source from the svn repository.
+To do this change into the directory:
+
+cd svn/taggersoftware/trunk/sisdev/sis3100_calls
+
+And make the library with:
+
+make clean
+make
+
+Repeat this step for the other directory:
+
+cd svn/taggersoftware/trunk/sisdev/sis3100_calls
+make clean
+make
+
+---
+
+Compiling GECKO
+---------------
+
+Change into the gecko source directory
+
+cd svn/taggersoftware/trunk/sisdev/gecko
+
+And compile the code:
+
+make clean
+qmake-qt4
+make
+
+---
+
+Driver installation
+-------------------
+
+In order to use the SIS3104 and SIS3150usb interfaces with gecko,
+the suitable drivers have to be installed.
+
+The drivers are available on the Struck software CDs.
+Please follow the provided installation instructions.
+
+

@@ -1,0 +1,10 @@
+/*!
+\mainpage
+
+\subpage umanual
+
+\page umanual GECKO User's Manual
+\section overv Overview
+\section nconf Creating a new configuration
+\section srun Starting a run
+*/

@@ -1,0 +1,170 @@
+#ifndef PLOT2D_H
+#define PLOT2D_H
+
+#include <QAction>
+#include <QWidget>
+#include <QPoint>
+#include <QFileDialog>
+#include <QList>
+#include <QPolygon>
+#include <QPainter>
+#include <QMenu>
+#include <QMouseEvent>
+#include <QToolTip>
+#include <vector>
+#include "../../samdsp/samdsp.h"
+
+//#define MAX_NOF_LWORDS 0x4000000 // 128 MByte
+
+class QTimer;
+class QPixmap;
+
+/*! An annotation belonging to a channel. */
+class Annotation
+{
+public:
+    enum annoType{note,vline,hline};
+
+    Annotation(QPoint p, annoType type, QString text = "unset");
+    ~Annotation();
+
+    QPoint getPoint() {return this->p;}
+    QString getText() {return this->text;}
+    annoType getType() {return this->type;}
+
+private:
+    QPoint p;
+    QString text;
+    annoType type;
+};
+
+/*! A channel that is displayed in a plot2d */
+class Channel : public QObject
+{
+    Q_OBJECT
+public:
+    Channel(vector<double> const& data);
+    ~Channel();
+
+    enum plotType{line,steps};
+
+    void setColor(QColor color);
+    void setName(QString name);
+    void setId(unsigned int id);
+    void setData(vector<double> const& data);
+    void setType(plotType type);
+    void setEnabled(bool enabled);
+    void setStepSize(double stepSize);
+    void addAnnotation(QPoint p, Annotation::annoType type, QString text);
+    void clearAnnotations();
+
+    QColor getColor() {return this->color; }
+    QString getname()  {return this->name; }
+    unsigned int getId() {return this->id; }
+    bool isEnabled() {return this->enabled; }
+    double getStepSize() {return this->stepSize; }
+    plotType getType() {return this->type; }
+    vector<double> const& getData() {return this->data; }
+    QList<Annotation*> *getAnnotations() {return this->annotations; }
+
+    double xmin, xmax, ymin, ymax;
+    bool ylog, xlog;
+
+signals:
+    void changed ();
+
+private:
+    QColor color;
+    QString name;
+    plotType type;
+    unsigned int id;
+    bool enabled;
+    double stepSize;
+
+    vector<double> data;
+    QList<Annotation *> *annotations;
+};
+
+/*! A widget for showing two-dimensional plots.
+ *  Using addChannel, you can add an arbitrary number of channels to the plot. The
+ *  tick marks refer to only one channel which is user-selectable via a context menu.
+ *  Displayed data may also be saved to a file.
+ *  \todo More Doc!
+ */
+class plot2d : public QWidget
+{
+    Q_OBJECT
+
+public:
+    plot2d(QWidget *parent, QSize size, unsigned int id);
+    ~plot2d();
+
+    void addChannel(unsigned int id, QString name, vector<double> const& data,
+                    QColor color, Channel::plotType type, double stepSize);
+    void removeChannel(unsigned int id);
+    void redraw();
+    void resetBoundaries(int ch);
+
+    unsigned int getNofChannels() {return this->channels->size();}
+    Channel* getChannelById(unsigned int id) {return this->channels->at(id);}
+
+public slots:
+    void clearHistogram();
+    void saveChannel();
+    void setMaximumExtends(int,int,int,int);
+    void toggleExternalBoundaries(bool);
+    void zoomExtends(bool);
+    void selectCurTickCh(int _curTickCh);
+
+signals:
+    void histogramCleared(unsigned int, unsigned int);
+
+protected:
+    void resizeEvent(QResizeEvent *event);
+    void paintEvent(QPaintEvent *);
+    void mouseMoveEvent(QMouseEvent *ev);
+    void contextMenuEvent(QContextMenuEvent *event);
+    void mousePressEvent(QMouseEvent *);
+    void mouseReleaseEvent(QMouseEvent *);
+    void mouseDoubleClickEvent(QMouseEvent *);
+
+private slots:
+    void channelUpdate ();
+
+private:
+    SamDSP* dsp;
+    unsigned int id;
+    double curxmin, curxmax, curymin, curymax;
+    double ext_xmin, ext_xmax, ext_ymin, ext_ymax;
+
+    int curTickCh;
+
+    void setBoundaries();
+    void drawTicks(QPainter &);
+    void drawChannels(QPainter &);
+    void drawChannel(QPainter &, unsigned int id);
+
+    void createActions();
+
+    double plotHeight;
+    double plotWidth;
+
+    bool useExternalBoundaries;
+    bool zoomExtendsTrue;
+
+    QList<Channel*>* channels;
+    QAction* clearHistogramAction;
+    QAction* saveChannelAction;
+    QList<QAction*> setCurTickChActions;
+
+    enum {ScaleX, ScaleY, ScaleOff} scalemode;
+    double scalestart;
+    double scaleend;
+
+    QRectF viewport;
+
+    QPixmap *backbuffer;
+    bool backbuffervalid;
+};
+
+#endif // PLOT2D_H

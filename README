@@ -1,0 +1,164 @@
+
+This is a README document for the Generic Experiment Control Kit and Online
+analysis framework GECKO.
+
+
+INSTALLATION
+------------
+
+Find installation notes in INSTALL
+
+
+USAGE
+-----
+
+After installation, type 
+
+./gecko
+
+on the command line.
+
+
+GET STARTED
+-----------
+
+* Interfaces:
+
+In order to communicate with the hardware, at least one interface has to be added
+to the list of interfaces on the right.
+
+Click with the right mouse button on the "Interfaces" item in the list and a
+dialog window pops up, where the new interface can be configured.
+
+Choose a name for the interface, then choose the interface type and (for VME
+interfaces) assign a base address.
+
+The first interface is the so called "main interface", which has some special
+privileges. See below for more information on Main Interface.
+
+When an interface is selected, you can change its settings in the right part
+of the window or access the hardware manually. For VME interfaces it is
+possible to send single shot VME calls.
+
+
+* Modules:
+
+Each piece of hardware is modeled in a software module, which can be added to the
+list in the same manner as the interfaces.
+
+A unique name has to be given to each module and then a type has to be chosen.
+Also it is necessary to assign a default interface to each module.
+The software module will use this interface to communicate with the hardware.
+For VME modules the base (hardware) address has to be assigned.
+
+When a module is selected from the list, it is possible to change its settings
+in the right part of the window. This is the most important part of the setup,
+so make sure that you know what you are doing. Please refer to the respective
+user manual of each module, if you are unsure.
+
+
+* Channels and triggers:
+
+Once one or more modules have been added to the list, a number of channels and
+triggers will appear in the list boxes on the "Run setup" page.
+Here you can choose, which channels are important for the current run setup,
+and which module will serve as the main trigger for the data acquisition.
+
+
+* Plugins:
+
+To make use of the data from the modules, the data has to be processed by plugins
+after readout. Special demultiplexing plugins (demux) take care of unpacking the
+raw data from each module, so that for each acquisition cycle the new data can
+be accessed from the respective channel.
+
+Plugins connect to the channels and collect the incoming data, process it and
+provide access to the processed data.
+
+Adding a plugin to the list is similar to adding a module, but the plugins are
+also sorted into groups. So first choose a plugin group, then the plugin.
+Give it a name and adjust free parameters, if necessary in the bottom list box.
+
+Once the plugin appears in the list, you can select it and edit its preferences
+in the right part of the window. Most importantly you have to connect the
+plugin to a module channel or an output of another plugin.
+
+
+* Plugin connections:
+
+The upper part of each plugin settings area contains two list boxes, the left
+one showing the input connectors and the right one showing the output connectors.
+Using the right mouse button you can now select an opposite side for each
+connector to connect to. For instance one input of a histogram plugin can be
+connected to the third channel of a QDC module.
+
+
+* Run setup:
+
+Once all modules and plugins have been set up, the important channels have to be
+selected in the "Run Setup" tab. Unselected channels will be read out, if they
+happen to contain data, but an acquisition cycle is valid, if only the selected
+channels carry data. So the notion is to have "important" channels which MUST
+have data and "unimportant" channels which MAY have data.
+
+In the list of triggers, one module must be selected to serve as the trigger
+source (if a module can indicate a trigger in several ways, several different
+trigger entries are visible for the same module).
+
+
+* Saving settings:
+
+Use the "File -> Save..." menu entry to choose a name for the current configuration.
+All settings of the current session will be saved to the file. Attention: There
+is NO autosave. So please remember to save your settings again, if you've made
+important changes.
+
+
+* Loading settings:
+
+With the "File -> Load..." menu entry a *.ini file can be selected from which the
+configuration will be loaded.
+
+
+* Run control:
+
+In the "Run Control" area you first have to select a directory, where all data for
+the current "run" will be saved. This includes all data, the settings file,
+special info files containing information on the run itself and also manually saved
+data, like histogram snapshots or similar.
+
+The next action should be to describe the current run in the "Run Info" text area.
+Here the basic principle "more is more" is generally true.
+
+Then double check that all settings are fine and save the settings again (Ctrl+S).
+
+Make sure, that the trigger contition is met and hit "Start Run" to, well, start
+the run.
+
+Run statistics will be displayed in the upper half of this window.
+
+Note that it is not possible to modify the module settings or the plugin connections
+during a run. This would lead to unexpected results and most definitely to a crash.
+
+To stop the run, simply press the "Stop Run" button.
+
+
+REMOTE CONTROL
+--------------
+
+Gecko can discover other running instances of the software on the same network
+via UDP broadcasts. This can be done on the "Remote Control" page.
+
+Once a peer is discovered after pressing the "Discover" button, a connection 
+can be established by pressing the "Connect" button. Of course, if the IP address
+of the peer is known, it can also be typed into the address field. The status of
+the peer is then updated on a regular basis. If no continuous update is necessary,
+a single shot update can be requested via the "Update" button.
+
+Using the "Start Remote Run" button, the remote instance can be controlled, i.e.
+started and stopped. This is only possible, if the remote instance is not already
+remotely controlled by a third party. If that is the case a notification showing
+the controlling IP address pops up.
+
+
+
