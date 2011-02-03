@@ -62,7 +62,8 @@ Currently there are plugins for signal processing (eg. pileup correction, discri
 
 The GECKO main window is divided into two parts:
 
-\image html geckomain.png "The GECKO main window"
+\image html geckomain.png  "The GECKO main window"
+\image latex geckomain.png "The GECKO main window"
 
 On the left-hand side a tree view containing all interfaces, modules and plugins of the current configuration is shown.
 In addition to that there are two entries in the tree view for controlling the execution of acquisition runs.
@@ -84,12 +85,14 @@ A GECKO configuration is built layer-wise from input to output:
 At least one interface module has to be defined before any DAQ modules may be added because it is impossible to create a DAQ module that is not associated with an interface (this association may be changed later).
 All interface and daq modules can be created by using the corresponding menu bar item or by right-clicking onto the respective category item inside the tree view and selecting "Add Module...".
 
-\image html add_dropdown.png "The context menu for adding modules and plugins"
+\image html add_dropdown.png  "The context menu for adding modules and plugins"
+\image latex add_dropdown.png "The context menu for adding modules and plugins"
 
 This brings up a dialog where the type of the module to be created can be selected.
 The module also has to be uniquely named and, for DAQ modules, assigned a VME base address and an interface over which the corresponding VME module is accessible.
 
-\image html add_module.png "The Add Module dialog"
+\image html add_module.png  "The Add Module dialog"
+\image latex add_module.png "The Add Module dialog"
 
 Plugins may be added using a similar procedure: using the "Plugin" menu or right-clicking on the "Plugins" item and selecting "Add Plugin..." will bring up a dialog similar to the one used for adding modules.
 A unique name has to be assigned to each plugin an a drop-down menu lists all available plugin types.
@@ -99,7 +102,8 @@ The values entered can not be changed later on, only by destroying and recreatin
 All the plugins and DAQ modules can be connected to form a (possibly multiply-rooted) tree through which data flows from the roots to the leaves.
 Every plugin features two lists of its input and output connectors at the top of its configuration page:
 
-\image html plugin_conn.png "Plugin connector panel"
+\image html plugin_conn.png  "Plugin connector panel"
+\image latex plugin_conn.png "Plugin connector panel"
 
 Each line is comprised of the connector name followed by the plugin/daq module and connector it is connected to (or \c \<none\> if it is unconnected).
 Right-clicking on an item brings up a list of compatible counterparts, sorted by plugin/daq module name.
@@ -124,7 +128,8 @@ First, a trigger setup has to be created. The trigger setup defines the DAQ modu
 It also defines which DAQ modules trigger an acquisition cycle when signalling data available.
 The trigger setup is done via the "Run Setup" panel:
 
-\image html run_setup.png
+\image html run_setup.png  "The Run Setup panel"
+\image latex run_setup.png "The Run Setup panel"
 
 The box at the top contains a list of all DAQ modules with checkboxes in front.
 If, during a run, any of the checked modules signal that data is available, an acquisition cycle commences and data is collected from all DAQ modules.
@@ -140,7 +145,8 @@ This allows for better synchronicity between different DAQ modules by not allowi
 
 Now, a run may be started from the "Run Control" panel:
 
-\image html run_control.png
+\image html  run_control.png "The Run Control panel"
+\image latex run_control.png "The Run Control panel"
 
 This panel contains the location where the runs will be stored, the name of the current run and a comment field that is stored in the run start file.
 During a run useful information like the start time and the current number of events processed are shown.
