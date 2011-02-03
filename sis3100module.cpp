@@ -179,3 +179,15 @@ int Sis3100Module::acquire()
 {
     return -1;
 }
+
+/*!
+\page sis3100if SIS 3100 PCIe-to-VME Interface
+<b>Module name:</b> \c sis3100
+
+\section desc Module Description
+Provides access to a VME crate via a PCIe interface card.
+
+\section Configuration Panel
+The configuration panel provides basic test functionality and the means for sending arbitrary commands over the VME bus.
+*/
+

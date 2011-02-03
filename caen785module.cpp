@@ -464,3 +464,39 @@ void Caen785Module::setBaseAddress (uint32_t baddr) {
 uint32_t Caen785Module::getBaseAddress () const {
     return conf.base_addr;
 }
+
+/*!
+\page caen785mod Caen V785 ADC
+<b>Module name:</b> \c caen785
+
+\section desc Module Description
+The Caen V785 is a 32-channel ADC. 
+
+\section Configuration Panel
+The Caen 785 configuration panel features some status displays at the top and configuration tabs at the bottom.
+\subsection devctrl Dev Ctrl Tab
+The device control panel provides several buttons for performing device tests. This panel will disappear some time in the future.
+
+\subsection settings Settings Tab
+The settings tab provides control over basic data readout functionality.
+The top panel controls the VME communication mode. It is best left untouched because the data acquisition highly relies on these settings.
+
+ADD MORE DOC
+
+The third group contains two fields:
+\li The crate number is an arbitrary number that is attached to each data set sent back from the module. It is currently not available to post-processing as it is ignored by the demultiplexer.
+\li The slide constant controls the offset that is added during data sampling to reduce non-linearity of the ADC. For further reference, please consult the V785 manual.
+
+\subsection thr Thresholds Tab
+\note This functionality is not implemented yet.
+
+The thresholds tab controls the threshold for each channel. If thresholds are enabled in the Settings tab, only channels exceeding their threshold will be recorded in the data set sent back from the VME module. It is also possible to completely remove any channel from all data sets.
+
+\subsection irq IRQ Tab
+This tab is for testing purposes only and will disappear in future versions. Use at your own risk.
+
+\subsection info Info Tab
+The Info tab displays a readout of the VME module ROM containing information about the firmware the VME module is currently executing.
+
+*/
+

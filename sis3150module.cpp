@@ -176,3 +176,15 @@ int Sis3150Module::readA322E(const uint32_t addr, uint32_t* dma_buffer,
     //return sis3150Usb_Vme_Dma_Read(m_device, addr, 0x20, 4, 0, dma_buffer, request_nof_words, got_nof_words);
     return sis3150Usb_Vme_Dma_Read(m_device, addr, 0x8, 8, 0, dma_buffer, request_nof_words & 0xfffffffe, got_nof_words);
 }
+
+/*!
+\page sis3150if SIS 3150 USB-to-VME Interface
+<b>Module name:</b> \c sis3150
+
+\section desc Module Description
+Provides access to a VME crate via a USB interface.
+
+\section Configuration Panel
+The configuration panel provides basic test functionality and the means for sending arbitrary commands over the VME bus.
+*/
+

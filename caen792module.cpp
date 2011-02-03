@@ -300,3 +300,25 @@ void Caen792Module::setBaseAddress (uint32_t baddr) {
 uint32_t Caen792Module::getBaseAddress () const {
     return conf_.base_addr;
 }
+/*!
+\page caen775mod Caen V775 TDC
+<b>Module name:</b> \c caen775
+
+\section desc Module Description
+The Caen V775 is a 32-channel TDC.
+
+\section Configuration Panel
+DO DOCUMENTATION
+*/
+
+/*!
+\page caen792mod Caen V792 QDC
+<b>Module name:</b> \c caen792
+
+\section desc Module Description
+The Caen V792 is a 32-channel QDC. 
+
+\section Configuration Panel
+DO DOCUMENTATION
+*/
+

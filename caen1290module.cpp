@@ -369,3 +369,15 @@ void Caen1290Module::saveSettings (QSettings *settings) {
     settings->endGroup ();
     std::cout << "done" << std::endl;
 }
+
+/*!
+\page caen1290mod Caen V1x90 Multi-Hit TDC
+<b>Module names:</b> \c caen1190a, \c caen1190b, \c caen1290a, \c caen1290n
+
+\section desc Module Description
+The Caen V1x90 family is a family of multi-hit TDCs. The V1290A/N features 32/16 high-resolution channels, the 1190A/B has 128/64 channels with a slightly lower resolution.
+
+\section Configuration Panel
+DO DOCUMENTATION
+*/
+

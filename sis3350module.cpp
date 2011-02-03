@@ -1162,3 +1162,15 @@ void Sis3350Module::setBaseAddress (uint32_t baddr) {
 uint32_t Sis3350Module::getBaseAddress () const {
     return conf.base_addr;
 }
+
+/*!
+\page sis3350mod SIS 3350 Flash ADC
+<b>Module name:</b> \c sis3350
+
+\section desc Module Description
+The SIS 3350 is a fast multi-channel ADC.
+
+\section Configuration Panel
+DO DOCUMENTATION
+*/
+

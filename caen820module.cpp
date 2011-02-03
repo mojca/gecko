@@ -180,3 +180,14 @@ uint32_t Caen820Module::getBaseAddress () const {
     return conf_.baddr;
 }
 
+/*!
+\page caen820mod Caen V820 Scaler
+<b>Module name:</b> \c caen820
+
+\section desc Module Description
+The Caen V820 is a 128-channel Scaler.
+
+\section Configuration Panel
+DO DOCUMENTATION
+*/
+
