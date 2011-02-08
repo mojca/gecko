@@ -377,7 +377,45 @@ void Caen1290Module::saveSettings (QSettings *settings) {
 \section desc Module Description
 The Caen V1x90 family is a family of multi-hit TDCs. The V1290A/N features 32/16 high-resolution channels, the 1190A/B has 128/64 channels with a slightly lower resolution.
 
-\section Configuration Panel
-DO DOCUMENTATION
+\section cpanel Configuration Panel
+The configuration features multiple tabs through which the device may be configured.
+\subsection general General
+The General tab controls some basic device functionality.
+\li <b>BERR</b> controls whether the end of the filled part of the event buffer is signalled by a bus error thus ending the transfer from the device to GECKO.
+The readout mechanism relies on te setting of this switch and it will be removed in a future version. <b>DO NOT CHANGE!</b>
+\li <b>ALIGN64</b> causes the length of an event to be a multiple of 64 bits.
+Use this switch if the VME interface cuts off the last 32-bit word from a block transfer.
+\li <b>Software TERM</b> controls whether the termination of the front panel connector is controlled via software or via the on-board dip-switches.
+See the Caen V1x90 manual for details.
+\li <b>TERM</b> terminates the front panel connector.
+Only works when Software TERM is checked.
+\li <b>Compensation</b> enables the compensation of the TDC's integral non-linearity.
+\li <b>Event FIFO</b> controls the filling of the event FIFO. The event FIFO is currently unused, so leave this option unchecked.
+\li <b>Ext. Time Tag</b> controls whether a trigger time tag is generated, denoting the trigger time relative to some aritrary point. This tag is currently unused, so leave this option unchecked.
+
+\subsection acqmode Acquisition Mode
+This tab controls how the multi-hit TDC gets data from its inputs.
+The mode is either \em continuous, i.e. every time an event occurs a timestamp is written to the output buffer, or \em triggered, i.e. a global trigger causes the acquisition of events in a certain window before the trigger occurred.
+The remaining fields control the layout of the acquisition window.
+Please consult the Caen V1x90 manual for further information on how to set these values.
+\attention The continuous mode is not tested and may not work (as expected).
+
+\subsection edgedet Edge Detection
+This tab defines the notion of an event for the device. The device may trigger on leading, trailing or both edges.
+The time resolution of and the dead time after the trigger events is adjustable.
+Please consult the Caen V1x90 manual for further information.
+
+\subsection adj Adjustments
+This tab allows for fine tuning the acquisition process.
+
+The first part allows to enable or disable any channel. Disabled channels will never trigger events.
+Through the second panel the user may assign individual offsets to each channel. This functionality is currently disabled because it slows down the configuration process very much.
+A global offset may still be set using the two spinboxes at the bottom of the panel.
+
+The last panel can be used to fine-tune the RC circuitry used by the V1290 for high-resolution timing.
+Please consult the Caen V1x90 manual for further information.
+
+\section outs Outputs
+The module contains an output for each channel, outputting a vector of hit timestamps for each event.
 */
 

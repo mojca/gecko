@@ -307,8 +307,49 @@ uint32_t Caen792Module::getBaseAddress () const {
 \section desc Module Description
 The Caen V775 is a 32-channel TDC.
 
-\section Configuration Panel
-DO DOCUMENTATION
+\section cpanel Configuration Panel
+\subsection devctrl Dev Ctrl
+This panel contains facilities for basic functionality tests of the device. It will go away in a future version.
+
+\subsection settings Settings
+This panel controls the operation mode of the device.
+\li <b>Block End</b> and <b>Berr En</b> control the way data is read from the module. The readout depends on the specific settings of these switches, so <b>DO NOT CHANGE</b>!
+These will go away in a future version.
+\li <b>Prog Reset</b> controls how the module reacts to pushing the reset button on its front panel. See the Caen 775 manual for further details.
+\li <b>Align 64</b> causes the length of an event to be a multiple of 64 bits.
+Use this switch if the VME interface cuts off the last 32-bit word from a block transfer.
+
+The next section controls data acquisition.
+\li <b>Suppress Over Range</b> causes the module to not report any values that exceed the maximum output value of the ADCs.
+\li <b>Suppress Low Thr</b> causes the module to honor the thresholds set for each of the individual channels and not report any value that is less than this threshold value.
+Note that the threshold values can not be set from the UI yet.
+\li <b>Offline</b> takes the ADC controller offline. No conversions will be performed.
+\li <b>Auto increment</b> automatically discards elements from the module's event buffer after they were read. <b>DO NOT CHANGE!</b> This switch will go away in a future version.
+\li <b>All triggers En</b> causes the event counter to be incremented on all triggers, not only accepted ones.
+\li <b>Write empty events</b> allows the module to write events that contain no data to the event buffer.
+\li <b>Use sliding scale</b> causes the module to use a sliding scale to reduce non-linearity at the cost of range.
+See the Caen V775 manual for further details
+\li <b>Slide subtract En</b> disables the subtraction of the sliding scale offset when checked. For testing purposes only.
+\li <b>High resolution thresholds</b> causes the thresholds to only be shifted by one instead of 4 bits, thus increasing threshold resolution at the cost of range.
+\li <b>Common Stop</b> sets operation mode to common stop if checked. Else, common start mode is active.
+
+The last group contains parameters for fine-grained control over the mode of operation.
+\li <b>Crate number</b> an arbitrary number that is passed back to GECKO when data is retrieved from the module. Unused as of now.
+\li <b>Full Scale Range</b> sets the range and resolution of the TDC scale
+See the Caen V775 manual for further details.
+\li <b>Fastclear window</b> sets the with of the window during which a fast clear signal on the front panel connector aborts an ongoing conversion.
+See the manual for further details
+\li <b> Sliding constant</b> sets the value that is added to the ADC inputs when the sliding scale is disabled.
+
+\subsection irq IRQ
+The IRQ panel controls the conditions on which VME interrupt requests are generated. IRQs are not yet used in data readout.
+
+\subsection info Info
+The Info panel provides some basic information about the firmware that runs on the module.
+This page is not fully implemented yet.
+
+\section outs Outputs
+The module provides an output for each TDC channel. These outputs contain single-element vectors with the output value (as \c uint32) of the respective ADC for each event.
 */
 
 /*!
@@ -318,7 +359,47 @@ DO DOCUMENTATION
 \section desc Module Description
 The Caen V792 is a 32-channel QDC. 
 
-\section Configuration Panel
-DO DOCUMENTATION
+\section cpanel Configuration Panel
+\subsection devctrl Dev Ctrl
+This panel contains facilities for basic functionality tests of the device. It will go away in a future version.
+
+\subsection settings Settings
+This panel controls the operation mode of the device.
+\li <b>Block End</b> and <b>Berr En</b> control the way data is read from the module. The readout depends on the specific settings of these switches, so <b>DO NOT CHANGE</b>!
+These will go away in a future version.
+\li <b>Prog Reset</b> controls how the module reacts to pushing the reset button on its front panel. See the Caen V792 manual for further details.
+\li <b>Align 64</b> causes the length of an event to be a multiple of 64 bits.
+Use this switch if the VME interface cuts off the last 32-bit word from a block transfer.
+
+The next section controls data acquisition.
+\li <b>Suppress Over Range</b> causes the module to not report any values that exceed the maximum output value of the ADCs.
+\li <b>Suppress Low Thr</b> causes the module to honor the thresholds set for each of the individual channels and not report any value that is less than this threshold value.
+Note that the threshold values can not be set from the UI yet.
+\li <b>Offline</b> takes the ADC controller offline. No conversions will be performed.
+\li <b>Auto increment</b> automatically discards elements from the module's event buffer after they were read. <b>DO NOT CHANGE!</b> This switch will go away in a future version.
+\li <b>All triggers En</b> causes the event counter to be incremented on all triggers, not only accepted ones.
+\li <b>Write empty events</b> allows the module to write events that contain no data to the event buffer.
+\li <b>Use sliding scale</b> causes the module to use a sliding scale to reduce non-linearity at the cost of range.
+See the Caen V792 manual for further details
+\li <b>Slide subtract En</b> disables the subtraction of the sliding scale offset when checked. For testing purposes only.
+\li <b>High resolution thresholds</b> causes the thresholds to only be shifted by one instead of 4 bits, thus increasing threshold resolution at the cost of range.
+
+The last group contains parameters for fine-grained control over the mode of operation.
+\li <b>Crate number</b> an arbitrary number that is passed back to GECKO when data is retrieved from the module. Unused as of now.
+\li <b>Pedestal current</b> controls the amount of current always present at the QDC. This current is required for correct operation.
+See the Caen V792 manual for further details and for converting this number into a current and back.
+\li <b>Fastclear window</b> sets the with of the window during which a fast clear signal on the front panel connector aborts an ongoing conversion.
+See the manual for further details
+\li <b> Sliding constant</b> sets the value that is added to the ADC inputs when the sliding scale is disabled.
+
+\subsection irq IRQ
+The IRQ panel controls the conditions on which VME interrupt requests are generated. IRQs are not yet used in data readout.
+
+\subsection info Info
+The Info panel provides some basic information about the firmware that runs on the module.
+This page is not fully implemented yet.
+
+\section outs Outputs
+The module provides an output for each QDC channel. These outputs contain single-element vectors with the output value (as \c uint32) of the respective ADC for each event.
 */
 

@@ -185,9 +185,22 @@ uint32_t Caen820Module::getBaseAddress () const {
 <b>Module name:</b> \c caen820
 
 \section desc Module Description
-The Caen V820 is a 128-channel Scaler.
+The Caen V820 is a 32-channel Scaler.
 
-\section Configuration Panel
-DO DOCUMENTATION
+\section cpanel Configuration Panel
+Only a few options are necessary to control the operation mode of this scaler module.
+\li <b>Enable header</b> causes the device to output a header before each event.
+The header is not used yet, but safely discarded.
+\li <b>26 bit data format</b> makes the module output data with less range (26 instead of 32 bits).
+\li <b>Auto-reset on trigger</b> resets all scaler channels after each trigger.
+\li <b>Acquisition mode</b> can either be set to \em periodic or \em triggered.
+Periodic mode causes an event to be put into the event buffer every time the dwell time elapses, recording the current scaler values.
+Triggered mode outputs an event every time the trigger input is signalled.
+\li <b>Dwell time</b> is the interval between events in periodic mode. It can be set in steps of 400 ns.
+
+Next is a grid where each of the channel may be enabled separately. Disabled channels will not be recorded in any event.
+
+\section outs Outputs
+This module has one output connector for each scaler channel. They contain single-element vectors for each event with the current scaler value as a \c uint32.
 */
 

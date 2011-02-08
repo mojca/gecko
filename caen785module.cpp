@@ -162,6 +162,7 @@ int Caen785Module::configure()
     if(conf.alwaysIncrementEventCounter) {
         data |= (1 << 14); // default ON
     }
+    // TODO: transfer more flags
     ret = iface->writeA32D16(addr,data);
     if(ret != 0) printf("Error %d at CAEN785_BIT_SET2\n",ret);
 
@@ -470,20 +471,34 @@ uint32_t Caen785Module::getBaseAddress () const {
 \section desc Module Description
 The Caen V785 is a 32-channel ADC. 
 
-\section Configuration Panel
+\section cpanel Configuration Panel
 The Caen 785 configuration panel features some status displays at the top and configuration tabs at the bottom.
 \subsection devctrl Dev Ctrl Tab
 The device control panel provides several buttons for performing device tests. This panel will disappear some time in the future.
 
 \subsection settings Settings Tab
-The settings tab provides control over basic data readout functionality.
-The top panel controls the VME communication mode. It is best left untouched because the data acquisition highly relies on these settings.
+This panel controls the operation mode of the device.
+\li <b>Block End</b> and <b>Berr En</b> control the way data is read from the module. The readout depends on the specific settings of these switches, so <b>DO NOT CHANGE</b>!
+These will go away in a future version.
+\li <b>Prog Reset</b> controls how the module reacts to pushing the reset button on its front panel. See the Caen V785 manual for further details.
+\li <b>Align 64</b> causes the length of an event to be a multiple of 64 bits.
+Use this switch if the VME interface cuts off the last 32-bit word from a block transfer.
 
-ADD MORE DOC
+The next section controls data acquisition.
+\li <b>Suppress Over Range</b> causes the module to not report any values that exceed the maximum output value of the ADCs.
+\li <b>Suppress Low Thr</b> causes the module to honor the thresholds set for each of the individual channels and not report any value that is less than this threshold value.
+Note that the threshold values can not be set from the UI yet.
+\li <b>Offline</b> takes the ADC controller offline. No conversions will be performed.
+\li <b>Auto increment</b> automatically discards elements from the module's event buffer after they were read. <b>DO NOT CHANGE!</b> This switch will go away in a future version.
+\li <b>All triggers En</b> causes the event counter to be incremented on all triggers, not only accepted ones.
+\li <b>Write empty events</b> allows the module to write events that contain no data to the event buffer.
+\li <b>Use sliding scale</b> causes the module to use a sliding scale to reduce non-linearity at the cost of range.
+See the Caen V785 manual for further details
+\li <b>Slide subtract En</b> disables the subtraction of the sliding scale offset when checked. For testing purposes only.
 
-The third group contains two fields:
+The last group contains parameters for fine-grained control over the mode of operation.
 \li The crate number is an arbitrary number that is attached to each data set sent back from the module. It is currently not available to post-processing as it is ignored by the demultiplexer.
-\li The slide constant controls the offset that is added during data sampling to reduce non-linearity of the ADC. For further reference, please consult the V785 manual.
+\li The slide constant controls the offset that is added during data sampling if the sliding scale is disabled. For further reference, please consult the V785 manual.
 
 \subsection thr Thresholds Tab
 \note This functionality is not implemented yet.
@@ -496,5 +511,7 @@ This tab is for testing purposes only and will disappear in future versions. Use
 \subsection info Info Tab
 The Info tab displays a readout of the VME module ROM containing information about the firmware the VME module is currently executing.
 
+\section outs Outputs
+The module has one output connector for each channel. These contain single-element vectors for each event with the ADC output value in \c uint32 format.
 */
 
