@@ -38,6 +38,9 @@ bool DemuxCaen820Plugin::processData (const uint32_t *data, int len) {
                     return false;
             }
 
+            uint32_t outdata = *data;
+            if (shortfmt_)
+                outdata &= 0x03FFFFFF; // mask the channel number
             outputs->at (i)->setData (new std::vector<uint32_t> (1, *data));
         }
         ++data; --len;
