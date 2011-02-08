@@ -109,7 +109,7 @@ protected:
     QCheckBox* allTriggerBox;
     QCheckBox* emptyProgBox;
     QCheckBox* offlineBox;
-    QCheckBox* highSldResBox;
+    QCheckBox* highThrResBox;
 
     QTextEdit* romInfoEdit;
     QLineEdit* firmwareEdit;

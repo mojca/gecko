@@ -282,7 +282,7 @@ QWidget* Caen785UI::createSettings2Controls()
     allTriggerBox = new QCheckBox(tr(  "All triggers En"));
     emptyProgBox = new QCheckBox(tr(   "Write empty events"));
     offlineBox = new QCheckBox(tr(     "Offline"));
-    highSldResBox = new QCheckBox(tr(  "Use high Slide Res"));
+    highThrResBox = new QCheckBox(tr(  "High resolution thresholds"));
 
     connect(ovRangeBox,SIGNAL(toggled(bool)),this,SLOT(settings2Changed()));
     connect(lowThrBox,SIGNAL(toggled(bool)),this,SLOT(settings2Changed()));
@@ -292,7 +292,7 @@ QWidget* Caen785UI::createSettings2Controls()
     connect(allTriggerBox,SIGNAL(toggled(bool)),this,SLOT(settings2Changed()));
     connect(emptyProgBox,SIGNAL(toggled(bool)),this,SLOT(settings2Changed()));
     connect(offlineBox,SIGNAL(toggled(bool)),this,SLOT(settings2Changed()));
-    connect(highSldResBox,SIGNAL(toggled(bool)),this,SLOT(settings2Changed()));
+    connect(highThrResBox,SIGNAL(toggled(bool)),this,SLOT(settings2Changed()));
 
     l->addWidget(ovRangeBox,     0,0,1,1);
     l->addWidget(lowThrBox,      0,1,1,1);
@@ -302,7 +302,7 @@ QWidget* Caen785UI::createSettings2Controls()
     l->addWidget(emptyProgBox,   1,2,1,1);
     l->addWidget(sldEnableBox,   2,0,1,1);
     l->addWidget(sldSubEnableBox,2,1,1,1);
-    l->addWidget(highSldResBox,  2,2,1,1);
+    l->addWidget(highThrResBox,  2,2,1,1);
 
     box->setLayout(l);
     return box;
@@ -353,7 +353,7 @@ void Caen785UI::settings2Changed()
     module->conf.alwaysIncrementEventCounter = allTriggerBox->isChecked();
     module->conf.emptyEventWriteEnabled      = emptyProgBox->isChecked();
     module->conf.offline                     = offlineBox->isChecked();
-    module->conf.highResSlidingScale         = highSldResBox->isChecked();
+    module->conf.zeroSuppressionThr          = highThrResBox->isChecked();
 }
 
 void Caen785UI::crateNoChanged()
@@ -399,7 +399,7 @@ void Caen785UI::applySettings()
     allTriggerBox->setChecked(module->conf.alwaysIncrementEventCounter);
     emptyProgBox->setChecked(module->conf.emptyEventWriteEnabled);
     offlineBox->setChecked(module->conf.offline);
-    highSldResBox->setChecked(module->conf.highResSlidingScale);
+    highThrResBox->setChecked(module->conf.zeroSuppressionThr);
 
     crateNumberSpinner->setValue(module->conf.cratenumber);
     slidingScaleSpinner->setValue(module->conf.slide_constant);

@@ -378,7 +378,6 @@ void Caen785Module::applySettings(QSettings* settings)
     set = "berr_enable";    if(settings->contains(set)) conf.berr_enable = settings->value(set).toBool();
     set = "block_end";    if(settings->contains(set)) conf.block_end = settings->value(set).toBool();
     set = "emptyEventWriteEnabled";    if(settings->contains(set)) conf.emptyEventWriteEnabled = settings->value(set).toBool();
-    set = "highResSlidingScale";    if(settings->contains(set)) conf.highResSlidingScale = settings->value(set).toBool();
     set = "memTestModeEnabled";    if(settings->contains(set)) conf.memTestModeEnabled = settings->value(set).toBool();
     set = "offline";    if(settings->contains(set)) conf.offline = settings->value(set).toBool();
     set = "overRangeSuppressionEnabled";    if(settings->contains(set)) conf.overRangeSuppressionEnabled = settings->value(set).toBool();
@@ -386,6 +385,7 @@ void Caen785Module::applySettings(QSettings* settings)
     set = "slideSubEnabled";    if(settings->contains(set)) conf.slideSubEnabled = settings->value(set).toBool();
     set = "slidingScaleEnabled";    if(settings->contains(set)) conf.slidingScaleEnabled = settings->value(set).toBool();
     set = "zeroSuppressionEnabled";    if(settings->contains(set)) conf.zeroSuppressionEnabled = settings->value(set).toBool();
+    set = "zeroSuppressionThr";    if(settings->contains(set)) conf.zeroSuppressionThr = settings->value(set).toBool();
 
     set = "cratenumber";    if(settings->contains(set)) conf.cratenumber = settings->value(set).toInt(&ok);
     set = "irq_level";    if(settings->contains(set)) conf.irq_level = settings->value(set).toInt(&ok);
@@ -393,7 +393,6 @@ void Caen785Module::applySettings(QSettings* settings)
     set = "nof_events";    if(settings->contains(set)) conf.nof_events = settings->value(set).toInt(&ok);
     set = "pollcount";    if(settings->contains(set)) conf.pollcount = settings->value(set).toInt(&ok);
     set = "slide_constant";    if(settings->contains(set)) conf.slide_constant = settings->value(set).toInt(&ok);
-    set = "zeroSuppressionThr";    if(settings->contains(set)) conf.zeroSuppressionThr = settings->value(set).toInt(&ok);
 
     for(unsigned int i = 0; i < 32; i++)
     {
@@ -427,7 +426,6 @@ void Caen785Module::saveSettings(QSettings* settings)
         settings->setValue("berr_enable",conf.berr_enable);
         settings->setValue("block_end",conf.block_end);
         settings->setValue("emptyEventWriteEnabled",conf.emptyEventWriteEnabled);
-        settings->setValue("highResSlidingScale",conf.highResSlidingScale);
         settings->setValue("memTestModeEnabled",conf.memTestModeEnabled);
         settings->setValue("offline",conf.offline);
         settings->setValue("overRangeSuppressionEnabled",conf.overRangeSuppressionEnabled);
@@ -435,6 +433,7 @@ void Caen785Module::saveSettings(QSettings* settings)
         settings->setValue("slideSubEnabled",conf.slideSubEnabled);
         settings->setValue("slidingScaleEnabled",conf.slidingScaleEnabled);
         settings->setValue("zeroSuppressionEnabled",conf.zeroSuppressionEnabled);
+        settings->setValue("zeroSuppressionThr",conf.zeroSuppressionThr);
 
         settings->setValue("cratenumber",conf.cratenumber);
         settings->setValue("irq_level",conf.irq_level);
@@ -442,7 +441,6 @@ void Caen785Module::saveSettings(QSettings* settings)
         settings->setValue("nof_events",conf.nof_events);
         settings->setValue("pollcount",conf.pollcount);
         settings->setValue("slide_constant",conf.slide_constant);
-        settings->setValue("zeroSuppressionThr",conf.zeroSuppressionThr);
 
         for(unsigned int i = 0; i < 32; i++)
         {

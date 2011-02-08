@@ -44,10 +44,18 @@ public:
     bool emptyEventWriteEnabled;
     bool slideSubEnabled;
     bool alwaysIncrementEventCounter;
-    bool highResSlidingScale;
 
     unsigned int pollcount;
 
+    Caen785config ()
+    : base_addr (0), irq_level (0), irq_vector (0), cratenumber (0), nof_events (0), slide_constant (0)
+    , block_end (false), berr_enable (true), program_reset (false), align64 (false), memTestModeEnabled (false)
+    , offline (false), overRangeSuppressionEnabled (true), zeroSuppressionEnabled (true), slidingScaleEnabled (true)
+    , zeroSuppressionThr (false), autoIncrementEnabled (true), emptyEventWriteEnabled (false)
+    , slideSubEnabled (false), alwaysIncrementEventCounter (true)
+    , pollcount (0)
+    {
+    }
 };
 
 class Caen785Module : public virtual BaseDAqModule

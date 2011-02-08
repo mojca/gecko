@@ -122,7 +122,7 @@ struct Caen1290Config {
     Caen1290Config ()
     : base_addr (0)
     , berr_enable (true), term (false), term_sw (false), emptyev (false), align64 (false)
-    , comp_enable (false), test_fifo_enable (false), read_comp_sram (false), ev_fifo_enable (false)
+    , comp_enable (true), test_fifo_enable (false), read_comp_sram (false), ev_fifo_enable (false)
     , extrigtimetag_enable (false), almost_full_lvl (0), out_prog (0), nof_aln_events (0)
     , trig_match_mode (false), win_width (0x14), win_offset (0xFFD8), sw_margin (0x08)
     , rej_margin (0x04), sub_trg (false), edge_detect_mode (2), edge_lsb_val (2), pair_lead_time (0)
