@@ -1,9 +1,16 @@
 #include "sis3100ui.h"
+#include "sis3100module.h"
 
 #include <iostream>
 
+Q_DECLARE_METATYPE(Sis3100UI::AddrMode);
+Q_DECLARE_METATYPE(Sis3100UI::DataMode);
+
 Sis3100UI::Sis3100UI(Sis3100Module* _module)
-    : BaseUI(dynamic_cast<BaseInterfaceModule*>(_module))
+    : module(_module)
+    , name(_module->getName())
+    , addrmode(A32)
+    , datamode(D32)
 {
     createUI();
     std::cout << "Instantiated Sis3100 UI" << std::endl;
@@ -93,16 +100,16 @@ QWidget* Sis3100UI::createVmeControl()
     addrModeSpinner = new QComboBox();
     dataModeSpinner = new QComboBox();
 
-    addrModeSpinner->addItem(tr("A32"));
-    dataModeSpinner->addItem(tr("D16"));
-    dataModeSpinner->addItem(tr("D32"));
+    addrModeSpinner->addItem(tr("A32"), QVariant::fromValue(A32));
+    dataModeSpinner->addItem(tr("D16"), QVariant::fromValue(D16));
+    dataModeSpinner->addItem(tr("D32"), QVariant::fromValue(D32));
     addrModeSpinner->setCurrentIndex(0);
     dataModeSpinner->setCurrentIndex(1);
 
     connect(addrEdit,SIGNAL(returnPressed()),this,SLOT(readButtonClicked()));
     connect(dataEdit,SIGNAL(returnPressed()),this,SLOT(writeButtonClicked()));
-    connect(addrModeSpinner,SIGNAL(currentIndexChanged(QString)),this,SLOT(modeChanged(QString)));
-    connect(dataModeSpinner,SIGNAL(currentIndexChanged(QString)),this,SLOT(modeChanged(QString)));
+    connect(addrModeSpinner,SIGNAL(currentIndexChanged(int)),this,SLOT(addrModeChanged(int)));
+    connect(dataModeSpinner,SIGNAL(currentIndexChanged(int)),this,SLOT(dataModeChanged(int)));
 
     readButton = new QPushButton(tr("VME Single Read"));
     writeButton = new QPushButton(tr("VME Single Write"));
@@ -126,11 +133,6 @@ QWidget* Sis3100UI::createVmeControl()
 
 void Sis3100UI::openCloseButtonClicked()
 {
-    Sis3100Module* module = dynamic_cast<Sis3100Module*>(this->module);
-
-    module->setAddrMode("A32");
-    module->setDataMode("D32");
-
     if(module->isOpen() == false)
     {
         module->open();
@@ -157,32 +159,72 @@ void Sis3100UI::moduleClosed () {
 
 void Sis3100UI::readButtonClicked()
 {
-    Sis3100Module* module = dynamic_cast<Sis3100Module*>(this->module);
-
     bool ok;
     uint32_t addr = addrEdit->text().toUInt(&ok,16);
-    uint32_t data = 0;
 
-    if(!ok) outputText(tr("Sis3100UI::readButtonClicked(): conversion failed.\n"));
+    if(!ok) { outputText(tr("Sis3100UI::readButtonClicked(): conversion failed.\n")); return; }
 
-    int ret = module->vmeSingleRead(addr,&data);
+    switch (datamode) {
+    case D32:
+        {
+            int ret;
+            uint32_t data;
+            switch (addrmode) {
+            case A32:
+            case A24:
+                ret = module->readA32D32 (addr,&data);
+                break;
+            }
 
-    outputText(tr("Read: %1 (0x%2), Status: %3 \n").arg(data,1,10).arg(data,1,16).arg(ret,1,16));
+            outputText(tr("Read: %1 (0x%2), Status: 0x%3 \n").arg(data,1,10).arg(data,1,16).arg(ret,1,16));
+        }
+        break;
+    case D16:
+        {
+            int ret;
+            uint16_t data;
+            switch (addrmode) {
+            case A32:
+            case A24:
+                ret = module->readA32D16(addr,&data);
+                break;
+            }
+
+            outputText(tr("Read: %1 (0x%2), Status: 0x%3 \n").arg(data,1,10).arg(data,1,16).arg(ret,1,16));
+        }
+        break;
+    }
 }
 
 void Sis3100UI::writeButtonClicked()
 {
-    Sis3100Module* module = dynamic_cast<Sis3100Module*>(this->module);
-
     bool ok;
     uint32_t addr = addrEdit->text().toUInt(&ok,16);
     uint32_t data = dataEdit->text().toUInt(&ok,16);
+    int ret;
 
-    if(!ok) outputText(tr("Sis3100UI::writeButtonClicked(): conversion failed."));
+    if(!ok) { outputText(tr("Sis3100UI::writeButtonClicked(): conversion failed.")); return; }
 
-    int ret = module->vmeSingleWrite(addr,data);
+    switch (datamode) {
+    case D32:
+        switch (addrmode) {
+        case A32:
+        case A24:
+            ret = module->writeA32D32 (addr,data);
+            break;
+        }
+        break;
+    case D16:
+        switch (addrmode) {
+        case A32:
+        case A24:
+            ret = module->writeA32D16(addr,data);
+            break;
+        }
+        break;
+    }
 
-    outputText(tr("Status: %1 \n").arg(ret,1,16));
+    outputText(tr("Status: 0x%1 \n").arg(ret,1,16));
 }
 
 void Sis3100UI::outputText(QString text)
@@ -191,18 +233,20 @@ void Sis3100UI::outputText(QString text)
     statusViewTextEdit->ensureCursorVisible();
 }
 
-void Sis3100UI::modeChanged(QString newMode)
+void Sis3100UI::addrModeChanged(int newIndex)
 {
-    Sis3100Module* module = dynamic_cast<Sis3100Module*>(this->module);
-
-    if(newMode.startsWith('A'))
-    {
-        module->setAddrMode(newMode);
-        outputText(tr("Changed address mode to ")+newMode+"\n");
+    QVariant mode = addrModeSpinner->itemData(newIndex);
+    if (mode.isValid()) {
+        addrmode = mode.value<AddrMode>();
+        outputText(tr("Changed address mode to ") + (addrmode == A32 ? "A32" : "A24") + "\n");
     }
-    else if(newMode.startsWith('D'))
-    {
-        module->setDataMode(newMode);
-        outputText(tr("Changed data mode to ")+newMode+"\n");
+}
+
+void Sis3100UI::dataModeChanged(int newIndex)
+{
+    QVariant mode = dataModeSpinner->itemData(newIndex);
+    if (mode.isValid()) {
+        datamode = mode.value<DataMode>();
+        outputText(tr("Changed data mode to ") + (addrmode == D32 ? "D32" : "D16") + "\n");
     }
 }

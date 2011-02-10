@@ -66,7 +66,7 @@ void RunManager::start (QString info) {
     running = true;
     state.setBit(StateRunning,true);
 
-    foreach(BaseInterfaceModule* iface, (*ModuleManager::ref().listInterfaces()))
+    foreach(BaseInterface* iface, (*ModuleManager::ref().listInterfaces()))
     {
         if(!iface->isOpen())
             iface->open();

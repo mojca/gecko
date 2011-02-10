@@ -2,7 +2,7 @@
 #define BASEDAQMODULE_H
 
 #include "basemodule.h"
-#include "baseinterfacemodule.h"
+#include "abstractinterface.h"
 #include "scopechannel.h"
 #include "threadbuffer.h"
 #include "dummyplugin.h"
@@ -33,13 +33,12 @@ public:
     /*! return a pointer to this module's output plugin. */
     BasePlugin* getOutputPlugin() { return output; }
     PluginConnector* getRootConnector() { return output->getOutputs()->first(); }
-    AbstractModule::Type getModuleType () { return AbstractModule::TypeDAq; }
 
     /*! retrieve the module used for VME communication */
-    BaseInterfaceModule *getInterface () const { return iface; }
+    AbstractInterface *getInterface () const { return iface; }
 
     /*! Set the interface to be used by this module for VME communication. */
-    void setInterface (BaseInterfaceModule *ifa) {
+    void setInterface (AbstractInterface *ifa) {
         if (iface)
             disconnect (iface, SIGNAL (destroyed()), this, SLOT (interfaceRemoved ()));
         iface = ifa;
@@ -47,7 +46,7 @@ public:
     }
 
     // Virtual methods
-    /*! return the ThreadBuffer the module writes its data to. */
+    /*! return the ThreadBuffer the module writes its data to. \deprecated */
     virtual ThreadBuffer<uint32_t>* getBuffer() = 0;
 
     /*! Store the channel descriptions for the channels used by this module in the #channels list.
@@ -99,7 +98,7 @@ signals:
     void triggered(ScopeChannel*);
 
 protected:
-    BaseInterfaceModule *iface; /*!< The interface used for communication. */
+    AbstractInterface *iface; /*!< The interface used for communication. */
     BasePlugin* output; /*!< The output plugin used by this module. */
     QList<ScopeChannel*> channels; /*!< The list of ScopeChannels provided by this module. */
 };

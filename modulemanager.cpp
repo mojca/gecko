@@ -1,6 +1,5 @@
 #include "modulemanager.h"
 #include "basedaqmodule.h"
-#include "baseinterfacemodule.h"
 
 #include <stdexcept>
 
@@ -25,7 +24,7 @@ ModuleManager::ModuleManager()
 {
     items = new QList<BaseModule*>;
     daqItems = new QList<BaseDAqModule*>;
-    interfaceItems = new QList<BaseInterfaceModule*>;
+    interfaceItems = new QList<BaseInterface*>;
 
     std::cout << "Instantiated ModuleManager" << std::endl;
     mainInterface = NULL;
@@ -65,7 +64,7 @@ bool ModuleManager::remove(BaseModule* rmModule)
             }
             else
             {
-                interfaceItems->removeAll(dynamic_cast<BaseInterfaceModule*>(*it));
+                interfaceItems->removeAll(dynamic_cast<BaseInterface*>(*it));
             }
             items->erase(it);
             emit moduleRemoved (rmModule);
@@ -143,18 +142,18 @@ BaseDAqModule *ModuleManager::getDAq (const QString &name) {
     return static_cast<BaseDAqModule *> (m);
 }
 
-BaseInterfaceModule *ModuleManager::getIface (int id) {
+BaseInterface *ModuleManager::getIface (int id) {
     BaseModule *m = get (id);
     if (m->getModuleType () != AbstractModule::TypeInterface)
         return NULL;
-    return static_cast<BaseInterfaceModule *> (m);
+    return static_cast<BaseInterface *> (m);
 }
 
-BaseInterfaceModule *ModuleManager::getIface (const QString &name) {
+BaseInterface *ModuleManager::getIface (const QString &name) {
     BaseModule *m = get (name);
     if (m->getModuleType () != AbstractModule::TypeInterface)
         return NULL;
-    return static_cast<BaseInterfaceModule *> (m);
+    return static_cast<BaseInterface *> (m);
 }
 
 void ModuleManager::applySettings(QSettings* newSettings)
@@ -219,8 +218,8 @@ BaseModule *ModuleManager::create (const QString &type, const QString &name) {
         else
         {
             if (interfaceItems->empty ()) // this is the first interface, make it the main interface
-                setMainInterface (static_cast<BaseInterfaceModule*> (m));
-            interfaceItems->push_back(static_cast<BaseInterfaceModule*>(m));
+                setMainInterface (static_cast<BaseInterface*> (m));
+            interfaceItems->push_back(static_cast<BaseInterface*>(m));
         }
         emit moduleAdded (m);
         return m;

@@ -49,7 +49,7 @@
 #include "runmanager.h"
 
 #include "modulemanager.h"
-#include "baseinterfacemodule.h"
+#include "abstractinterface.h"
 #include "dummymodule.h"
 #include "sis3100module.h"
 #include "sis3150module.h"

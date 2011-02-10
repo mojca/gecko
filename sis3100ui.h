@@ -9,6 +9,7 @@
 #include <QComboBox>
 #include <QTextEdit>
 #include <QLineEdit>
+#include <QString>
 
 #include "sis3100module.h"
 #include "baseui.h"
@@ -18,6 +19,9 @@ class Sis3100Module;
 class Sis3100UI : public virtual BaseUI
 {
     Q_OBJECT
+
+    enum AddrMode {A24, A32};
+    enum DataMode {D16, D32};
 
     QWidget* createButtons();
     QWidget* createStatusView();
@@ -43,6 +47,12 @@ class Sis3100UI : public virtual BaseUI
 
     QWidget* vmeControl;
 
+    AddrMode addrmode;
+    DataMode datamode;
+
+    Sis3100Module *module;
+    QString name;
+
 public:
     Sis3100UI(Sis3100Module* _module);
     ~Sis3100UI() {}
@@ -60,7 +70,8 @@ public slots:
     void readButtonClicked();
     void writeButtonClicked();
     void outputText(QString);
-    void modeChanged(QString);
+    void addrModeChanged(int);
+    void dataModeChanged(int);
 
 signals:
     void deviceOpened();

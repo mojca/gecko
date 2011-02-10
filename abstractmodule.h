@@ -19,9 +19,6 @@ public:
 
     /*! return the module's name */
     virtual QString getName() = 0;
-
-    /*! return the module's type */
-    virtual Type getModuleType () = 0;
  };
 
 #endif // ABSTRACTMODULE_H

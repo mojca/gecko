@@ -8,10 +8,10 @@
 #include <QMetaType>
 #include <QMessageBox>
 
-#include "modulemanager.h"
-#include "baseinterfacemodule.h"
-
+class ModuleManager;
+class ScopeChannel;
 class QSettings;
+class BaseDAqModule;
 
 class RunThread : public QThread
 {

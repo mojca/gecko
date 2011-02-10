@@ -5,7 +5,7 @@
 #include "../sis3100_calls/sis3100_vme_calls.h"  // Contains all function definitions to use the driver
 #include <fcntl.h>              // Contains open and close
 
-#include "baseinterfacemodule.h"
+#include "baseinterface.h"
 #include "sis3100ui.h"
 
 /* Registers for SIS3104 */
@@ -44,11 +44,15 @@
 #define vme_system_controller (1<<16)
 
 
-class Sis3100Module : public virtual BaseInterfaceModule
+class QSettings;
+
+class Sis3100Module : public BaseInterface
 {
     Q_OBJECT
 
 protected:
+    int id;
+    const QString& name;
     int m_device;
     int c_device;
     bool deviceOpen;
@@ -63,24 +67,19 @@ public:
     ~Sis3100Module();
 
     // Factory method
-    static BaseModule *create (int id, const QString &name) {
+    static AbstractInterface *create (int id, const QString &name) {
         return new Sis3100Module (id, name);
     }
 
     virtual int open();
     virtual int close();
-    virtual bool isOpen();
+    virtual bool isOpen() const ;
 
     virtual int setOutput1(bool);
     virtual int setOutput2(bool);
 
     virtual void saveSettings(QSettings*) {}
     virtual void applySettings(QSettings*) {}
-
-    // Aliases
-
-    int vmeSingleRead(const uint32_t addr, uint32_t* data);
-    int vmeSingleWrite(const uint32_t addr, const uint32_t data);
 
     // VME access
     int readA32D32(const uint32_t addr, uint32_t* data);

@@ -1,10 +1,9 @@
 #include "sis3350ui.h"
 
 Sis3350UI::Sis3350UI(Sis3350Module* _module)
-        : BaseUI(_module)
+: module (_module)
+, name (_module->getName ())
 {
-    module = _module;
-
     createUI();
 
     freeRunnerTimer = new QTimer();

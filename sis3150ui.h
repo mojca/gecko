@@ -19,6 +19,9 @@ class Sis3150UI : public virtual BaseUI
 {
     Q_OBJECT
 
+    enum AddrMode {A24, A32};
+    enum DataMode {D16, D32};
+
     QWidget* createButtons();
     QWidget* createStatusView();
     QWidget* createVmeControl();
@@ -43,6 +46,12 @@ class Sis3150UI : public virtual BaseUI
 
     QWidget* vmeControl;
 
+    AddrMode addrmode;
+    DataMode datamode;
+
+    Sis3150Module *module;
+    QString name;
+
 public:
     Sis3150UI(Sis3150Module* _module);
     ~Sis3150UI() {}
@@ -61,7 +70,8 @@ public slots:
     void readButtonClicked();
     void writeButtonClicked();
     void outputText(QString);
-    void modeChanged(QString);
+    void addrModeChanged(int);
+    void dataModeChanged(int);
 
 signals:
     void deviceOpened();

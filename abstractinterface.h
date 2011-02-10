@@ -1,32 +1,27 @@
-#ifndef BASEINTERFACEMODULE_H
-#define BASEINTERFACEMODULE_H
+#ifndef ABSTRACTINTERFACE_H
+#define ABSTRACTINTERFACE_H
 
-#include <inttypes.h>
+#include <stdint.h>
 
-#include "basemodule.h"
+#include <QObject>
+#include <QString>
 
-/*! Base class for VME interfaces. */
-class BaseInterfaceModule : public BaseModule
-{
-    Q_OBJECT
-
-protected:
-
-    QString addrMode;
-    QString dataMode;
-
+/*! Base class for all VME interfaces. */
+class AbstractInterface : public QObject {
 public:
-    BaseInterfaceModule(int id_, QString _name = "Base Interface");
+    virtual ~AbstractInterface () = 0;
 
-    void setAddrMode(QString newMode) { addrMode = newMode; }
-    void setDataMode(QString newMode) { dataMode = newMode; }
-    QString getAddrMode() { return addrMode; }
-    QString getDataMode() { return dataMode; }
+    /*! returns the interface name. */
+    virtual const QString& getName () const = 0;
 
-    AbstractModule::Type getModuleType () { return AbstractModule::TypeInterface; }
+    /*! returns the interface type. */
+    virtual QString getTypeName () const = 0;
+
+    /*! returns the interface id */
+    virtual int getId () const = 0;
 
     /*! check if the interface is open. */
-    virtual bool isOpen() = 0;
+    virtual bool isOpen() const = 0;
 
     /*! open the interface. After opening, the interface is ready to perform VME communication */
     virtual int open() = 0;
@@ -73,6 +68,15 @@ public:
 
     /*! Return whether the given error code is a bus error or not. */
     virtual bool isBusError (int err) const = 0;
+
+protected:
+    /*! Called by the interface manager when a name change is requested. */
+    virtual void setName (QString newName) = 0;
+
+    /*! Called by the interface manager to set the type for later retrieval. */
+    virtual void setTypeName (QString newtype) = 0;
+
+    friend class InterfaceManager;
 };
 
-#endif // BASEINTERFACEMODULE_H
+#endif // ABSTRACTINTERFACE_H

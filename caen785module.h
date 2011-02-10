@@ -5,7 +5,7 @@
 #include <cstdio>
 
 #include "basedaqmodule.h"
-#include "baseinterfacemodule.h"
+#include "abstractinterface.h"
 #include "baseplugin.h"
 #include "caen_v785.h"
 #include "caen785ui.h"
