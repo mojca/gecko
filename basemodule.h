@@ -2,67 +2,70 @@
 #define BASEMODULE_H
 
 #include <QString>
-#include <QThread>
-#include <QSettings>
+#include <QList>
 
 #include "abstractmodule.h"
-#include "baseui.h"
+#include "abstractinterface.h"
 
-class ScopeChannel;
 class BaseUI;
+class ScopeChannel;
 class ModuleManager;
 
 /*! base class for all modules.
  *  Each module is registered with the module manager to allow generalised access.
- *  To implement a new module, do not inherit from this class but from either BaseDAqModule or BaseInterfaceModule.
+ *  To implement a new DAQ module inherit from this class.
  *  You will need to call #setUI in your constructor because the main window needs the UI right after construction of the module.
  */
-class BaseModule : public QObject, public virtual AbstractModule
+class BaseModule : public AbstractModule
 {
     Q_OBJECT
 
 public:
-    BaseModule(int _id, QString _name = "Base Module");
+    BaseModule(int _id, QString _name = "Base Module")
+    : id (_id)
+    , name (_name)
+    , ui (NULL)
+    {
+    }
+
     virtual ~BaseModule() {}
 
-    /*! Return the module's id, as assigned by the module manager. */
-    int getId() { return id; }
+    int getId () const { return id; }
+    const QString& getName() const { return name; }
+    QString getTypeName () const {return typename_; }
 
-    /*! Retrieve the module's name. The module is referenced by this name in the configuration file. */
-    QString getName() { return name; }
+    BaseUI* getUI() const { return ui; }
 
-    /*! return the module's type as a string. */
-    QString getTypeName () {return typename_; }
-
-    /*! return a pointer the ui set via #setUI. */
-    BaseUI* getUI() { return ui; }
-
-    /*! Save the module settings to the given QSettings object.
-     *  The implementation should read the subsection named like the module instance
-     *  and save all settings inside to a local data structure, because lifetime of the settings object 
-     *  is not guaranteed to be longer than the lifetime of this object.
-     *  \sa #applySettings, ModuleManager::saveSettings
-     */
     virtual void saveSettings(QSettings*) {}
-
-    /*! Load the module settings from the given QSettings object.
-     *  The implementation should create a new subsection named like the module instance
-     *  and save all settings inside this section.
-     *  \sa #saveSettings, ModuleManager::applySettings
-     */
     virtual void applySettings(QSettings*) {}
 
+    AbstractInterface *getInterface () const { return iface; }
+    void setInterface (AbstractInterface *ifa) {
+        if (iface)
+            disconnect (iface, SIGNAL (destroyed()), this, SLOT (interfaceRemoved ()));
+        iface = ifa;
+        connect (iface, SIGNAL (destroyed()), SLOT (interfaceRemoved ()));
+    }
+
+    QList<ScopeChannel*>* getChannels () { return &channels; }
+
+    ThreadBuffer<uint32_t>* getBuffer () { return NULL; }
+
+public slots:
+    void prepareForNextAcquisition () {}
+
 protected:
-    /*! set the module's UI object. This object is shown in the main window when the module's tree entry is selected. */
     void setUI (BaseUI *_ui) { ui = _ui; }
+    void setName (QString newName) { name = newName; }
+    void setTypeName (QString newTypeName) { typename_ = newTypeName; }
 
 private:
+    AbstractInterface *iface;
     int id;
     QString name;
     QString typename_;
     BaseUI *ui;
-
-    friend class ModuleManager;
+    QList<ScopeChannel*> channels_;
 };
 
 #endif // BASEMODULE_H

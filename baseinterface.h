@@ -11,6 +11,8 @@ public:
     {
     }
 
+    ~BaseInterface () {}
+
     int getId () const { return id_; }
     const QString& getName () const { return name_; }
     QString getTypeName () const { return type_; }
