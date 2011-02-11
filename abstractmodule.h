@@ -6,14 +6,14 @@
 #include <stdint.h>
 
 class QSettings;
-class QList;
+template<typename T> class QList;
+template<typename T> class ThreadBuffer;
 
 class AbstractInterface;
-class BasePlugin;
+class AbstractPlugin;
 class BaseUI;
 class PluginConnector;
 class ScopeChannel;
-class ThreadBuffer;
 
 /*! Base class for data acquisition modules.
  *  This class is used by all modules that receive data from VME modules.
@@ -33,7 +33,7 @@ class AbstractModule : public QObject
 {
     Q_OBJECT
 public:
-    virtual ~BaseModule() = 0;
+    virtual ~AbstractModule() = 0;
 
     /*! Return the module's id, as assigned by the module manager. */
     virtual int getId() const = 0;
@@ -45,23 +45,23 @@ public:
     virtual QString getTypeName () const = 0;
 
     /*! return a pointer the ui set via #setUI. */
-    BaseUI* getUI() const = 0;
+    virtual BaseUI* getUI() const = 0;
 
     /*! retrieve the list of channels made available by this module. */
-    QList<ScopeChannel*>* getChannels() = 0;
+    virtual QList<ScopeChannel*>* getChannels() = 0;
 
     /*! return a pointer to this module's output plugin. */
-    BasePlugin* getOutputPlugin() const = 0;
-    PluginConnector* getRootConnector() const = 0;
+    virtual AbstractPlugin* getOutputPlugin() const = 0;
+    virtual PluginConnector* getRootConnector() const = 0;
 
     /*! return the ThreadBuffer the module writes its data to. \deprecated */
     virtual ThreadBuffer<uint32_t>* getBuffer() = 0;
 
     /*! retrieve the module used for VME communication */
-    AbstractInterface *getInterface () const = 0;
+    virtual AbstractInterface *getInterface () const = 0;
 
     /*! Set the interface to be used by this module for VME communication. */
-    void setInterface (AbstractInterface *ifa) = 0;
+    virtual void setInterface (AbstractInterface *ifa) = 0;
 
     /*! Save the module settings to the given QSettings object.
      *  The implementation should read the subsection named like the module instance
@@ -113,11 +113,11 @@ signals:
 
 protected:
     /*! set the module's UI object. This object is shown in the main window when the module's tree entry is selected. */
-    void setUI (BaseUI *_ui) = 0;
+    virtual void setUI (BaseUI *_ui) = 0;
 
     // TODO: Do this The Right Way (tm)
-    void setName (QString newName) = 0;
-    void setTypeName (QString newTypeName) = 0;
+    virtual void setName (QString newName) = 0;
+    virtual void setTypeName (QString newTypeName) = 0;
 
     friend class ModuleManager;
  };

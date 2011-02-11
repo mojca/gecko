@@ -47,7 +47,7 @@ public:
         connect (iface, SIGNAL (destroyed()), SLOT (interfaceRemoved ()));
     }
 
-    QList<ScopeChannel*>* getChannels () { return &channels; }
+    QList<ScopeChannel*>* getChannels () { return &channels_; }
 
     ThreadBuffer<uint32_t>* getBuffer () { return NULL; }
 

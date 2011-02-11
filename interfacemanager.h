@@ -15,8 +15,6 @@ class InterfaceManager : public QObject{
 public:
     typedef AbstractInterface *(*InterfaceFactory) (int id, const QString &name);
 
-    ~ModuleManager();
-
     static InterfaceManager *ptr (); /*!< Returns a pointer to the ModuleManager singleton. */
     static InterfaceManager &ref (); /*!< Returns a reference to the ModuleManager singleton */
 
@@ -79,6 +77,7 @@ signals:
 
 private:
     InterfaceManager();
+    ~InterfaceManager();
 
     static InterfaceManager *inst;
 
