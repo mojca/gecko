@@ -2,10 +2,9 @@
 #define BASEDAQMODULE_H
 
 #include "basemodule.h"
-#include "abstractinterface.h"
-#include "scopechannel.h"
-#include "threadbuffer.h"
-#include "dummyplugin.h"
+#include "abstractplugin.h"
+
+class AbstractInterface;
 
 /*! Base class for data acquisition modules.
  *  This class is used by all modules that receive data from VME modules.
@@ -31,8 +30,8 @@ public:
     QList<ScopeChannel*>* getChannels() { return &channels; }
 
     /*! return a pointer to this module's output plugin. */
-    BasePlugin* getOutputPlugin() { return output; }
-    PluginConnector* getRootConnector() { return output->getOutputs()->first(); }
+    AbstractPlugin* getOutputPlugin() const { return output; }
+    PluginConnector* getRootConnector() const { return output->getOutputs()->first(); }
 
     /*! retrieve the module used for VME communication */
     AbstractInterface *getInterface () const { return iface; }
@@ -99,7 +98,7 @@ signals:
 
 protected:
     AbstractInterface *iface; /*!< The interface used for communication. */
-    BasePlugin* output; /*!< The output plugin used by this module. */
+    AbstractPlugin* output; /*!< The output plugin used by this module. */
     QList<ScopeChannel*> channels; /*!< The list of ScopeChannels provided by this module. */
 };
 

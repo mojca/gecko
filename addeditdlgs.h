@@ -7,6 +7,7 @@
 
 #include "modulemanager.h"
 #include "pluginmanager.h"
+#include "interfacemanager.h"
 
 #include <QComboBox>
 #include <QMessageBox>
@@ -113,7 +114,7 @@ public slots:
             return;
         }
 
-        if (module_ != InterfaceManager::ref().get (name_->text()) ||
+        if (iface_ != InterfaceManager::ref().get (name_->text()) ||
             ModuleManager::ref().get (name_->text ()) ||
             PluginManager::ref().get (name_->text ())) {
             QMessageBox::warning (this, tr ("Scope"), tr ("A component with the same name already exists!"));
@@ -129,7 +130,7 @@ public slots:
     }
 
 private:
-    AbstractInterface *module_;
+    AbstractInterface *iface_;
 
     QComboBox *typeselector_;
     QLineEdit *name_;
@@ -227,21 +228,18 @@ public slots:
         }
 
         if (module_) {
-            BaseDAqModule *daq = static_cast<BaseDAqModule *> (module_);
             if (ifaceselector_->currentText().isEmpty()) {
                 QMessageBox::warning (this, tr("Scope"), tr("Please select an interface module!"));
                 return;
             }
-            daq->setInterface (
-                    ModuleManager::ref ().getIface (ifaceselector_->currentText()));
-            daq->setBaseAddress (baddr_->value() << 16);
+            module_->setInterface (InterfaceManager::ref ().get (ifaceselector_->currentText()));
+            module_->setBaseAddress (baddr_->value() << 16);
 
             ModuleManager::ref ().setModuleName (module_, name_->text ());
         } else {
-            BaseModule *m = ModuleManager::ref ().create (typeselector_->currentText (), name_->text ());
-            BaseDAqModule *daq = static_cast<BaseDAqModule *> (m);
-            daq->setInterface (InterfaceManager::ref ().get (ifaceselector_->currentText()));
-            daq->setBaseAddress (baddr_->value() << 16);
+            AbstractModule *m = ModuleManager::ref ().create (typeselector_->currentText (), name_->text ());
+            m->setInterface (InterfaceManager::ref ().get (ifaceselector_->currentText()));
+            m->setBaseAddress (baddr_->value() << 16);
         }
         QDialog::accept ();
     }

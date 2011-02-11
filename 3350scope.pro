@@ -28,7 +28,6 @@ SOURCES += main.cpp \
     dummymodule.cpp \
     scopechannel.cpp \
     dummyui.cpp \
-    basemodule.cpp \
     sis3150ui.cpp \
     sis3150module.cpp \
     sis3350module.cpp \
