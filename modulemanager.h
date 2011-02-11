@@ -7,15 +7,13 @@
 #include <QList>
 #include <QMap>
 
-//#include "abstractmanager.h"
-#include "basemodule.h"
-#include "basedaqmodule.h"
-#include "threadbuffer.h"
-
 class BaseModule;
 class BaseDAqModule;
 class AbstractInterface;
 struct ModuleTypeDesc;
+class AbstractModule;
+
+template<typename T> class ThreadBuffer;
 
 
 /*! Manager singleton for interface and daq modules. */
@@ -23,7 +21,8 @@ class ModuleManager : public QObject
 {
     Q_OBJECT
 public:
-    typedef BaseModule *(*ModuleFactory) (int id, const QString &name);
+    typedef AbstractModule *(*ModuleFactory) (int id, const QString &name);
+    typedef QList<AbstractModule*> list_type;
 
     ~ModuleManager();
 
@@ -32,11 +31,8 @@ public:
 
     void identify();
 
-    /*! returns a list of all registered daq modules. */
-    const QList<BaseDAqModule*>* listDaqModules() { return daqItems; }
-
     /*! returns a list of all registered interface and daq modules. */
-    const QList<BaseModule*>* list() { return items; }
+    const QList<AbstractModule*>* list() { return items; }
 
     /*! removes all modules. */
     void clear();
@@ -45,12 +41,6 @@ public:
     BaseModule* get (int id);
     /*! returns the module with the given name, or NULL if no such module exists. */
     BaseModule* get (const QString &);
-
-
-    /*! \overload getDAq(const QString&) */
-    BaseDAqModule *getDAq (int id);
-    /*! returns the daq module with the given name, or NULL if no such module exists. */
-    BaseDAqModule *getDAq (const QString &name);
 
     /*! assigns a new name to the given module. */
     void setModuleName (BaseModule *m, const QString &name);
@@ -71,16 +61,13 @@ public:
      *  \param mclass defines whether this type is an interface or a daq type
      *  \sa ModuleRegistrar
      */
-    void registerModuleType (const QString &type, ModuleFactory fac, AbstractModule::Type mclass);
-
-    /*! returns whether the given type is an interface or a daq type. */
-    AbstractModule::Type getModuleTypeClass (const QString &type) const;
+    void registerModuleType (const QString &type, ModuleFactory fac);
 
     /*! returns a list of available module types. */
     QStringList getAvailableTypes () const;
 
     /*! creates a new module with the given type. */
-    BaseModule *create (const QString &type, const QString &name);
+    AbstractModule *create (const QString &type, const QString &name);
 
     /*! removes the given module. */
     bool remove (BaseModule *);
@@ -100,8 +87,7 @@ private:
     int getNextId ();
 
 private:
-    QList<BaseModule*>* items;
-    QList<BaseDAqModule*>* daqItems;
+    list_type* items;
     QMap<QString, ModuleTypeDesc> registry;
 
 private: // no copying
@@ -111,8 +97,8 @@ private: // no copying
 
 class ModuleRegistrar {
 public:
-    ModuleRegistrar (const QString &type, ModuleManager::ModuleFactory fac, AbstractModule::Type mclass) {
-        ModuleManager::ref ().registerModuleType (type, fac, mclass);
+    ModuleRegistrar (const QString &type, ModuleManager::ModuleFactory fac) {
+        ModuleManager::ref ().registerModuleType (type, fac);
     }
 
 private:

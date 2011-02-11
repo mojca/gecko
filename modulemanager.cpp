@@ -1,5 +1,5 @@
 #include "modulemanager.h"
-#include "basedaqmodule.h"
+#include "abstractmodule.h"
 
 #include <stdexcept>
 
@@ -22,9 +22,7 @@ ModuleManager &ModuleManager::ref () {
 
 ModuleManager::ModuleManager()
 {
-    items = new QList<BaseModule*>;
-    daqItems = new QList<BaseDAqModule*>;
-    interfaceItems = new QList<BaseInterface*>;
+    items = new list_type;
 
     std::cout << "Instantiated ModuleManager" << std::endl;
     mainInterface = NULL;
@@ -34,16 +32,12 @@ ModuleManager::~ModuleManager()
 {
     clear();
     delete items;
-    delete daqItems;
-    delete interfaceItems;
 }
 
 void ModuleManager::clear()
 {
-    while (!daqItems->empty ())
-        remove (daqItems->first ());
-    while (!interfaceItems->empty ())
-        remove (interfaceItems->first ());
+    while (!items->empty ())
+        remove (items->first ());
 }
 
 void ModuleManager::identify()
@@ -53,19 +47,11 @@ void ModuleManager::identify()
 
 bool ModuleManager::remove(BaseModule* rmModule)
 {
-    QList<BaseModule*>::iterator it(items->begin());
+    list_type::iterator it(items->begin());
     while(it != items->end())
     {
         if((*it) == rmModule)
         {
-            if((*it)->getModuleType() == AbstractModule::TypeDAq)
-            {
-                daqItems->removeAll(dynamic_cast<BaseDAqModule*>(*it));
-            }
-            else
-            {
-                interfaceItems->removeAll(dynamic_cast<BaseInterface*>(*it));
-            }
             items->erase(it);
             emit moduleRemoved (rmModule);
             rmModule->deleteLater ();
@@ -78,7 +64,7 @@ bool ModuleManager::remove(BaseModule* rmModule)
 
 bool ModuleManager::remove (int id)
 {
-    BaseModule* am;
+    AbstractModule* am;
     if((am = get (id)) != NULL)
     {
         remove(am);
@@ -89,7 +75,7 @@ bool ModuleManager::remove (int id)
 
 bool ModuleManager::remove (const QString &name)
 {
-    BaseModule* am;
+    AbstractModule* am;
     if((am = get (name)) != NULL)
     {
         remove(am);
@@ -99,9 +85,9 @@ bool ModuleManager::remove (const QString &name)
 }
 
 
-BaseModule* ModuleManager::get (int id)
+AbstractModule* ModuleManager::get (int id)
 {
-    QList<BaseModule*>::iterator it(items->begin());
+    list_type::iterator it(items->begin());
     while(it != items->end())
     {
         BaseModule* bm = (*it);
@@ -114,9 +100,9 @@ BaseModule* ModuleManager::get (int id)
     return NULL;
 }
 
-BaseModule* ModuleManager::get (const QString &name)
+AbstractModule* ModuleManager::get (const QString &name)
 {
-    QList<BaseModule*>::iterator it(items->begin());
+    list_type::iterator it(items->begin());
     while(it != items->end())
     {
         if((*it)->getName() == name)
@@ -128,37 +114,9 @@ BaseModule* ModuleManager::get (const QString &name)
     return NULL;
 }
 
-BaseDAqModule *ModuleManager::getDAq (int id) {
-    BaseModule *m = get (id);
-    if (m->getModuleType () != AbstractModule::TypeDAq)
-        return NULL;
-    return static_cast<BaseDAqModule *> (m);
-}
-
-BaseDAqModule *ModuleManager::getDAq (const QString &name) {
-    BaseModule *m = get (name);
-    if (m->getModuleType () != AbstractModule::TypeDAq)
-        return NULL;
-    return static_cast<BaseDAqModule *> (m);
-}
-
-BaseInterface *ModuleManager::getIface (int id) {
-    BaseModule *m = get (id);
-    if (m->getModuleType () != AbstractModule::TypeInterface)
-        return NULL;
-    return static_cast<BaseInterface *> (m);
-}
-
-BaseInterface *ModuleManager::getIface (const QString &name) {
-    BaseModule *m = get (name);
-    if (m->getModuleType () != AbstractModule::TypeInterface)
-        return NULL;
-    return static_cast<BaseInterface *> (m);
-}
-
 void ModuleManager::applySettings(QSettings* newSettings)
 {
-    QList<BaseModule*>::iterator it(items->begin());
+    list_type::iterator it(items->begin());
     while(it != items->end())
     {
         BaseModule* bm = (*it);
@@ -169,7 +127,7 @@ void ModuleManager::applySettings(QSettings* newSettings)
 
 void ModuleManager::saveSettings(QSettings* settings)
 {
-    QList<BaseModule*>::iterator it(items->begin());
+    list_type::iterator it(items->begin());
     while(it != items->end())
     {
         BaseModule* bm = (*it);
@@ -192,12 +150,12 @@ ThreadBuffer<uint32_t>* ModuleManager::createBuffer(uint32_t _size, uint32_t _ch
     return new ThreadBuffer<uint32_t>(_size,_chunkSize,_id);
 }
 
-void ModuleManager::registerModuleType (const QString &type, ModuleFactory fac, AbstractModule::Type mtype) {
+void ModuleManager::registerModuleType (const QString &type, ModuleFactory fac) {
     if (registry.contains (type)) {
         std::cout << "Double registration of module type " << type.toStdString () << ". Ignoring!" << std::endl;
         return;
     }
-    ModuleTypeDesc desc = {fac, mtype};
+    ModuleTypeDesc desc = {fac};
     registry.insert (type, desc);
 }
 
@@ -211,28 +169,10 @@ BaseModule *ModuleManager::create (const QString &type, const QString &name) {
         BaseModule *m = (*registry.value (type).fac) (getNextId (), name);
         m->typename_ = type;
         items->push_back (m);
-        if(m->getModuleType() == AbstractModule::TypeDAq)
-        {
-            daqItems->push_back(dynamic_cast<BaseDAqModule*>(m));
-        }
-        else
-        {
-            if (interfaceItems->empty ()) // this is the first interface, make it the main interface
-                setMainInterface (static_cast<BaseInterface*> (m));
-            interfaceItems->push_back(static_cast<BaseInterface*>(m));
-        }
         emit moduleAdded (m);
         return m;
     } else
         return NULL;
-}
-
-AbstractModule::Type ModuleManager::getModuleTypeClass (const QString &type) const {
-    if (registry.contains (type)) {
-        return registry.value (type).type;
-    } else {
-        throw std::invalid_argument ("ModuleManager::getModuleTypeClass");
-    }
 }
 
 QStringList ModuleManager::getAvailableTypes () const {
