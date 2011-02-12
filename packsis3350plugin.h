@@ -36,7 +36,7 @@ public:
     /*! return the type of the plugin */
     virtual AbstractPlugin::Group getPluginGroup () { return AbstractPlugin::GroupPack; }
 
-    static BasePlugin *create (int id, const QString &name, const Attributes &attrs) {
+    static AbstractPlugin *create (int id, const QString &name, const Attributes &attrs) {
         Q_UNUSED (attrs);
         return new PackSis3350Plugin (id, name);
     }

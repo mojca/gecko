@@ -1,10 +1,11 @@
 #include "dummymodule.h"
 #include "modulemanager.h"
+#include "scopechannel.h"
 
-static ModuleRegistrar registrar ("dummy", DummyModule::create, AbstractModule::TypeDAq);
+static ModuleRegistrar registrar ("dummy", DummyModule::create);
 
 DummyModule::DummyModule(int _id, QString _name)
-        : BaseDAqModule (_id, _name)
+        : BaseModule (_id, _name)
 {
     // Test data
     data = new QByteArray("0123456789");

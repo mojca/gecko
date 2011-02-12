@@ -8,17 +8,16 @@
 #include <QMetaType>
 #include <QMessageBox>
 
-class ModuleManager;
 class ScopeChannel;
 class QSettings;
-class BaseDAqModule;
+class AbstractModule;
 
 class RunThread : public QThread
 {
     Q_OBJECT
 
 public:
-    RunThread(ModuleManager*);
+    RunThread();
     ~RunThread();
 
     void createLists();
@@ -49,14 +48,12 @@ private:
     bool interruptBased;
     bool pollBased;
 
-    ModuleManager* mmgr;
-
     uint nofSuccessfulEvents;
     uint nofPolls;
 
     QList<ScopeChannel*>* triggerList;
     QList<ScopeChannel*>* channelList;
-    QList<BaseDAqModule*>* moduleList;
+    QList<AbstractModule*>* moduleList;
 
     QMutex mutex;
 };

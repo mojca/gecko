@@ -1,13 +1,13 @@
 #ifndef CAEN1290MODULE_H
 #define CAEN1290MODULE_H
 
-#include "basedaqmodule.h"
+#include "basemodule.h"
 
 struct Caen1290Config;
 class Caen1290UI;
 class DemuxCaen1290Plugin;
 
-class Caen1290Module : public BaseDAqModule {
+class Caen1290Module : public BaseModule {
     Q_OBJECT
 private:
     class ModuleType {
@@ -39,16 +39,16 @@ private:
 public:
     ~Caen1290Module();
 
-    static BaseModule *create1290a (int id, const QString &name) {
+    static AbstractModule *create1290a (int id, const QString &name) {
         return new Caen1290Module (id, name, ModuleType::V1290A);
     }
-    static BaseModule *create1290n (int id, const QString &name) {
+    static AbstractModule *create1290n (int id, const QString &name) {
         return new Caen1290Module (id, name, ModuleType::V1290N);
     }
-    static BaseModule *create1190a (int id, const QString &name) {
+    static AbstractModule *create1190a (int id, const QString &name) {
         return new Caen1290Module (id, name, ModuleType::V1190A);
     }
-    static BaseModule *create1190b (int id, const QString &name) {
+    static AbstractModule *create1190b (int id, const QString &name) {
         return new Caen1290Module (id, name, ModuleType::V1190B);
     }
 

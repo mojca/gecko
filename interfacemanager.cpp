@@ -1,8 +1,12 @@
 #include "interfacemanager.h"
+#include "abstractinterface.h"
 
-InterfaceManager *InterfaceManager::inst = NULL;
+#include <QStringList>
+#include <iostream>
 
-struct ModuleTypeDesc {
+InterfaceManager *InterfaceManager::inst;
+
+struct InterfaceTypeDesc {
     InterfaceManager::InterfaceFactory fac;
 };
 
@@ -18,22 +22,22 @@ InterfaceManager &InterfaceManager::ref () {
 
 InterfaceManager::InterfaceManager ()
 {
-    items = new QList<AbstractInterface*>;
+    items_ = new QList<AbstractInterface*>;
 
     std::cout << "Instantiated InterfaceManager" << std::endl;
-    mainInterface = NULL;
+    mainInterface_ = NULL;
 }
 
 InterfaceManager::~InterfaceManager()
 {
     clear();
-    delete items;
+    delete items_;
 }
 
 void InterfaceManager::clear()
 {
-    while (!items->empty ())
-        remove (items->first ());
+    while (!items_->empty ())
+        remove (items_->first ());
 }
 
 bool InterfaceManager::remove(AbstractInterface* rmIf)
@@ -43,7 +47,7 @@ bool InterfaceManager::remove(AbstractInterface* rmIf)
     {
         if((*it) == rmIf)
         {
-            items->erase(it);
+            items_->erase(it);
             emit interfaceRemoved (rmIf);
             rmIf->deleteLater ();
             return true;
@@ -79,7 +83,7 @@ bool InterfaceManager::remove (const QString &name)
 AbstractInterface* InterfaceManager::get (int id)
 {
     QList<AbstractInterface*>::iterator it(items_->begin());
-    while(it != items->end())
+    while(it != items_->end())
     {
         AbstractInterface* ai = (*it);
         if(ai->getId() == id)
@@ -118,8 +122,8 @@ void InterfaceManager::applySettings(QSettings* newSettings)
 
 void InterfaceManager::saveSettings(QSettings* settings)
 {
-    QList<AbstractInterface*>::iterator it(items->begin());
-    while(it != items->end())
+    QList<AbstractInterface*>::iterator it(items_->begin());
+    while(it != items_->end())
     {
         AbstractInterface* ai = (*it);
         ai->saveSettings(settings);
@@ -133,16 +137,16 @@ void InterfaceManager::setInterfaceName (AbstractInterface *i, const QString &na
 
     QString oldname = i->getName ();
     i->setName (name);
-    emit interfaceNameChanged (m, oldname);
+    emit interfaceNameChanged (i, oldname);
 }
 
 void InterfaceManager::registerInterfaceType (const QString &type, InterfaceFactory fac) {
-    if (registry.contains (type)) {
+    if (registry_.contains (type)) {
         std::cout << "Double registration of module type " << type.toStdString () << ". Ignoring!" << std::endl;
         return;
     }
     InterfaceTypeDesc desc = {fac};
-    registry.insert (type, desc);
+    registry_.insert (type, desc);
 }
 
 
@@ -151,14 +155,14 @@ AbstractInterface *InterfaceManager::create (const QString &type, const QString 
         return NULL;
     }
 
-    if (registry.contains (type)) {
-        AbstractInterface *i = (*registry.value (type).fac) (getNextId (), name);
+    if (registry_.contains (type)) {
+        AbstractInterface *i = (*registry_.value (type).fac) (getNextId (), name);
         i->setTypeName (type);
         if (items_->empty ()) // this is the first interface, make it the main interface
             setMainInterface (i);
-        items_->push_back (m);
-        emit moduleAdded (m);
-        return m;
+        items_->push_back (i);
+        emit interfaceAdded (i);
+        return i;
     } else {
         return NULL;
     }

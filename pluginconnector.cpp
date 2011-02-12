@@ -1,10 +1,10 @@
 #include "pluginconnector.h"
-#include "baseplugin.h"
+#include "abstractplugin.h"
 
 #include <stdexcept>
 #include <iostream>
 
-PluginConnector::PluginConnector(BasePlugin* _plugin, ScopeCommon::ConnectorType _type, QString _name, DataType _dt)
+PluginConnector::PluginConnector(AbstractPlugin* _plugin, ScopeCommon::ConnectorType _type, QString _name, DataType _dt)
         : plugin(_plugin), type(_type), otherSide(NULL), name(_name), dtype (_dt)
 {
 
@@ -70,7 +70,7 @@ QString PluginConnector::getConnectedPluginName() const
     else return "";
 }
 
-BasePlugin* PluginConnector::getConnectedPlugin() const
+AbstractPlugin* PluginConnector::getConnectedPlugin() const
 {
     if(hasOtherSide()) return otherSide->getPlugin();
     else return NULL;

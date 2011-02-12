@@ -40,7 +40,7 @@ protected:
 
 public:
     DspPileupSeparatorPlugin(int _id, QString _name);
-    static BasePlugin *create (int id, const QString &name, const Attributes &attrs) {
+    static AbstractPlugin *create (int id, const QString &name, const Attributes &attrs) {
         Q_UNUSED (attrs);
         return new DspPileupSeparatorPlugin (id, name);
     }

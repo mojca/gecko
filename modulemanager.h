@@ -7,8 +7,8 @@
 #include <QList>
 #include <QMap>
 
-class BaseModule;
-class BaseDAqModule;
+#include <stdint.h>
+
 class AbstractInterface;
 struct ModuleTypeDesc;
 class AbstractModule;
@@ -16,7 +16,7 @@ class AbstractModule;
 template<typename T> class ThreadBuffer;
 
 
-/*! Manager singleton for interface and daq modules. */
+/*! Manager singleton for daq modules. */
 class ModuleManager : public QObject
 {
     Q_OBJECT
@@ -38,12 +38,12 @@ public:
     void clear();
 
     /*! \overload get(const QString&) */
-    BaseModule* get (int id);
+    AbstractModule* get (int id);
     /*! returns the module with the given name, or NULL if no such module exists. */
-    BaseModule* get (const QString &);
+    AbstractModule* get (const QString &);
 
     /*! assigns a new name to the given module. */
-    void setModuleName (BaseModule *m, const QString &name);
+    void setModuleName (AbstractModule *m, const QString &name);
 
     /*! Iterates through all registered modules and calls BaseModule::applySettings on each of them. */
     void applySettings(QSettings*);
@@ -70,14 +70,14 @@ public:
     AbstractModule *create (const QString &type, const QString &name);
 
     /*! removes the given module. */
-    bool remove (BaseModule *);
+    bool remove (AbstractModule *);
     bool remove (int id); /*!< \overload remove(BaseModule*) */
     bool remove (const QString &name); /*!< \overload remove(BaseModule*) */
 
 signals:
-    void moduleAdded (BaseModule *); /*!< signalled when a module is added. */
-    void moduleRemoved (BaseModule *); /*!< signalled when a module is removed. */
-    void moduleNameChanged (BaseModule *, QString); /*! signalled when a module's name is changed. */
+    void moduleAdded (AbstractModule *); /*!< signalled when a module is added. */
+    void moduleRemoved (AbstractModule *); /*!< signalled when a module is removed. */
+    void moduleNameChanged (AbstractModule *, QString); /*! signalled when a module's name is changed. */
 
 private:
     ModuleManager();

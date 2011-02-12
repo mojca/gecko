@@ -52,7 +52,6 @@ SOURCES += main.cpp \
     dspampspecplugin.cpp \
     caen792module.cpp \
     caen792ui.cpp \
-    basedaqmodule.cpp \
     dspqdcspecplugin.cpp \
     fanoutplugin.cpp \
     dspcalfilterplugin.cpp \
@@ -119,7 +118,6 @@ HEADERS += sis3350.h \
     caen_v792.h \
     caen792module.h \
     caen792ui.h \
-    basedaqmodule.h \
     dspqdcspecplugin.h \
     fanoutplugin.h \
     dspcalfilterplugin.h \

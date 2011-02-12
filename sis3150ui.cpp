@@ -245,6 +245,6 @@ void Sis3150UI::dataModeChanged(int newIndex)
     QVariant mode = dataModeSpinner->itemData(newIndex);
     if (mode.isValid()) {
         datamode = mode.value<DataMode>();
-        outputText(tr("Changed data mode to ") + (addrmode == D32 ? "D32" : "D16") + "\n");
+        outputText(tr("Changed data mode to ") + (datamode == D32 ? "D32" : "D16") + "\n");
     }
 }

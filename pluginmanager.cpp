@@ -1,6 +1,6 @@
 #include "pluginmanager.h"
 
-#include "basedaqmodule.h"
+#include "abstractmodule.h"
 
 struct PluginTypeDesc {
     PluginManager::PluginFactory fac;
@@ -27,7 +27,7 @@ PluginManager &PluginManager::ref () {
 PluginManager::PluginManager()
 {
     mmgr = ModuleManager::ptr ();
-    items = new QList<BasePlugin*>;
+    items = new QList<AbstractPlugin*>;
     roots = new QList<PluginConnector*>;
     inBuffers = new QList<ThreadBuffer<uint32_t>*>;
 
@@ -50,9 +50,9 @@ void PluginManager::clear()
         remove (items->first ());
 }
 
-bool PluginManager::remove (BasePlugin* rmItem)
+bool PluginManager::remove (AbstractPlugin* rmItem)
 {
-    QList<BasePlugin*>::iterator it(items->begin());
+    QList<AbstractPlugin*>::iterator it(items->begin());
     while(it != items->end())
     {
         if((*it) == rmItem)
@@ -69,7 +69,7 @@ bool PluginManager::remove (BasePlugin* rmItem)
 
 bool PluginManager::remove (int id)
 {
-    BasePlugin* am;
+    AbstractPlugin* am;
     if((am = get (id)) != NULL)
     {
         remove(am);
@@ -80,7 +80,7 @@ bool PluginManager::remove (int id)
 
 bool PluginManager::remove (const QString &name)
 {
-    BasePlugin* am;
+    AbstractPlugin* am;
     if((am = get (name)) != NULL)
     {
         remove(am);
@@ -90,12 +90,12 @@ bool PluginManager::remove (const QString &name)
 }
 
 
-BasePlugin* PluginManager::get (int id)
+AbstractPlugin* PluginManager::get (int id)
 {
-    QList<BasePlugin*>::iterator it(items->begin());
+    QList<AbstractPlugin*>::iterator it(items->begin());
     while(it != items->end())
     {
-        BasePlugin* bm = (*it);
+        AbstractPlugin* bm = (*it);
         if(bm->getId() == id)
         {
             return *it;
@@ -106,9 +106,9 @@ BasePlugin* PluginManager::get (int id)
 }
 
 
-BasePlugin* PluginManager::get (const QString &_name)
+AbstractPlugin* PluginManager::get (const QString &_name)
 {
-    QList<BasePlugin*>::iterator it(items->begin());
+    QList<AbstractPlugin*>::iterator it(items->begin());
     while(it != items->end())
     {
         if((*it)->getName() == _name)
@@ -120,7 +120,7 @@ BasePlugin* PluginManager::get (const QString &_name)
     return NULL;
 }
 
-void PluginManager::registerPluginType (const QString &type, PluginFactory fac, const AbstractPlugin::Group group, const BasePlugin::AttributeMap & attrs) {
+void PluginManager::registerPluginType (const QString &type, PluginFactory fac, const AbstractPlugin::Group group, const AbstractPlugin::AttributeMap & attrs) {
     if (registry.contains (type)) {
         std::cout << "Double registration of plugin type " << type.toStdString () << "! Ignoring." << std::endl;
         return;
@@ -130,7 +130,7 @@ void PluginManager::registerPluginType (const QString &type, PluginFactory fac, 
     registry.insert (type, desc);
 }
 
-void PluginManager::registerPluginType (const QString &type, const AbstractPlugin::Group group, const BasePlugin::AttributeMap & attrs) {
+void PluginManager::registerPluginType (const QString &type, const AbstractPlugin::Group group, const AbstractPlugin::AttributeMap & attrs) {
     if (registry.contains (type)) {
         std::cout << "Double registration of plugin type " << type.toStdString () << "! Ignoring." << std::endl;
         return;
@@ -140,13 +140,13 @@ void PluginManager::registerPluginType (const QString &type, const AbstractPlugi
     registry.insert (type, desc);
 }
 
-BasePlugin *PluginManager::create(const QString &type, const QString &name, const AbstractPlugin::Attributes &attrs) {
+AbstractPlugin *PluginManager::create(const QString &type, const QString &name, const AbstractPlugin::Attributes &attrs) {
     if (get (name)) // name already exists
         return NULL;
 
     if (registry.contains (type)) {
-        BasePlugin *p = (*registry.value (type).fac) (getNextId (), name, attrs);
-        p->typename_ = type;
+        AbstractPlugin *p = (*registry.value (type).fac) (getNextId (), name, attrs);
+        p->setTypeName (type);
         items->push_back (p);
         emit pluginAdded (p);
         return p;
@@ -190,12 +190,12 @@ BasePlugin::AttributeMap PluginManager::getAttributeMap (const QString &type) {
 int PluginManager::addBuffer(ThreadBuffer<uint32_t>* _inBuffer)
 {
     int threadId = _inBuffer->getModuleId();
-    BasePlugin* newRootPlugin = mmgr->getDAq (threadId)->getOutputPlugin();
+    AbstractPlugin* newRootPlugin = mmgr->get (threadId)->getOutputPlugin();
 
     std::cout << "Adding buffer from module " << threadId << std::endl;
     std::cout << "Adding plugin " << newRootPlugin->getName().toStdString() << " as root" << std::endl;
 
-    roots->append(newRootPlugin->outputs->first());
+    roots->append(newRootPlugin->getOutputs()->first());
     inBuffers->append(_inBuffer);
 
     return roots->size();
@@ -232,10 +232,10 @@ void PluginManager::createPluginGroups() {
 
 void PluginManager::applySettings(QSettings* newSettings)
 {
-    QList<BasePlugin*>::iterator it(items->begin());
+    QList<AbstractPlugin*>::iterator it(items->begin());
     while(it != items->end())
     {
-        BasePlugin* bm = (*it);
+        AbstractPlugin* bm = (*it);
         bm->applySettings(newSettings);
         it++;
     }
@@ -243,20 +243,20 @@ void PluginManager::applySettings(QSettings* newSettings)
 
 void PluginManager::saveSettings(QSettings* newSettings)
 {
-    QList<BasePlugin*>::iterator it(items->begin());
+    QList<AbstractPlugin*>::iterator it(items->begin());
     while(it != items->end())
     {
-        BasePlugin* bm = (*it);
+        AbstractPlugin* bm = (*it);
         bm->saveSettings(newSettings);
         it++;
     }
 }
 
-void PluginManager::setPluginName (BasePlugin *p, const QString &name) {
-    if (p->name == name || get (name)) // either no change or name already exists
+void PluginManager::setPluginName (AbstractPlugin *p, const QString &name) {
+    if (p->getName () == name || get (name)) // either no change or name already exists
         return;
 
-    QString oldname = p->name;
-    p->name = name;
+    QString oldname = p->getName ();
+    p->setName (name);
     emit pluginNameChanged (p, oldname);
 }

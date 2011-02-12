@@ -31,7 +31,7 @@ protected:
 
 public:
     FanOutPlugin(int _id, QString _name, const Attributes &_attrs);
-    static BasePlugin *create (int _id, const QString &_name, const Attributes &_attrs) {
+    static AbstractPlugin *create (int _id, const QString &_name, const Attributes &_attrs) {
         return new FanOutPlugin (_id, _name, _attrs);
     }
     ~FanOutPlugin();

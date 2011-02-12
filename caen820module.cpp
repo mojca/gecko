@@ -5,17 +5,18 @@
 #include "confmap.h"
 #include "modulemanager.h"
 #include "runmanager.h"
+#include "scopechannel.h"
 
 #include <vector>
 
-static ModuleRegistrar reg ("caen820", &Caen820Module::create, AbstractModule::TypeDAq);
+static ModuleRegistrar reg ("caen820", &Caen820Module::create);
 
-BaseModule *Caen820Module::create (int id, const QString &name) {
+AbstractModule *Caen820Module::create (int id, const QString &name) {
     return new Caen820Module (id, name);
 }
 
 Caen820Module::Caen820Module (int id, const QString &name)
-: BaseDAqModule (id, name)
+: BaseModule (id, name)
 {
     setUI (new Caen820UI (this));
     setChannels ();
@@ -36,6 +37,7 @@ void Caen820Module::createOutputPlugin () {
 int Caen820Module::configure () {
     int err = 0;
     const uint32_t &baddr = conf_.baddr;
+    AbstractInterface *iface = getInterface ();
 
     if (!iface)
         return -1;
@@ -66,6 +68,7 @@ int Caen820Module::configure () {
 bool Caen820Module::dataReady () {
     int err;
     uint16_t stat;
+    AbstractInterface *iface = getInterface ();
 
     if (!iface)
         return false;
@@ -80,6 +83,7 @@ bool Caen820Module::dataReady () {
 
 int Caen820Module::reset () {
     int err = 0;
+    AbstractInterface *iface = getInterface ();
 
     if (!iface)
         return -1;
@@ -92,6 +96,7 @@ int Caen820Module::reset () {
 
 int Caen820Module::dataClear () {
     int err = 0;
+    AbstractInterface *iface = getInterface ();
 
     if (!iface)
         return -1;
@@ -105,6 +110,7 @@ int Caen820Module::acquire () {
     int err = 0;
     unsigned evlen = getNofActiveChannels ();
     uint32_t buffer [33];
+    AbstractInterface *iface = getInterface ();
 
     if (!iface)
         return -1;

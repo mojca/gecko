@@ -1,9 +1,9 @@
 #include "sis3100module.h"
-#include "modulemanager.h"
+#include "interfacemanager.h"
 
 #include <iostream>
 
-static ModuleRegistrar registrar ("sis3100", Sis3100Module::create, AbstractModule::TypeInterface);
+static InterfaceRegistrar registrar ("sis3100", Sis3100Module::create);
 
 Sis3100Module::Sis3100Module(int _id, QString _name)
     : BaseInterface(_id, _name)

@@ -6,7 +6,7 @@
 #include <QMetaType>
 #include <vector>
 
-class BasePlugin;
+class AbstractPlugin;
 
 namespace ScopeCommon
 {
@@ -21,7 +21,7 @@ public:
     enum DataType { Uint32, Double, VectorUint32, VectorDouble };
 
 public:
-    PluginConnector(BasePlugin* _plugin, ScopeCommon::ConnectorType _type, QString _name, DataType _dt);
+    PluginConnector(AbstractPlugin* _plugin, ScopeCommon::ConnectorType _type, QString _name, DataType _dt);
     virtual ~PluginConnector();
 
     /*! Returns the type of data the connector sends or accepts. */
@@ -29,13 +29,13 @@ public:
     /*! Returns whether this connector is an input or an output. */
     ScopeCommon::ConnectorType getType() const { return type; }
     /*! Returns the plugin which this connector belongs to. */
-    BasePlugin* getPlugin() const { return plugin; }
+    AbstractPlugin* getPlugin() const { return plugin; }
     /*! Returns the connector name. */
     QString getName() const { return name; }
     /*! Returns the name of the plugin which this connector is connected to. */
     QString getConnectedPluginName() const;
     /*! Returns the plugin which this connector is connected to. */
-    BasePlugin* getConnectedPlugin() const;
+    AbstractPlugin* getConnectedPlugin() const;
     /*! Returns the name of the connector which this connector is connected to. */
     QString getOthersideName() const;
     /*! Returns whether the connector is connected or disconnected. */
@@ -76,7 +76,7 @@ protected:
     PluginConnector* getOtherSide() { return otherSide; }
 
 private:
-    BasePlugin* plugin;
+    AbstractPlugin* plugin;
     ScopeCommon::ConnectorType type;
     PluginConnector* otherSide;
     QString name;

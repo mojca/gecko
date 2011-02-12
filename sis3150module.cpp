@@ -1,8 +1,8 @@
 #include <iostream>
 #include "sis3150module.h"
-#include "modulemanager.h"
+#include "interfacemanager.h"
 
-static ModuleRegistrar registrar ("sis3150", Sis3150Module::create, AbstractModule::TypeInterface);
+static InterfaceRegistrar registrar ("sis3150", Sis3150Module::create);
 
 Sis3150Module::Sis3150Module(int _id, QString _name)
     : BaseInterface(_id, _name)
@@ -68,7 +68,7 @@ int Sis3150Module::open()
     return 0;
 }
 
-bool Sis3150Module::isOpen()
+bool Sis3150Module::isOpen() const
 {
     return deviceOpen;
 }

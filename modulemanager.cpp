@@ -1,13 +1,14 @@
 #include "modulemanager.h"
 #include "abstractmodule.h"
+#include "threadbuffer.h"
 
 #include <stdexcept>
+#include <QStringList>
 
 ModuleManager *ModuleManager::inst = NULL;
 
 struct ModuleTypeDesc {
     ModuleManager::ModuleFactory fac;
-    AbstractModule::Type type;
 };
 
 ModuleManager *ModuleManager::ptr () {
@@ -25,7 +26,6 @@ ModuleManager::ModuleManager()
     items = new list_type;
 
     std::cout << "Instantiated ModuleManager" << std::endl;
-    mainInterface = NULL;
 }
 
 ModuleManager::~ModuleManager()
@@ -45,7 +45,7 @@ void ModuleManager::identify()
     std::cout << "ModuleManager" << std::endl;
 }
 
-bool ModuleManager::remove(BaseModule* rmModule)
+bool ModuleManager::remove(AbstractModule* rmModule)
 {
     list_type::iterator it(items->begin());
     while(it != items->end())
@@ -90,7 +90,7 @@ AbstractModule* ModuleManager::get (int id)
     list_type::iterator it(items->begin());
     while(it != items->end())
     {
-        BaseModule* bm = (*it);
+        AbstractModule* bm = (*it);
         if(bm->getId() == id)
         {
             return *it;
@@ -119,7 +119,7 @@ void ModuleManager::applySettings(QSettings* newSettings)
     list_type::iterator it(items->begin());
     while(it != items->end())
     {
-        BaseModule* bm = (*it);
+        AbstractModule* bm = (*it);
         bm->applySettings(newSettings);
         it++;
     }
@@ -130,18 +130,18 @@ void ModuleManager::saveSettings(QSettings* settings)
     list_type::iterator it(items->begin());
     while(it != items->end())
     {
-        BaseModule* bm = (*it);
+        AbstractModule* bm = (*it);
         bm->saveSettings(settings);
         it++;
     }
 }
 
-void ModuleManager::setModuleName (BaseModule *m, const QString &name) {
-    if (m->name == name || get (name)) // no change or name already exists
+void ModuleManager::setModuleName (AbstractModule *m, const QString &name) {
+    if (m->getName () == name || get (name)) // no change or name already exists
         return;
 
-    QString oldname = m->name;
-    m->name = name;
+    QString oldname = m->getName ();
+    m->setName (name);
     emit moduleNameChanged (m, oldname);
 }
 
@@ -160,14 +160,14 @@ void ModuleManager::registerModuleType (const QString &type, ModuleFactory fac) 
 }
 
 
-BaseModule *ModuleManager::create (const QString &type, const QString &name) {
+AbstractModule *ModuleManager::create (const QString &type, const QString &name) {
     if (get (name)) { // name already exists
         return NULL;
     }
 
     if (registry.contains (type)) {
-        BaseModule *m = (*registry.value (type).fac) (getNextId (), name);
-        m->typename_ = type;
+        AbstractModule *m = (*registry.value (type).fac) (getNextId (), name);
+        m->setTypeName (type);
         items->push_back (m);
         emit moduleAdded (m);
         return m;

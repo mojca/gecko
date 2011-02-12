@@ -10,8 +10,7 @@
 #include <QSignalMapper>
 
 Caen820UI::Caen820UI(Caen820Module *mod)
-: BaseUI (mod)
-, module_ (mod)
+: module_ (mod)
 {
     createUI ();
     applySettings ();

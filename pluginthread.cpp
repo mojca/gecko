@@ -1,7 +1,9 @@
-#include "pluginthread.h"
 #include <QtConcurrentRun>
 #include <QFutureSynchronizer>
-#include "basedaqmodule.h"
+
+#include "pluginthread.h"
+#include "abstractmodule.h"
+#include "scopechannel.h"
 
 PluginThread::PluginThread(PluginManager* _pmgr, ModuleManager* _mmgr)
         : pmgr(_pmgr), mmgr(_mmgr), nofAcqsWaiting (0)
@@ -19,11 +21,11 @@ PluginThread::PluginThread(PluginManager* _pmgr, ModuleManager* _mmgr)
 void PluginThread::addBuffers()
 {
     std::cout << "PluginThread adding buffers." << std::endl;
-    foreach(BaseDAqModule* module, (*mmgr->listDaqModules()))
+    foreach(AbstractModule* module, (*mmgr->list ()))
     {
         //pmgr->addBuffer(module->getBuffer());
 
-        BasePlugin* p = module->getOutputPlugin();
+        AbstractPlugin* p = module->getOutputPlugin();
         if(p != NULL)
         {
             int i = 0;
@@ -51,17 +53,17 @@ void PluginThread::createProcessList()
 {
     int level = 0;
     processList.clear();
-    foreach(BaseDAqModule* module, (*mmgr->listDaqModules()))
+    foreach(AbstractModule* module, (*mmgr->list ()))
     {
         processList.insert(module->getOutputPlugin(),level);
     }
     addChildrenToProcessList();
 
     std::cout << "ProcessList: " << std::endl;
-    QMap<BasePlugin*, int>::const_iterator i = processList.constBegin();
+    QMap<AbstractPlugin*, int>::const_iterator i = processList.constBegin();
     while (i != processList.constEnd())
     {
-        BasePlugin* p = i.key();
+        AbstractPlugin* p = i.key();
         std::cout << p->getName().toStdString() << ": " << i.value() << std::endl;
         ++i;
     }
@@ -73,7 +75,7 @@ void PluginThread::addChildrenToProcessList()
     //std::cout << "pmgr->list()->size(): " << pmgr->list()->size() << std::endl;
     for(int level = 1; level <= pmgr->list()->size(); level++)
     {
-        QMap<BasePlugin*, int>::const_iterator i = processList.constBegin();
+        QMap<AbstractPlugin*, int>::const_iterator i = processList.constBegin();
         while (i != processList.constEnd())
         {
             if(i.value() == level-1)
@@ -81,7 +83,7 @@ void PluginThread::addChildrenToProcessList()
                 maxDepth = level;
                 foreach(PluginConnector* out, (*i.key()->getOutputs()))
                 {
-                    BasePlugin* p = out->getConnectedPlugin();
+                    AbstractPlugin* p = out->getConnectedPlugin();
                     if(p != NULL)
                     {
                         processList.insert(p,level);
@@ -190,7 +192,7 @@ void PluginThread::process()
         else
         {
             // throw away excess data. FIXME: Is this always the right thing to do? (multi-event mode?)
-            foreach (BaseDAqModule *m, (*mmgr->listDaqModules())) {
+            foreach (AbstractModule *m, (*mmgr->list ())) {
                 foreach (PluginConnector *pc, (*m->getOutputPlugin()->getOutputs())) {
                     PluginConnectorThreadBuffered *bpc = dynamic_cast<PluginConnectorThreadBuffered*> (pc);
                     while (bpc->dataAvailable()) {
@@ -219,14 +221,14 @@ void PluginThread::execProcessList()
         if(false && processList.keys(level).size() > 1)
         {
             QFutureSynchronizer<void> fsync;
-            foreach(BasePlugin* p, processList.keys(level))
+            foreach(AbstractPlugin* p, processList.keys(level))
             {
-                fsync.addFuture(QtConcurrent::run(p, &BasePlugin::process));
+                fsync.addFuture(QtConcurrent::run(p, &AbstractPlugin::process));
             }
         }
         else
         {
-            foreach(BasePlugin* p, processList.keys(level))
+            foreach(AbstractPlugin* p, processList.keys(level))
             {
                 p->process();
             }
@@ -236,11 +238,11 @@ void PluginThread::execProcessList()
     }
 
     // Use all unconnected channels
-    foreach(BaseDAqModule* module, (*mmgr->listDaqModules()))
+    foreach(AbstractModule* module, (*mmgr->list ()))
     {
         foreach(PluginConnector* out, (*module->getOutputPlugin()->getOutputs()))
         {
-            BasePlugin* p = out->getConnectedPlugin();
+            AbstractPlugin* p = out->getConnectedPlugin();
             if(p == NULL)
             {
                 //std::cout << "Trying to delete data from " << out->getName() << std::endl;

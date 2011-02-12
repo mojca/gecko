@@ -12,7 +12,7 @@
 #include "threadbuffer.h"
 #include "modulemanager.h"
 
-class BasePlugin;
+class AbstractPlugin;
 
 class DummyPlugin;
 class PluginConnector;
@@ -33,21 +33,21 @@ public:
     /*! Typedef for Plugin factory methods.
      *  These methods are used to create instances of registered plugin types
      */
-    typedef BasePlugin *(*PluginFactory) (int id, const QString &name, const AbstractPlugin::Attributes &attrs);
+    typedef AbstractPlugin *(*PluginFactory) (int id, const QString &name, const AbstractPlugin::Attributes &attrs);
     ~PluginManager();
 
     static PluginManager *ptr (); /*!< return a pointer to the singleton instance. */
     static PluginManager &ref (); /*!< return a reference to the singleton instance. */
 
     /*! return a list of all plugins. */
-    const QList<BasePlugin*>* list() { return items; }
+    const QList<AbstractPlugin*>* list() { return items; }
 
     /*! delete all plugins. */
     void clear();
 
     /*! get the plugin with the specified id. */
-    BasePlugin* get (int id);
-    BasePlugin* get (const QString &name); /*!< \overload */
+    AbstractPlugin* get (int id);
+    AbstractPlugin* get (const QString &name); /*!< \overload */
 
     /*! get the output connectors from all daq modules.
      *  \deprecated
@@ -55,7 +55,7 @@ public:
     QList<PluginConnector*>* getRootConnectors() { return roots; }
 
     /*! change the name of the given plugin */
-    void setPluginName (BasePlugin *p, const QString &name);
+    void setPluginName (AbstractPlugin *p, const QString &name);
 
     /*! make all plugins load their settings from the specified QSettings object */
     void applySettings(QSettings* s);
@@ -74,15 +74,15 @@ public:
      *
      *  \sa PluginRegistrar
      */
-    void registerPluginType (const QString &type, PluginFactory fac, const AbstractPlugin::Group, const BasePlugin::AttributeMap & attrs);
+    void registerPluginType (const QString &type, PluginFactory fac, const AbstractPlugin::Group, const AbstractPlugin::AttributeMap & attrs);
 
-    void registerPluginType (const QString &type, const AbstractPlugin::Group, const BasePlugin::AttributeMap & attrs);
+    void registerPluginType (const QString &type, const AbstractPlugin::Group, const AbstractPlugin::AttributeMap & attrs);
 
     /*! create a plugin of the specified type with the given attributes. */
-    BasePlugin *create (const QString &type, const QString &name, const AbstractPlugin::Attributes &attrs = AbstractPlugin::Attributes ());
+    AbstractPlugin *create (const QString &type, const QString &name, const AbstractPlugin::Attributes &attrs = AbstractPlugin::Attributes ());
 
     /*! list the attributes that are meaningful for the given plugin type. */
-    BasePlugin::AttributeMap getAttributeMap (const QString &type);
+    AbstractPlugin::AttributeMap getAttributeMap (const QString &type);
 
     /*! list the available plugin types. */
     QStringList getAvailableTypes () const;
@@ -107,16 +107,16 @@ public:
     }
 
     /*! delete the given plugin. All references to this plugin become invalid. */
-    bool remove (BasePlugin*);
+    bool remove (AbstractPlugin*);
     bool remove (const QString &name); /*!< \overload */
     bool remove (int id); /*!< \overload */
 
     friend class PluginThread;
 
 signals:
-    void pluginAdded (BasePlugin *); /*!< signaled when a plugin has been added */
-    void pluginRemoved (BasePlugin *);  /*!< signaled when a plugin has been removed */
-    void pluginNameChanged (BasePlugin *, QString);  /*!< signaled when a plugin name has been changed */
+    void pluginAdded (AbstractPlugin *); /*!< signaled when a plugin has been added */
+    void pluginRemoved (AbstractPlugin *);  /*!< signaled when a plugin has been removed */
+    void pluginNameChanged (AbstractPlugin *, QString);  /*!< signaled when a plugin name has been changed */
 
 private:
     PluginManager();
@@ -134,7 +134,7 @@ private:
 
     static PluginManager *inst;
 
-    QList<BasePlugin*>* items;
+    QList<AbstractPlugin*>* items;
     QList<PluginConnector*>* roots;
     QList<ThreadBuffer<uint32_t>*>* inBuffers;
     QMap<QString, PluginTypeDesc> registry;
@@ -156,11 +156,11 @@ private: //no copying
  */
 class PluginRegistrar {
 public:
-    PluginRegistrar (const QString &type, PluginManager::PluginFactory fac, const AbstractPlugin::Group group = AbstractPlugin::GroupUnspecified, const BasePlugin::AttributeMap & attrs = BasePlugin::AttributeMap ()) {
+    PluginRegistrar (const QString &type, PluginManager::PluginFactory fac, const AbstractPlugin::Group group = AbstractPlugin::GroupUnspecified, const AbstractPlugin::AttributeMap & attrs = AbstractPlugin::AttributeMap ()) {
         PluginManager::ref ().registerPluginType (type, fac, group, attrs);
     }
 
-    PluginRegistrar (const QString &type, const AbstractPlugin::Group group = AbstractPlugin::GroupUnspecified, const BasePlugin::AttributeMap & attrs = BasePlugin::AttributeMap ()) {
+    PluginRegistrar (const QString &type, const AbstractPlugin::Group group = AbstractPlugin::GroupUnspecified, const BasePlugin::AttributeMap & attrs = AbstractPlugin::AttributeMap ()) {
         PluginManager::ref ().registerPluginType (type, group, attrs);
     } /*!< \overload */
 

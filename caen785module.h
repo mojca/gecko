@@ -4,7 +4,7 @@
 #include <QTime>
 #include <cstdio>
 
-#include "basedaqmodule.h"
+#include "basemodule.h"
 #include "abstractinterface.h"
 #include "baseplugin.h"
 #include "caen_v785.h"
@@ -58,7 +58,7 @@ public:
     }
 };
 
-class Caen785Module : public virtual BaseDAqModule
+class Caen785Module : public BaseModule
 {
     Q_OBJECT
 
@@ -112,7 +112,7 @@ public:
     ThreadBuffer<uint32_t> *getBuffer () { return NULL; }
 
     // Factory method
-    static BaseModule *create (int id, const QString &name) {
+    static AbstractModule *create (int id, const QString &name) {
         return new Caen785Module (id, name);
     }
 

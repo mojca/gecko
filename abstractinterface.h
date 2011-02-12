@@ -6,11 +6,14 @@
 #include <QObject>
 #include <QString>
 
+class BaseUI;
+class QSettings;
+
 /*! Abstract base class for all VME interfaces.
  * To implement a new interface please derive from BaseInterface which already handles ids names and types. */
 class AbstractInterface : public QObject {
 public:
-    virtual ~AbstractInterface () = 0;
+    virtual ~AbstractInterface () {}
 
     /*! returns the interface name. */
     virtual const QString& getName () const = 0;
@@ -18,8 +21,26 @@ public:
     /*! returns the interface type. */
     virtual QString getTypeName () const = 0;
 
+    /*! returns the UI for the interface. */
+    virtual BaseUI* getUI () const = 0;
+
     /*! returns the interface id */
     virtual int getId () const = 0;
+
+    /*! Save the interface settings to the given QSettings object.
+     *  The implementation should read the subsection named like the interface instance
+     *  and save all settings inside to a local data structure, because lifetime of the settings object
+     *  is not guaranteed to be longer than the lifetime of this object.
+     *  \sa #applySettings, InterfaceManager::saveSettings
+     */
+    virtual void saveSettings(QSettings*) = 0;
+
+    /*! Load the interface settings from the given QSettings object.
+     *  The implementation should create a new subsection named like the interface instance
+     *  and save all settings inside this section.
+     *  \sa #saveSettings, InterfaceManager::applySettings
+     */
+    virtual void applySettings(QSettings*) = 0;
 
     /*! check if the interface is open. */
     virtual bool isOpen() const = 0;

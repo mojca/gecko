@@ -21,8 +21,7 @@ enum ResMode { Rm800 = 0, Rm200 = 1, Rm100 = 2, Rm25 = 3 };
 enum DeadTime { Dt5 = 0, Dt10 = 1, Dt30 = 2, Dt100 = 3 };
 
 Caen1290UI::Caen1290UI (Caen1290Module *mod)
-: BaseUI (mod)
-, module_ (mod)
+: module_ (mod)
 {
     createUI ();
     applySettings ();

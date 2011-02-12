@@ -6,6 +6,7 @@
 
 #include "abstractmodule.h"
 #include "abstractinterface.h"
+#include "abstractplugin.h"
 
 class BaseUI;
 class ScopeChannel;
@@ -22,7 +23,8 @@ class BaseModule : public AbstractModule
 
 public:
     BaseModule(int _id, QString _name = "Base Module")
-    : id (_id)
+    : iface (NULL)
+    , id (_id)
     , name (_name)
     , ui (NULL)
     {
@@ -51,6 +53,9 @@ public:
 
     ThreadBuffer<uint32_t>* getBuffer () { return NULL; }
 
+    AbstractPlugin* getOutputPlugin () const { return output; }
+    PluginConnector *getRootConnector () const {return output->getOutputs ()->first (); }
+
 public slots:
     void prepareForNextAcquisition () {}
 
@@ -58,6 +63,10 @@ protected:
     void setUI (BaseUI *_ui) { ui = _ui; }
     void setName (QString newName) { name = newName; }
     void setTypeName (QString newTypeName) { typename_ = newTypeName; }
+
+protected:
+    // TODO: DO this The Right Way (tm)
+    AbstractPlugin *output;
 
 private:
     AbstractInterface *iface;

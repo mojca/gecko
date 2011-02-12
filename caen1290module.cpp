@@ -11,10 +11,10 @@
 #include <vector>
 #include <cstdio>
 
-static ModuleRegistrar reg1 ("caen1290a", Caen1290Module::create1290a, AbstractModule::TypeDAq);
-static ModuleRegistrar reg2 ("caen1290n", Caen1290Module::create1290n, AbstractModule::TypeDAq);
-static ModuleRegistrar reg3 ("caen1190a", Caen1290Module::create1190a, AbstractModule::TypeDAq);
-static ModuleRegistrar reg4 ("caen1190b", Caen1290Module::create1190b, AbstractModule::TypeDAq);
+static ModuleRegistrar reg1 ("caen1290a", Caen1290Module::create1290a);
+static ModuleRegistrar reg2 ("caen1290n", Caen1290Module::create1290n);
+static ModuleRegistrar reg3 ("caen1190a", Caen1290Module::create1190a);
+static ModuleRegistrar reg4 ("caen1190b", Caen1290Module::create1190b);
 
 // initialise "enum" constants
 const Caen1290Module::ModuleType Caen1290Module::ModuleType::V1290A (V1290A_v, 0x00000005000A0000LL, 32, 4);
@@ -23,7 +23,7 @@ const Caen1290Module::ModuleType Caen1290Module::ModuleType::V1190A (V1190A_v, 0
 const Caen1290Module::ModuleType Caen1290Module::ModuleType::V1190B (V1190B_v, 0x0000000400A60001LL, 64, 2);
 
 Caen1290Module::Caen1290Module(int id, QString name, ModuleType type)
-: BaseDAqModule (id, name)
+: BaseModule (id, name)
 , conf_ (new Caen1290Config)
 , type_ (type)
 {
@@ -63,6 +63,7 @@ void Caen1290Module::prepareForNextAcquisition () {
 }
 
 int Caen1290Module::reset () {
+    AbstractInterface *iface = getInterface ();
     int ret = 0;
     if (!iface)
         return -1;
@@ -73,6 +74,7 @@ int Caen1290Module::reset () {
 }
 
 int Caen1290Module::softClear () {
+    AbstractInterface *iface = getInterface ();
     int ret = 0;
     if (!iface)
         return -1;
@@ -83,6 +85,7 @@ int Caen1290Module::softClear () {
 }
 
 bool Caen1290Module::dataReady () {
+    AbstractInterface *iface = getInterface ();
     int ret;
     uint16_t status;
 
@@ -95,6 +98,7 @@ bool Caen1290Module::dataReady () {
 }
 
 int Caen1290Module::acquire () {
+    AbstractInterface *iface = getInterface ();
     std::vector<uint32_t> data;
     const uint32_t len = 0xFFC;
     uint32_t buf [len];
@@ -133,6 +137,7 @@ int Caen1290Module::acquire () {
 }
 
 int Caen1290Module::configure () {
+    AbstractInterface *iface = getInterface ();
     uint32_t baddr = conf_->base_addr;
     int ret;
     int i;
@@ -236,6 +241,7 @@ int Caen1290Module::configure () {
 }
 
 int Caen1290Module::writeToMC (uint16_t data) {
+    AbstractInterface *iface = getInterface ();
     int ret;
     uint16_t stat;
     while (!(ret = iface->readA32D16 (conf_->base_addr + CAEN1290_MICRO_HS, &stat))) {
@@ -248,6 +254,7 @@ int Caen1290Module::writeToMC (uint16_t data) {
 }
 
 bool Caen1290Module::isCorrectModule () {
+    AbstractInterface *iface = getInterface ();
     int ret;
     const uint64_t CaenOui = 0x0000004000E6LL;
     uint16_t oui0, oui1, oui2;

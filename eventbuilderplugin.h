@@ -34,7 +34,7 @@ protected:
 public:
     EventBuilderPlugin(int _id, QString _name, const Attributes &_attrs);
 
-    static BasePlugin *create (int id, const QString &name, const Attributes &attrs) {
+    static AbstractPlugin *create (int id, const QString &name, const Attributes &attrs) {
         return new EventBuilderPlugin (id, name, attrs);
     }
 

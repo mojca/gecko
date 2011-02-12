@@ -1,5 +1,6 @@
 #include "baseplugin.h"
 #include "pluginmanager.h"
+#include "abstractmodule.h"
 
 #include <stdint.h>
 #include <vector>
@@ -15,7 +16,7 @@
 #include <QMenu>
 
 BasePlugin::BasePlugin(int _id, QString _name, QWidget* _parent)
-        : QWidget(_parent), name(_name), id(_id)
+        : AbstractPlugin(_parent), name(_name), id(_id)
 {
     inputs  = new QList<PluginConnector*>;
     outputs = new QList<PluginConnector*>;
@@ -179,7 +180,7 @@ void BasePlugin::itemDblClicked(QListWidgetItem *item) {
 }
 
 void BasePlugin::displayInputConnectionPopup (const QPoint &p) {
-    const QList<BasePlugin*>* plugins = PluginManager::ref().list ();
+    const QList<AbstractPlugin*>* plugins = PluginManager::ref().list ();
 
     if (inputList->itemAt (p))
         inputList->setCurrentItem (inputList->itemAt (p));
@@ -190,14 +191,14 @@ void BasePlugin::displayInputConnectionPopup (const QPoint &p) {
 
     QMenu popup;
     popup.addAction (tr("<none>"))->setData (QVariant::fromValue (static_cast<PluginConnector*> (NULL)));
-    foreach (BaseDAqModule *m, (*ModuleManager::ref().listDaqModules())) {
-        createPluginSubmenu (&popup, thisSide->getDataType(), m->getOutputPlugin(), &BasePlugin::getOutputs);
+    foreach (AbstractModule *m, (*ModuleManager::ref().list ())) {
+        createPluginSubmenu (&popup, thisSide->getDataType(), m->getOutputPlugin(), &AbstractPlugin::getOutputs);
     }
 
     popup.addSeparator ();
-    foreach (BasePlugin *p, (*plugins)) {
+    foreach (AbstractPlugin *p, (*plugins)) {
         if (p != this)
-            createPluginSubmenu (&popup, thisSide->getDataType(), p, &BasePlugin::getOutputs);
+            createPluginSubmenu (&popup, thisSide->getDataType(), p, &AbstractPlugin::getOutputs);
     }
 
     QAction *act = popup.exec (inputList->mapToGlobal(p));
@@ -211,7 +212,7 @@ void BasePlugin::displayInputConnectionPopup (const QPoint &p) {
 }
 
 void BasePlugin::displayOutputConnectionPopup (const QPoint &p) {
-    const QList<BasePlugin*>* plugins = PluginManager::ref().list ();
+    const QList<AbstractPlugin*>* plugins = PluginManager::ref().list ();
 
     if (outputList->itemAt (p))
         outputList->setCurrentItem (outputList->itemAt (p));
@@ -222,9 +223,9 @@ void BasePlugin::displayOutputConnectionPopup (const QPoint &p) {
 
     QMenu popup;
     popup.addAction (tr("<none>"))->setData (QVariant::fromValue (static_cast<PluginConnector*> (NULL)));
-    foreach (BasePlugin *p, (*plugins)) {
+    foreach (AbstractPlugin *p, (*plugins)) {
         if (p != this)
-            createPluginSubmenu (&popup, thisSide->getDataType(), p, &BasePlugin::getInputs);
+            createPluginSubmenu (&popup, thisSide->getDataType(), p, &AbstractPlugin::getInputs);
     }
 
     QAction *act = popup.exec (outputList->mapToGlobal(p));
@@ -237,7 +238,7 @@ void BasePlugin::displayOutputConnectionPopup (const QPoint &p) {
     }
 }
 
-void BasePlugin::createPluginSubmenu (QMenu *popup, PluginConnector::DataType dt, BasePlugin *p, ConnectorList *(BasePlugin::*type) ()) {
+void BasePlugin::createPluginSubmenu (QMenu *popup, PluginConnector::DataType dt, AbstractPlugin *p, ConnectorList *(AbstractPlugin::*type) ()) {
     if ((p->*type) ()->empty ())
         return;
 

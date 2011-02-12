@@ -1,8 +1,7 @@
 #ifndef ADDEDITDLGS_H
 #define ADDEDITDLGS_H
 
-#include "basemodule.h"
-#include "basedaqmodule.h"
+#include "abstractmodule.h"
 #include "abstractinterface.h"
 
 #include "modulemanager.h"
@@ -77,12 +76,12 @@ public:
         name_ = new QLineEdit (this);
 
         if (iface_) {
-            setWindowTitle (tr("Edit Module"));
+            setWindowTitle (tr("Edit Interface"));
             name_->setText (iface_->getName ());
             typeselector_->setCurrentIndex (typeselector_->findText (iface_->getTypeName ()));
             typeselector_->setEnabled (false);
         } else {
-            setWindowTitle (tr("Add Module"));
+            setWindowTitle (tr("Add Interface"));
         }
 
         QGridLayout *l = new QGridLayout (this);
@@ -139,7 +138,7 @@ private:
 class AddEditModuleDlg : public QDialog {
     Q_OBJECT
 public:
-    AddEditModuleDlg (QWidget *parent, BaseModule *mod = NULL)
+    AddEditModuleDlg (QWidget *parent, AbstractModule *mod = NULL)
     : QDialog (parent)
     , module_ (mod)
     {
@@ -175,12 +174,12 @@ public:
             name_->setText (module_->getName ());
             typeselector_->setCurrentIndex (typeselector_->findText (module_->getTypeName ()));
             typeselector_->setEnabled (false);
-            BaseDAqModule *daq =dynamic_cast<BaseDAqModule*> (module_);
-            if (daq->getInterface ())
+
+            if (module_->getInterface ())
                 ifaceselector_->setCurrentIndex (ifaceselector_->findText (
-                        daq->getInterface ()->getName ()
+                        module_->getInterface ()->getName ()
                         ));
-            baddr_->setValue (daq->getBaseAddress() >> 16);
+            baddr_->setValue (module_->getBaseAddress() >> 16);
         } else {
             setWindowTitle (tr("Add Module"));
         }
@@ -245,7 +244,7 @@ public slots:
     }
 
 private:
-    BaseModule *module_;
+    AbstractModule *module_;
 
     QComboBox *typeselector_;
     QLineEdit *name_;
@@ -256,7 +255,7 @@ private:
 class AddEditPluginDlg : public QDialog {
     Q_OBJECT
 public:
-    AddEditPluginDlg (QWidget *parent = NULL, BasePlugin *p = NULL)
+    AddEditPluginDlg (QWidget *parent = NULL, AbstractPlugin *p = NULL)
     : QDialog (parent)
     , plugin_ (p)
     {
@@ -399,7 +398,7 @@ private slots:
     }
 
 private:
-    BasePlugin *plugin_;
+    AbstractPlugin *plugin_;
     QLineEdit *name_;
     QComboBox *typeselector_;
     QComboBox *groupselector_;

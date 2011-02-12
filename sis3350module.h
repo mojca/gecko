@@ -13,7 +13,7 @@
 #include <inttypes.h>
 
 //#include "configmanager.h"
-#include "basedaqmodule.h"
+#include "basemodule.h"
 #include "sis3350ui.h"
 #include "sis3350.h"
 #include "baseplugin.h"
@@ -70,7 +70,7 @@ public:
 
 };
 
-class Sis3350Module : public virtual BaseDAqModule
+class Sis3350Module : public virtual BaseModule
 {
     Q_OBJECT
 
@@ -82,7 +82,7 @@ public:
     ~Sis3350Module();
 
     // Factory method
-    static BaseModule *create (int id, const QString &name) {
+    static AbstractModule *create (int id, const QString &name) {
         return new Sis3350Module (id, name);
     }
 
@@ -90,7 +90,7 @@ public:
     virtual void saveSettings(QSettings*);
     virtual void applySettings(QSettings*);
 
-    bool isIfaceOpen () { return iface->isOpen (); }
+    bool isIfaceOpen () { return getInterface()->isOpen (); }
 
     // Basic functions
     int arm();

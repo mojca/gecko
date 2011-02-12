@@ -1,7 +1,7 @@
 #ifndef CAEN820SCALER_H
 #define CAEN820SCALER_H
 
-#include "basedaqmodule.h"
+#include "basemodule.h"
 
 struct Caen820Config {
     uint32_t baddr;
@@ -30,10 +30,10 @@ struct Caen820Config {
 class DemuxCaen820Plugin;
 class Caen820UI;
 
-class Caen820Module : public BaseDAqModule {
+class Caen820Module : public BaseModule {
     Q_OBJECT
 public:
-    static BaseModule *create (int id, const QString& name);
+    static AbstractModule *create (int id, const QString& name);
 
     ThreadBuffer<uint32_t>* getBuffer () { return NULL; }
     void setChannels ();

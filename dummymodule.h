@@ -1,11 +1,11 @@
 #ifndef DUMMYMODULE_H
 #define DUMMYMODULE_H
 
-#include "basedaqmodule.h"
+#include "basemodule.h"
 #include "dummyui.h"
 #include "pluginmanager.h"
 
-class DummyModule : public virtual BaseDAqModule
+class DummyModule : public BaseModule
 {
     Q_OBJECT
 
@@ -20,7 +20,7 @@ protected:
 public:
     DummyModule(int id, QString name = "no name");
     // Factory method
-    static BaseModule *create (int id, const QString &name) {
+    static AbstractModule *create (int id, const QString &name) {
         return new DummyModule (id, name);
     }
 

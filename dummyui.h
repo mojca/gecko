@@ -16,6 +16,8 @@ class DummyUI : public virtual BaseUI
 {
     QPushButton *trigger;
     QPushButton *pollTrigger;
+    DummyModule *module;
+    const QString& name;
 public:
     DummyUI(DummyModule* _module);
     ~DummyUI() {}

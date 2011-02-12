@@ -33,7 +33,7 @@ class AbstractModule : public QObject
 {
     Q_OBJECT
 public:
-    virtual ~AbstractModule() = 0;
+    virtual ~AbstractModule() {}
 
     /*! Return the module's id, as assigned by the module manager. */
     virtual int getId() const = 0;

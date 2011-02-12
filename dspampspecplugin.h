@@ -47,7 +47,7 @@ protected:
 
 public:
     DspAmpSpecPlugin(int _id, QString _name);
-    static BasePlugin *create (int _id, const QString &_name, const Attributes &_attrs) {
+    static AbstractPlugin *create (int _id, const QString &_name, const Attributes &_attrs) {
         Q_UNUSED (_attrs);
         return new DspAmpSpecPlugin (_id, _name);
     }
