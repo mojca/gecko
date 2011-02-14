@@ -88,7 +88,7 @@ void ScopeMainWindow::createUI()
              SLOT (addInterfaceToTree(AbstractInterface*)));
     connect (InterfaceManager::ptr (), SIGNAL (interfaceRemoved(AbstractInterface*)),
              SLOT (removeInterfaceFromTree(AbstractInterface*)));
-    connect (ModuleManager::ptr (), SIGNAL (interfaceNameChanged(AbstractInterface*,QString)),
+    connect (InterfaceManager::ptr (), SIGNAL (interfaceNameChanged(AbstractInterface*,QString)),
              SLOT (interfaceNameChanged(AbstractInterface*,QString)));
 
     connect (PluginManager::ptr (), SIGNAL (pluginAdded(AbstractPlugin*)), SLOT (addPluginToTree(AbstractPlugin*)));
@@ -340,12 +340,12 @@ void ScopeMainWindow::removeInterfaceFromTree(AbstractInterface* newIf)
 {
     QWidget* newWidget = newIf->getUI();
     mainArea->removeWidget (newWidget);
-    QList<QStandardItem*> modList = treeModel->findItems(newIf->getName (), Qt::MatchExactly | Qt::MatchRecursive);
-    if (modList.empty())
+    QList<QStandardItem*> ifList = treeModel->findItems(newIf->getName (), Qt::MatchExactly | Qt::MatchRecursive);
+    if (ifList.empty())
         return;
-    foreach (QStandardItem *it, modList) {
-        if (it->parent () != moduleItem) continue;
-        moduleItem->removeRow (it->row ());
+    foreach (QStandardItem *it, ifList) {
+        if (it->parent () != ifaceItem) continue;
+        ifaceItem->removeRow (it->row ());
         break;
     }
 }
@@ -1450,6 +1450,15 @@ void ScopeMainWindow::treeViewClicked(const QModelIndex & idx, const QModelIndex
         removePlugAct->setEnabled (false);
     }
 
+    if (item->parent () == moduleItem || item->parent () == ifaceItem || item->parent () == pluginItem) {
+        editAct->setEnabled (configEditAllowed);
+        removeAct->setEnabled (configEditAllowed);
+    } else {
+        editAct->setEnabled (false);
+        removeAct->setEnabled (false);
+    }
+
+    createAct->setEnabled (configEditAllowed && item->parent () != runItem && item != runItem);
     makeMainIfaceAct->setEnabled(configEditAllowed && item->parent () == ifaceItem);
 }
 

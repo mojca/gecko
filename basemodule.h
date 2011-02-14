@@ -58,6 +58,7 @@ public:
 
 public slots:
     void prepareForNextAcquisition () {}
+    void interfaceRemoved () { iface = NULL; }
 
 protected:
     void setUI (BaseUI *_ui) { ui = _ui; }
