@@ -58,6 +58,8 @@ public:
 
 public slots:
     void prepareForNextAcquisition () {}
+
+private slots:
     void interfaceRemoved () { iface = NULL; }
 
 protected:
