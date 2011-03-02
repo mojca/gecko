@@ -49,18 +49,14 @@
 #include "runmanager.h"
 
 #include "modulemanager.h"
-#include "baseinterfacemodule.h"
-#include "dummymodule.h"
-#include "sis3100module.h"
-#include "sis3150module.h"
-#include "sis3350module.h"
-#include "caen785module.h"
-#include "caen792module.h"
+#include "abstractinterface.h"
 
 class QStandardItem;
 class QTreeWidget;
 class QCheckBox;
 class QHostAddress;
+class QTextEdit;
+class QComboBox;
 
 class SystemInfo;
 
@@ -140,12 +136,15 @@ public slots:
     void runStopped ();
     void updateRunPage(float evspersec, unsigned evs);
 
-    void addModuleToTree(BaseModule* newModule);
-    void addPluginToTree(BasePlugin* newPlugin);
-    void removeModuleFromTree(BaseModule* newModule);
-    void removePluginFromTree(BasePlugin* newPlugin);
-    void moduleNameChanged(BaseModule *m, QString oldname);
-    void pluginNameChanged(BasePlugin *p, QString oldname);
+    void addModuleToTree(AbstractModule* newModule);
+    void addInterfaceToTree(AbstractInterface* newModule);
+    void addPluginToTree(AbstractPlugin* newPlugin);
+    void removeModuleFromTree(AbstractModule* newModule);
+    void removeInterfaceFromTree(AbstractInterface* newModule);
+    void removePluginFromTree(AbstractPlugin* newPlugin);
+    void moduleNameChanged(AbstractModule *m, QString oldname);
+    void interfaceNameChanged(AbstractInterface *m, QString oldname);
+    void pluginNameChanged(AbstractPlugin *p, QString oldname);
 
     void open();
     bool save();
@@ -157,13 +156,21 @@ public slots:
     void editModule ();
     void removeModule ();
 
+    void createInterface ();
+    void editInterface ();
+    void removeInterface ();
+
     void createPlugin ();
     void editPlugin ();
     void removePlugin ();
 
+    void createComponent ();
+    void editComponent ();
+    void removeComponent ();
+
     void makeMainInterface ();
 
-    void jumpToPlugin (BasePlugin *);
+    void jumpToPlugin (AbstractPlugin *);
 
     void readUdpDatagram();
     void remoteDiscoverClicked();
@@ -197,6 +204,7 @@ private:
     QMenu *fileMenu;
     QMenu *modulesMenu;
     QMenu *pluginsMenu;
+    QMenu *interfacesMenu;
 
     QAction *openAct;
     QAction *saveAct;
@@ -208,9 +216,17 @@ private:
     QAction *editModAct;
     QAction *removeModAct;
 
+    QAction *createIfAct;
+    QAction *editIfAct;
+    QAction *removeIfAct;
+
     QAction *createPlugAct;
     QAction *editPlugAct;
     QAction *removePlugAct;
+
+    QAction *createAct;
+    QAction *editAct;
+    QAction *removeAct;
 
     QAction *makeMainIfaceAct;
 

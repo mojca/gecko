@@ -6,7 +6,7 @@
 #include <sis3150usb_vme.h>
 #include <sis3150usb_vme_calls.h>
 
-#include "baseinterfacemodule.h"
+#include "baseinterface.h"
 #include "sis3150ui.h"
 
 #define MAXNUMDEV 10
@@ -17,11 +17,15 @@ public:
     unsigned int base_addr;
 };
 
-class Sis3150Module : public virtual BaseInterfaceModule
+class QSettings;
+
+class Sis3150Module : public BaseInterface
 {
     Q_OBJECT
 
 protected:
+    int id;
+    const QString& name;
     struct SIS3150USB_Device_Struct info[MAXNUMDEV];
     HANDLE m_device;
     bool deviceOpen;
@@ -32,7 +36,7 @@ public:
     ~Sis3150Module();
 
     // Factory method
-    static BaseModule *create (int id, const QString &name) {
+    static AbstractInterface *create (int id, const QString &name) {
         return new Sis3150Module (id, name);
     }
 
@@ -40,17 +44,13 @@ public:
 
     virtual int open();
     virtual int close();
-    virtual bool isOpen();
+    virtual bool isOpen() const;
 
     virtual int setOutput1(bool){ return -1;}
     virtual int setOutput2(bool){ return -1;}
 
     virtual void saveSettings(QSettings*) {}
     virtual void applySettings(QSettings*) {}
-
-    // Aliases
-    int vmeSingleRead(const uint32_t addr, uint32_t* data);
-    int vmeSingleWrite(const uint32_t addr, const uint32_t data);
 
     // VME access
     int readA32D32(const uint32_t addr, uint32_t* data);

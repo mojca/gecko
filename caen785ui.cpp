@@ -1,7 +1,6 @@
 #include "caen785ui.h"
 
 Caen785UI::Caen785UI(Caen785Module* _module)
-    : BaseUI(_module)
 {
     module = _module;
     blockSlots = false;
@@ -21,7 +20,7 @@ void Caen785UI::createUI()
     QGridLayout* boxL = new QGridLayout;
 
     QGroupBox* box = new QGroupBox;
-    box->setTitle(name + " Settings");
+    box->setTitle(module->getName() + " Settings");
 
     // Module specific code here
 

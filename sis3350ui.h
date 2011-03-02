@@ -63,7 +63,6 @@ public slots:
     void armTimer();
 
 protected:
-    Sis3350Module* module;
     bool timerArmed;
 
     void createUI();
@@ -137,6 +136,10 @@ protected:
 
     QLabel *clockFrequencyLabel;
     QLineEdit *baseAddressEdit;
+
+private:
+    Sis3350Module *module;
+    QString name;
 };
 
 #endif // SIS3350UI_H

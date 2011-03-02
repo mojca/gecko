@@ -63,7 +63,7 @@ Currently there are plugins for signal processing (eg. pileup correction, discri
 The GECKO main window is divided into two parts:
 
 \image html geckomain.png  "The GECKO main window"
-\image latex geckomain.png "The GECKO main window"
+\image latex geckomain.png "The GECKO main window" width=.6\textwidth
 
 On the left-hand side a tree view containing all interfaces, modules and plugins of the current configuration is shown.
 In addition to that there are two entries in the tree view for controlling the execution of acquisition runs.

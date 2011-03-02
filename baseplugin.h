@@ -1,7 +1,6 @@
 #ifndef BASEPLUGIN_H
 #define BASEPLUGIN_H
 
-#include <QWidget>
 #include <QList>
 
 #include "abstractplugin.h"
@@ -26,7 +25,7 @@ class QMenu;
  *
  *  \sa PluginManager, PluginThread
  */
-class BasePlugin : public QWidget, public virtual AbstractPlugin
+class BasePlugin : public AbstractPlugin
 {
     Q_OBJECT
 
@@ -97,9 +96,6 @@ public:
     /*! enable or disable those UI elements that should not be accessible during a run. */
     void setConfigEnabled (bool enabled);
 
-signals:
-    void jumpToPluginRequested(BasePlugin*);
-
 public slots:
     /*! Do processing.
      *  This function checks whether there is data available on all input connectors and then calls the userProcess function.
@@ -148,6 +144,10 @@ protected:
      */
     void addConnector(PluginConnector*);
 
+protected:
+    void setName (QString newName) { name = newName; }
+    void setTypeName (QString newType) {typename_ = newType; }
+
 private slots:
     void displayInputConnectionPopup (const QPoint &);
     void displayOutputConnectionPopup (const QPoint &);
@@ -160,7 +160,7 @@ private:
     QWidget* createSetbox();
 
     int updateConnList (ConnectorList *lst, QListWidget *w);
-    void createPluginSubmenu (QMenu *popup, PluginConnector::DataType dt, BasePlugin *p, ConnectorList *(BasePlugin::*type) ());
+    void createPluginSubmenu (QMenu *popup, PluginConnector::DataType dt, AbstractPlugin *p, ConnectorList *(AbstractPlugin::*type) ());
 
 private:
     QString name;

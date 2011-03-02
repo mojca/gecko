@@ -1,8 +1,15 @@
 #include "scopemainwindow.h"
 #include "addeditdlgs.h"
+#include "scopechannel.h"
+#include "baseui.h"
+
 #include <QThreadPool>
 #include <QUdpSocket>
 #include <QNetworkInterface>
+#include <QCheckBox>
+#include <QPushButton>
+#include <QTextEdit>
+#include <QCloseEvent>
 
 #include <stdexcept>
 
@@ -72,12 +79,22 @@ void ScopeMainWindow::createUI()
     createStatusBar();
     createTreeView();
 
-    connect (ModuleManager::ptr (), SIGNAL (moduleAdded(BaseModule*)), SLOT (addModuleToTree(BaseModule*)));
-    connect (PluginManager::ptr (), SIGNAL (pluginAdded(BasePlugin*)), SLOT (addPluginToTree(BasePlugin*)));
-    connect (ModuleManager::ptr (), SIGNAL (moduleRemoved(BaseModule*)), SLOT (removeModuleFromTree(BaseModule*)));
-    connect (PluginManager::ptr (), SIGNAL (pluginRemoved(BasePlugin*)), SLOT (removePluginFromTree(BasePlugin*)));
-    connect (ModuleManager::ptr (), SIGNAL (moduleNameChanged(BaseModule*,QString)), SLOT (moduleNameChanged(BaseModule*,QString)));
-    connect (PluginManager::ptr (), SIGNAL (pluginNameChanged(BasePlugin*,QString)), SLOT (pluginNameChanged(BasePlugin*,QString)));
+    connect (ModuleManager::ptr (), SIGNAL (moduleAdded(AbstractModule*)), SLOT (addModuleToTree(AbstractModule*)));
+    connect (ModuleManager::ptr (), SIGNAL (moduleRemoved(AbstractModule*)), SLOT (removeModuleFromTree(AbstractModule*)));
+    connect (ModuleManager::ptr (), SIGNAL (moduleNameChanged(AbstractModule*,QString)),
+             SLOT (moduleNameChanged(AbstractModule*,QString)));
+
+    connect (InterfaceManager::ptr (), SIGNAL (interfaceAdded(AbstractInterface*)),
+             SLOT (addInterfaceToTree(AbstractInterface*)));
+    connect (InterfaceManager::ptr (), SIGNAL (interfaceRemoved(AbstractInterface*)),
+             SLOT (removeInterfaceFromTree(AbstractInterface*)));
+    connect (InterfaceManager::ptr (), SIGNAL (interfaceNameChanged(AbstractInterface*,QString)),
+             SLOT (interfaceNameChanged(AbstractInterface*,QString)));
+
+    connect (PluginManager::ptr (), SIGNAL (pluginAdded(AbstractPlugin*)), SLOT (addPluginToTree(AbstractPlugin*)));
+    connect (PluginManager::ptr (), SIGNAL (pluginRemoved(AbstractPlugin*)), SLOT (removePluginFromTree(AbstractPlugin*)));
+    connect (PluginManager::ptr (), SIGNAL (pluginNameChanged(AbstractPlugin*,QString)),
+             SLOT (pluginNameChanged(AbstractPlugin*,QString)));
 
     connect (RunManager::ptr (), SIGNAL(runStarted()), SLOT(runStarted()));
     connect (RunManager::ptr (), SIGNAL(runStopping()), SLOT(runStopping()));
@@ -116,16 +133,10 @@ void ScopeMainWindow::createTreeView()
     moduleItem = addTabToTree(new QLabel(tr("Modules")));
     pluginItem = addTabToTree(new QLabel(tr("Plugins")));
 
-    treeView->addAction (createModAct);
-    treeView->addAction (editModAct);
-    treeView->addAction (removeModAct);
+    treeView->addAction (createAct);
+    treeView->addAction (editAct);
+    treeView->addAction (removeAct);
     treeView->addAction (makeMainIfaceAct);
-    QAction *act = new QAction (this);
-    act->setSeparator (true);
-    treeView->addAction (act);
-    treeView->addAction (createPlugAct);
-    treeView->addAction (editPlugAct);
-    treeView->addAction (removePlugAct);
     treeView->setContextMenuPolicy (Qt::ActionsContextMenu);
 }
 
@@ -166,6 +177,34 @@ void ScopeMainWindow::createActions()
     removeModAct->setEnabled (false);
     connect (removeModAct, SIGNAL(triggered()), SLOT(removeModule()));
 
+    createAct = new QAction(tr("Add..."), this);
+    createAct->setStatusTip (tr("Add a component to the configuration"));
+    connect (createAct, SIGNAL(triggered()), SLOT(createComponent()));
+
+    editAct = new QAction(tr("Edit..."), this);
+    editAct->setStatusTip(tr("Edit the selected component"));
+    editAct->setEnabled (false);
+    connect (editAct, SIGNAL(triggered()), SLOT(editComponent()));
+
+    removeAct = new QAction(tr("Remove"), this);
+    removeAct->setStatusTip(tr("Remove the selected component"));
+    removeAct->setEnabled (false);
+    connect (removeAct, SIGNAL(triggered()), SLOT(removeComponent()));
+
+    createIfAct = new QAction(tr("Add Interface..."), this);
+    createIfAct->setStatusTip (tr("Add a interface to the configuration"));
+    connect (createIfAct, SIGNAL(triggered()), SLOT(createInterface()));
+
+    editIfAct = new QAction(tr("Edit Interface..."), this);
+    editIfAct->setStatusTip(tr("Edit the selected interface"));
+    editIfAct->setEnabled (false);
+    connect (editIfAct, SIGNAL(triggered()), SLOT(editInterface()));
+
+    removeIfAct = new QAction(tr("Remove Interface"), this);
+    removeIfAct->setStatusTip(tr("Remove the selected interface"));
+    removeIfAct->setEnabled (false);
+    connect (removeIfAct, SIGNAL(triggered()), SLOT(removeInterface()));
+
     createPlugAct = new QAction (tr("Add Plugin..."), this);
     createPlugAct->setStatusTip (tr("Add a plugin to the configuration"));
     connect (createPlugAct, SIGNAL(triggered()), SLOT(createPlugin()));
@@ -204,17 +243,22 @@ void ScopeMainWindow::createMenu()
     modulesMenu->addAction(createModAct);
     modulesMenu->addAction(editModAct);
     modulesMenu->addAction(removeModAct);
-    modulesMenu->addSeparator();
-    modulesMenu->addAction(makeMainIfaceAct);
     pluginsMenu = new QMenu(tr("&Plugins"));
     pluginsMenu->addAction(createPlugAct);
     pluginsMenu->addAction(editPlugAct);
     pluginsMenu->addAction(removePlugAct);
+    interfacesMenu = new QMenu(tr("&Interfaces"));
+    interfacesMenu->addAction(createIfAct);
+    interfacesMenu->addAction(editIfAct);
+    interfacesMenu->addAction(removeIfAct);
+    interfacesMenu->addSeparator();
+    interfacesMenu->addAction(makeMainIfaceAct);
 
     menubar = this->menuBar();
     menubar->addMenu(fileMenu);
     menubar->addMenu(modulesMenu);
     menubar->addMenu(pluginsMenu);
+    menubar->addMenu(interfacesMenu);
 }
 
 void ScopeMainWindow::createConnections()
@@ -244,45 +288,80 @@ QStandardItem *ScopeMainWindow::addTabToTree(QWidget* newTab)
     return newItem;
 }
 
-void ScopeMainWindow::addModuleToTree(BaseModule* newModule)
+void ScopeMainWindow::addModuleToTree(AbstractModule* newModule)
 {
     QWidget* newWidget = newModule->getUI();
-    QStandardItem* parentItem = newModule->getModuleType() == AbstractModule::TypeDAq ? moduleItem : ifaceItem;
     QStandardItem* item = new QStandardItem(newModule->getName());
     item->setEditable(false);
     item->setData(QVariant::fromValue(newWidget));
     mainArea->addWidget(newWidget);
-    parentItem->appendRow(item);
+    moduleItem->appendRow(item);
+    loadChannelList ();
 }
 
-void ScopeMainWindow::removeModuleFromTree(BaseModule* newModule)
+void ScopeMainWindow::removeModuleFromTree(AbstractModule* newModule)
 {
     QWidget* newWidget = newModule->getUI();
     mainArea->removeWidget (newWidget);
     QList<QStandardItem*> modList = treeModel->findItems(newModule->getName (), Qt::MatchExactly | Qt::MatchRecursive);
-    QStandardItem* parentItem = newModule->getModuleType() == AbstractModule::TypeDAq ? moduleItem : ifaceItem;
     if (modList.empty())
         return;
     foreach (QStandardItem *it, modList) {
-        if (it->parent () != parentItem) continue;
-        parentItem->removeRow (it->row ());
+        if (it->parent () != moduleItem) continue;
+        moduleItem->removeRow (it->row ());
+        break;
+    }
+    loadChannelList ();
+}
+
+void ScopeMainWindow::moduleNameChanged(AbstractModule *m, QString oldname) {
+    QList<QStandardItem*> modList = treeModel->findItems(oldname, Qt::MatchExactly | Qt::MatchRecursive);
+    if (modList.empty())
+        return;
+    foreach (QStandardItem *it, modList) {
+        if (it->parent () != moduleItem) continue;
+        it->setText (m->getName());
+        break;
+    }
+    loadChannelList ();
+}
+
+void ScopeMainWindow::addInterfaceToTree(AbstractInterface* newIf)
+{
+    QWidget* newWidget = newIf->getUI();
+    QStandardItem* item = new QStandardItem(newIf->getName());
+    item->setEditable(false);
+    item->setData(QVariant::fromValue(newWidget));
+    mainArea->addWidget(newWidget);
+    ifaceItem->appendRow(item);
+}
+
+void ScopeMainWindow::removeInterfaceFromTree(AbstractInterface* newIf)
+{
+    QWidget* newWidget = newIf->getUI();
+    mainArea->removeWidget (newWidget);
+    QList<QStandardItem*> ifList = treeModel->findItems(newIf->getName (), Qt::MatchExactly | Qt::MatchRecursive);
+    if (ifList.empty())
+        return;
+    foreach (QStandardItem *it, ifList) {
+        if (it->parent () != ifaceItem) continue;
+        ifaceItem->removeRow (it->row ());
         break;
     }
 }
 
-void ScopeMainWindow::moduleNameChanged(BaseModule *m, QString oldname) {
+void ScopeMainWindow::interfaceNameChanged(AbstractInterface *m, QString oldname) {
     QList<QStandardItem*> modList = treeModel->findItems(oldname, Qt::MatchExactly | Qt::MatchRecursive);
-    QStandardItem* parentItem = m->getModuleType() == AbstractModule::TypeDAq ? moduleItem : ifaceItem;
     if (modList.empty())
         return;
     foreach (QStandardItem *it, modList) {
-        if (it->parent () != parentItem) continue;
+        if (it->parent () != moduleItem) continue;
         it->setText (m->getName());
         break;
     }
 }
 
-void ScopeMainWindow::pluginNameChanged(BasePlugin *p, QString oldname) {
+void ScopeMainWindow::pluginNameChanged(AbstractPlugin *p, QString oldname) {
     QList<QStandardItem*> plugList = treeModel->findItems(oldname, Qt::MatchExactly | Qt::MatchRecursive);
     if (plugList.empty())
         return;
@@ -293,12 +372,12 @@ void ScopeMainWindow::pluginNameChanged(BasePlugin *p, QString oldname) {
     }
 }
 
-void ScopeMainWindow::addPluginToTree(BasePlugin* newPlugin)
+void ScopeMainWindow::addPluginToTree(AbstractPlugin* newPlugin)
 {
     QWidget* newWidget = newPlugin;
     mainArea->addWidget(newWidget);
 
-    connect (newPlugin, SIGNAL(jumpToPluginRequested(BasePlugin*)), SLOT(jumpToPlugin(BasePlugin*)));
+    connect (newPlugin, SIGNAL(jumpToPluginRequested(AbstractPlugin*)), SLOT(jumpToPlugin(AbstractPlugin*)));
 
     QStandardItem* item = new QStandardItem(newPlugin->getName());
     item->setEditable(false);
@@ -306,7 +385,7 @@ void ScopeMainWindow::addPluginToTree(BasePlugin* newPlugin)
     pluginItem->appendRow(item);
 }
 
-void ScopeMainWindow::removePluginFromTree(BasePlugin* newPlugin)
+void ScopeMainWindow::removePluginFromTree(AbstractPlugin* newPlugin)
 {
     QWidget* newWidget = newPlugin;
     mainArea->removeWidget (newWidget);
@@ -320,7 +399,7 @@ void ScopeMainWindow::removePluginFromTree(BasePlugin* newPlugin)
     }
 }
 
-void ScopeMainWindow::jumpToPlugin(BasePlugin *p) {
+void ScopeMainWindow::jumpToPlugin(AbstractPlugin *p) {
     for (int i= 0; i < pluginItem->rowCount (); ++i) {
         if (pluginItem->child (i, 0)->data().value<QWidget*> () == static_cast<QWidget*> (p)) {
             treeView->setCurrentIndex (pluginItem->child (i, 0)->index ());
@@ -340,9 +419,9 @@ void ScopeMainWindow::editModule () {
         return;
 
     QStandardItem *it = treeModel->itemFromIndex (treeView->currentIndex ());
-    if (it->parent () != moduleItem && it->parent () != ifaceItem)
+    if (it->parent () != moduleItem)
         return;
-    BaseModule *m = ModuleManager::ref().get(it->text ());
+    AbstractModule *m = ModuleManager::ref().get(it->text ());
     AddEditModuleDlg dlg (this, m);
     dlg.exec ();
     loadChannelList();
@@ -353,10 +432,37 @@ void ScopeMainWindow::removeModule () {
         return;
 
     QStandardItem *it = treeModel->itemFromIndex (treeView->currentIndex ());
-    if (it->parent () != moduleItem && it->parent () != ifaceItem)
+    if (it->parent () != moduleItem)
         return;
     ModuleManager::ref().remove(it->text ());
     loadChannelList();
+}
+
+void ScopeMainWindow::createInterface () {
+    AddEditInterfaceDlg dlg (this, NULL);
+    dlg.exec ();
+}
+
+void ScopeMainWindow::editInterface () {
+    if (!treeView->currentIndex ().isValid ())
+        return;
+
+    QStandardItem *it = treeModel->itemFromIndex (treeView->currentIndex ());
+    if (it->parent () != ifaceItem)
+        return;
+    AbstractInterface *m = InterfaceManager::ref().get (it->text ());
+    AddEditInterfaceDlg dlg (this, m);
+    dlg.exec ();
+}
+
+void ScopeMainWindow::removeInterface () {
+    if (!treeView->currentIndex ().isValid ())
+        return;
+
+    QStandardItem *it = treeModel->itemFromIndex (treeView->currentIndex ());
+    if (it->parent () != ifaceItem)
+        return;
+    InterfaceManager::ref ().remove (it->text ());
 }
 
 void ScopeMainWindow::createPlugin () {
@@ -371,7 +477,7 @@ void ScopeMainWindow::editPlugin () {
     QStandardItem *it = treeModel->itemFromIndex (treeView->currentIndex ());
     if (it->parent () != pluginItem)
         return;
-    BasePlugin *p = PluginManager::ref().get(it->text ());
+    AbstractPlugin *p = PluginManager::ref().get(it->text ());
     AddEditPluginDlg dlg (this, p);
     dlg.exec ();
 }
@@ -386,6 +492,51 @@ void ScopeMainWindow::removePlugin () {
     PluginManager::ref().remove(it->text ());
 }
 
+void ScopeMainWindow::createComponent () {
+    if (!treeView->currentIndex ().isValid ())
+        return;
+
+    QStandardItem *it = treeModel->itemFromIndex (treeView->currentIndex ());
+    QStandardItem *parent = it->parent ();
+
+    if (it == ifaceItem || parent == ifaceItem)
+        createInterface ();
+    else if (it == moduleItem || parent == moduleItem)
+        createModule ();
+    else if (it == pluginItem || parent == pluginItem)
+        createPlugin ();
+}
+
+void ScopeMainWindow::editComponent () {
+    if (!treeView->currentIndex ().isValid ())
+        return;
+
+    QStandardItem *it = treeModel->itemFromIndex (treeView->currentIndex ());
+    QStandardItem *parent = it->parent ();
+
+    if (it == ifaceItem || parent == ifaceItem)
+        editInterface ();
+    else if (it == moduleItem || parent == moduleItem)
+        editModule ();
+    else if (it == pluginItem || parent == pluginItem)
+        editPlugin ();
+}
+
+void ScopeMainWindow::removeComponent () {
+    if (!treeView->currentIndex ().isValid ())
+        return;
+
+    QStandardItem *it = treeModel->itemFromIndex (treeView->currentIndex ());
+    QStandardItem *parent = it->parent ();
+
+    if (it == ifaceItem || parent == ifaceItem)
+        removeInterface ();
+    else if (it == moduleItem || parent == moduleItem)
+        removeModule ();
+    else if (it == pluginItem || parent == pluginItem)
+        removePlugin ();
+}
+
 void ScopeMainWindow::makeMainInterface () {
     if (!treeView->currentIndex ().isValid ())
         return;
@@ -394,7 +545,7 @@ void ScopeMainWindow::makeMainInterface () {
     if (it->parent () != ifaceItem)
         return;
 
-    ModuleManager::ref().setMainInterface (ModuleManager::ref().getIface(it->text ()));
+    InterfaceManager::ref().setMainInterface (InterfaceManager::ref().get (it->text ()));
 }
 
 void ScopeMainWindow::addRunPageToTree(QWidget* newWidget)
@@ -418,31 +569,31 @@ void ScopeMainWindow::createRunSetupPage()
     QGroupBox* triggerBox = new QGroupBox(tr("Triggers"));
     QGroupBox* channelBox = new QGroupBox(tr("Channels"));
 
-        triggerList = new QTreeWidget();
-        triggerList->setColumnCount(2);
-        QStringList headerLabels;
-        headerLabels.append("Module");
-        headerLabels.append("Channel");
-        triggerList->setHeaderLabels(headerLabels);
-        headerLabels.clear();
+    triggerList = new QTreeWidget();
+    triggerList->setColumnCount(2);
+    QStringList headerLabels;
+    headerLabels.append("Module");
+    headerLabels.append("Channel");
+    triggerList->setHeaderLabels(headerLabels);
+    headerLabels.clear();
 
-        channelList = new QTreeWidget();
-        channelList->setColumnCount(3);
-        headerLabels.append("Module");
-        headerLabels.append("Channel");
-        headerLabels.append("Type");
-        channelList->setHeaderLabels(headerLabels);
-        headerLabels.clear();
+    channelList = new QTreeWidget();
+    channelList->setColumnCount(3);
+    headerLabels.append("Module");
+    headerLabels.append("Channel");
+    headerLabels.append("Type");
+    channelList->setHeaderLabels(headerLabels);
+    headerLabels.clear();
 
-        loadChannelList();
+    loadChannelList();
 
-        connect(triggerList,SIGNAL(itemChanged(QTreeWidgetItem*,int)),SLOT(triggerListChanged(QTreeWidgetItem*,int)));
-        connect(channelList,SIGNAL(itemChanged(QTreeWidgetItem*,int)),SLOT(channelListChanged(QTreeWidgetItem*,int)));
+    connect(triggerList,SIGNAL(itemChanged(QTreeWidgetItem*,int)),SLOT(triggerListChanged(QTreeWidgetItem*,int)));
+    connect(channelList,SIGNAL(itemChanged(QTreeWidgetItem*,int)),SLOT(channelListChanged(QTreeWidgetItem*,int)));
 
-        boxLayout->addWidget(triggerList,0,0,1,1);
-        boxLayout2->addWidget(channelList,1,0,1,1);
-        triggerBox->setLayout(boxLayout);
-        channelBox->setLayout(boxLayout2);
+    boxLayout->addWidget(triggerList,0,0,1,1);
+    boxLayout2->addWidget(channelList,1,0,1,1);
+    triggerBox->setLayout(boxLayout);
+    channelBox->setLayout(boxLayout2);
 
     layout->addWidget(triggerBox,0,0,1,1);
     layout->addWidget(channelBox,1,0,1,1);
@@ -1275,12 +1426,20 @@ void ScopeMainWindow::treeViewClicked(const QModelIndex & idx, const QModelIndex
 
     mainArea->setCurrentWidget(item->data().value<QWidget*>());
 
-    if (item->parent () == moduleItem || item->parent () == ifaceItem) {
+    if (item->parent () == moduleItem) {
         editModAct->setEnabled (configEditAllowed);
         removeModAct->setEnabled (configEditAllowed);
     } else {
         editModAct->setEnabled (false);
         removeModAct->setEnabled (false);
+    }
+
+    if (item->parent () == ifaceItem) {
+        editIfAct->setEnabled (configEditAllowed);
+        removeIfAct->setEnabled (configEditAllowed);
+    } else {
+        editIfAct->setEnabled (false);
+        removeIfAct->setEnabled (false);
     }
 
     if (item->parent () == pluginItem) {
@@ -1291,6 +1450,15 @@ void ScopeMainWindow::treeViewClicked(const QModelIndex & idx, const QModelIndex
         removePlugAct->setEnabled (false);
     }
 
+    if (item->parent () == moduleItem || item->parent () == ifaceItem || item->parent () == pluginItem) {
+        editAct->setEnabled (configEditAllowed);
+        removeAct->setEnabled (configEditAllowed);
+    } else {
+        editAct->setEnabled (false);
+        removeAct->setEnabled (false);
+    }
+
+    createAct->setEnabled (configEditAllowed && item->parent () != runItem && item != runItem);
     makeMainIfaceAct->setEnabled(configEditAllowed && item->parent () == ifaceItem);
 }
 
@@ -1330,13 +1498,13 @@ void ScopeMainWindow::loadChannelList()
 
     QList<QTreeWidgetItem *> trgItems;
     QList<QTreeWidgetItem *> chItems;
-    const QList<BaseModule*>* mlist = mmgr->list();
+    const QList<AbstractModule*>* mlist = mmgr->list();
     QList<ScopeChannel*>* trgCh;
-    QList<BaseModule*>::const_iterator it(mlist->begin());
+    QList<AbstractModule*>::const_iterator it(mlist->begin());
 
     for(;it != mlist->end(); ++it)
     {
-        BaseDAqModule* curModule = dynamic_cast<BaseDAqModule *> (*it);
+        AbstractModule* curModule = *it;
         if (!curModule) continue;
 
         trgCh = curModule->getChannels();
@@ -1429,10 +1597,10 @@ void ScopeMainWindow::setConfigEnabled (bool enabled) {
     runNameEdit->setEnabled (enabled);
     runNameButton->setEnabled (enabled);
 
-    foreach (BasePlugin *p, *PluginManager::ptr ()->list ())
+    foreach (AbstractPlugin *p, *PluginManager::ptr ()->list ())
         p->setConfigEnabled (enabled);
 
-    foreach (BaseModule *m, *ModuleManager::ptr ()->list ())
+    foreach (AbstractModule *m, *ModuleManager::ptr ()->list ())
         m->getUI ()->setEnabled (enabled);
 
     // update treeview actions
@@ -1571,17 +1739,17 @@ QString dotEscape (QString str) {
 }
 
 void ScopeMainWindow::writeDotFile (QTextStream &out) {
-    QMap<BasePlugin*,QString> outputplugins;
+    QMap<AbstractPlugin*,QString> outputplugins;
 
     out << "digraph {\n";
     out << "node [shape=record];\n"
            "labelloc=t;\n"
            "label=\"" << dotEscape (this->fileName) << "\";\n";
-    foreach (BaseModule *m, *ModuleManager::ref ().listInterfaces()) {
+    foreach (AbstractInterface *m, *InterfaceManager::ref ().list ()) {
         out << "\"if_" << m->getName () << "\" [label=\"" << dotEscape (m->getName ()) << "\",shape=ellipse];\n";
     }
 
-    foreach (BaseDAqModule *daq, *ModuleManager::ref ().listDaqModules()) {
+    foreach (AbstractModule *daq, *ModuleManager::ref ().list ()) {
         outputplugins.insert(daq->getOutputPlugin (), daq->getName ());
         QString label = dotEscape (daq->getName ());
         if (!daq->getOutputPlugin ()->getOutputs ()->empty()) {
@@ -1595,7 +1763,7 @@ void ScopeMainWindow::writeDotFile (QTextStream &out) {
         out << "\"mod_" << daq->getName () << "\" [label=\"{" << label << "}\"];\n";
     }
 
-    foreach (BasePlugin *p, *PluginManager::ref ().list()) {
+    foreach (AbstractPlugin *p, *PluginManager::ref ().list()) {
         QString label = dotEscape (p->getName ());
         if (!p->getInputs ()->empty()) {
             QStringList ins;
@@ -1616,12 +1784,12 @@ void ScopeMainWindow::writeDotFile (QTextStream &out) {
         out << "\"plg_" << p->getName () << "\" [label=\"{" << label << "}\"];\n";
     }
 
-    foreach (BaseDAqModule *daq, *ModuleManager::ref().listDaqModules()) {
+    foreach (AbstractModule *daq, *ModuleManager::ref().list ()) {
         if (daq->getInterface())
             out << "\"if_" << daq->getInterface()->getName() << "\" -> \"mod_" << daq->getName () << "\";\n";
     }
 
-    foreach (BasePlugin *p, *PluginManager::ref ().list ()) {
+    foreach (AbstractPlugin *p, *PluginManager::ref ().list ()) {
         foreach (PluginConnector *c, (*p->getInputs())) {
             if (!c->hasOtherSide()) continue;
             if (outputplugins.contains (c->getConnectedPlugin ())) {
@@ -1638,15 +1806,15 @@ void ScopeMainWindow::writeDotFile (QTextStream &out) {
 }
 
 void ScopeMainWindow::saveConfig (QSettings *s) {
-    QMap<BasePlugin*,QString> roots;
+    QMap<AbstractPlugin*,QString> roots;
     int i = 0;
     s->beginGroup ("Configuration");
 
-    if (ModuleManager::ref().getMainInterface())
-        s->setValue ("MainInterface", ModuleManager::ref().getMainInterface()->getName ());
+    if (InterfaceManager::ref ().getMainInterface ())
+        s->setValue ("MainInterface", InterfaceManager::ref().getMainInterface()->getName ());
 
     s->beginWriteArray ("Interfaces");
-    foreach (BaseModule *m, *ModuleManager::ref().listInterfaces()) {
+    foreach (AbstractInterface *m, *InterfaceManager::ref ().list ()) {
         s->setArrayIndex (i++);
         s->setValue ("name", m->getName ());
         s->setValue ("type", m->getTypeName ());
@@ -1655,7 +1823,7 @@ void ScopeMainWindow::saveConfig (QSettings *s) {
 
     i = 0;
     s->beginWriteArray ("DAqModules");
-    foreach (BaseDAqModule *daq, *ModuleManager::ref().listDaqModules()) {
+    foreach (AbstractModule *daq, *ModuleManager::ref().list()) {
         s->setArrayIndex (i++);
         s->setValue ("name", daq->getName ());
         s->setValue ("type", daq->getTypeName ());
@@ -1677,7 +1845,7 @@ void ScopeMainWindow::saveConfig (QSettings *s) {
 
     i = 0;
     s->beginWriteArray ("Plugins");
-    foreach (BasePlugin *p, *PluginManager::ref().list()) {
+    foreach (AbstractPlugin *p, *PluginManager::ref().list()) {
         s->setArrayIndex (i++);
         s->setValue ("name", p->getName ());
         s->setValue ("type", p->getTypeName ());
@@ -1688,7 +1856,7 @@ void ScopeMainWindow::saveConfig (QSettings *s) {
 
     i = 0;
     s->beginWriteArray ("Channels");
-    foreach (BasePlugin *p, *PluginManager::ref().list()) {
+    foreach (AbstractPlugin *p, *PluginManager::ref().list()) {
         foreach (PluginConnector *c, *p->getInputs ()) {
             if (c->hasOtherSide()) {
                 s->setArrayIndex (i++);
@@ -1707,12 +1875,13 @@ void ScopeMainWindow::saveConfig (QSettings *s) {
 }
 
 void ScopeMainWindow::loadConfig (QSettings *s) {
-    QMap<QString,BasePlugin*> roots;
+    QMap<QString,AbstractPlugin*> roots;
     int size;
     QStringList fail;
 
     PluginManager::ref().clear ();
     ModuleManager::ref().clear ();
+    InterfaceManager::ref().clear ();
 
     s->beginGroup ("Configuration");
     size = s->beginReadArray ("Interfaces");
@@ -1720,12 +1889,10 @@ void ScopeMainWindow::loadConfig (QSettings *s) {
         s->setArrayIndex (i);
         QString name = s->value ("name").toString ();
         QString type = s->value ("type").toString ();
-        BaseModule *mod = ModuleManager::ref ().create (type, name);
+        AbstractInterface *mod = InterfaceManager::ref ().create (type, name);
 
         if (!mod)
             fail << tr ("Module type not found: %1").arg (type);
-        if (mod->getModuleType () != AbstractModule::TypeInterface)
-            fail << tr ("Not an interface type: %1"). arg (type);
     }
     s->endArray ();
 
@@ -1735,15 +1902,13 @@ void ScopeMainWindow::loadConfig (QSettings *s) {
         QString name = s->value ("name").toString ();
         QString type = s->value ("type").toString ();
 
-        BaseDAqModule *daq = dynamic_cast<BaseDAqModule *> (ModuleManager::ref().create (type, name));
+        AbstractModule *daq = ModuleManager::ref().create (type, name);
         if (!daq)
             fail << tr ("Module type not found: %1").arg (type);
-        if (daq->getModuleType () != AbstractModule::TypeDAq)
-            fail << tr ("Not a daq module type: %1"). arg (type);
 
         if (s->contains ("iface")) {
-            if (ModuleManager::ref().getIface (s->value ("iface").toString ())) {
-                daq->setInterface (ModuleManager::ref().getIface (s->value ("iface").toString ()));
+            if (InterfaceManager::ref().get (s->value ("iface").toString ())) {
+                daq->setInterface (InterfaceManager::ref().get (s->value ("iface").toString ()));
             } else {
                 fail << tr ("Interface module not found: %1").arg (s->value ("iface").toString());
             }
@@ -1778,7 +1943,7 @@ void ScopeMainWindow::loadConfig (QSettings *s) {
     size = s->beginReadArray ("Channels");
     for (int i = 0; i < size; ++i) {
         s->setArrayIndex (i);
-        BasePlugin *from, *to;
+        AbstractPlugin *from, *to;
         PluginConnector *fromc = NULL, *toc = NULL;
         QString fromport = s->value ("fromport").toString ();
         QString toport   = s->value ("toport").toString ();
@@ -1836,9 +2001,9 @@ void ScopeMainWindow::loadConfig (QSettings *s) {
     s->endArray ();
 
     if (s->contains ("MainInterface")) {
-        if (ModuleManager::ref().getIface (s->value ("MainInterface").toString ()))
-            ModuleManager::ref().setMainInterface(
-                ModuleManager::ref().getIface (s->value ("MainInterface").toString ()));
+        if (InterfaceManager::ref().get (s->value ("MainInterface").toString ()))
+            InterfaceManager::ref().setMainInterface(
+                InterfaceManager::ref().get (s->value ("MainInterface").toString ()));
         else
             fail << tr ("Main interface does not exist: %1").arg (s->value ("MainInterface").toString ());
     }

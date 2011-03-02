@@ -73,7 +73,7 @@ private:
     QList<PluginConnectorThreadBuffered*> bufferList;
     QList<PluginConnector*> unconnectedList;
 
-    QMap<BasePlugin*, int> processList;
+    QMap<AbstractPlugin*, int> processList;
     int maxDepth;
 
     void addBuffers();

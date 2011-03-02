@@ -7,23 +7,22 @@
 #include <QList>
 #include <QMap>
 
-//#include "abstractmanager.h"
-#include "basemodule.h"
-#include "basedaqmodule.h"
-#include "threadbuffer.h"
+#include <stdint.h>
 
-class BaseModule;
-class BaseDAqModule;
-class BaseInterfaceModule;
+class AbstractInterface;
 struct ModuleTypeDesc;
+class AbstractModule;
+
+template<typename T> class ThreadBuffer;
 
 
-/*! Manager singleton for interface and daq modules. */
+/*! Manager singleton for daq modules. */
 class ModuleManager : public QObject
 {
     Q_OBJECT
 public:
-    typedef BaseModule *(*ModuleFactory) (int id, const QString &name);
+    typedef AbstractModule *(*ModuleFactory) (int id, const QString &name);
+    typedef QList<AbstractModule*> list_type;
 
     ~ModuleManager();
 
@@ -32,45 +31,19 @@ public:
 
     void identify();
 
-    /*! returns a list of all registered interface modules. */
-    const QList<BaseInterfaceModule*>* listInterfaces() { return interfaceItems; }
-
-    /*! returns a list of all registered daq modules. */
-    const QList<BaseDAqModule*>* listDaqModules() { return daqItems; }
-
     /*! returns a list of all registered interface and daq modules. */
-    const QList<BaseModule*>* list() { return items; }
+    const QList<AbstractModule*>* list() { return items; }
 
     /*! removes all modules. */
     void clear();
 
-    /*! sets the main interface. The main interface module's output 1 is set during data acquisition.
-     *  This can be used to generate a veto signal for all modules, so no additional data is collected during readout.
-     *  \sa #getMainInterface
-     */
-    void setMainInterface(BaseInterfaceModule* _mainInterface) { mainInterface = _mainInterface; }
-
-    /*! returns the currently set main interface or NULL if none. */
-    BaseInterfaceModule* getMainInterface() { return mainInterface; }
-
     /*! \overload get(const QString&) */
-    BaseModule* get (int id);
+    AbstractModule* get (int id);
     /*! returns the module with the given name, or NULL if no such module exists. */
-    BaseModule* get (const QString &);
-
-
-    /*! \overload getDAq(const QString&) */
-    BaseDAqModule *getDAq (int id);
-    /*! returns the daq module with the given name, or NULL if no such module exists. */
-    BaseDAqModule *getDAq (const QString &name);
-
-    /*! \overload getIface(const QString&) */
-    BaseInterfaceModule *getIface (int id);
-    /*! returns the interface module with the given name, or NULL if no such module exists. */
-    BaseInterfaceModule *getIface (const QString &name);
+    AbstractModule* get (const QString &);
 
     /*! assigns a new name to the given module. */
-    void setModuleName (BaseModule *m, const QString &name);
+    void setModuleName (AbstractModule *m, const QString &name);
 
     /*! Iterates through all registered modules and calls BaseModule::applySettings on each of them. */
     void applySettings(QSettings*);
@@ -88,40 +61,34 @@ public:
      *  \param mclass defines whether this type is an interface or a daq type
      *  \sa ModuleRegistrar
      */
-    void registerModuleType (const QString &type, ModuleFactory fac, AbstractModule::Type mclass);
-
-    /*! returns whether the given type is an interface or a daq type. */
-    AbstractModule::Type getModuleTypeClass (const QString &type) const;
+    void registerModuleType (const QString &type, ModuleFactory fac);
 
     /*! returns a list of available module types. */
     QStringList getAvailableTypes () const;
 
     /*! creates a new module with the given type. */
-    BaseModule *create (const QString &type, const QString &name);
+    AbstractModule *create (const QString &type, const QString &name);
 
     /*! removes the given module. */
-    bool remove (BaseModule *);
+    bool remove (AbstractModule *);
     bool remove (int id); /*!< \overload remove(BaseModule*) */
     bool remove (const QString &name); /*!< \overload remove(BaseModule*) */
 
 signals:
-    void moduleAdded (BaseModule *); /*!< signalled when a module is added. */
-    void moduleRemoved (BaseModule *); /*!< signalled when a module is removed. */
-    void moduleNameChanged (BaseModule *, QString); /*! signalled when a module's name is changed. */
+    void moduleAdded (AbstractModule *); /*!< signalled when a module is added. */
+    void moduleRemoved (AbstractModule *); /*!< signalled when a module is removed. */
+    void moduleNameChanged (AbstractModule *, QString); /*! signalled when a module's name is changed. */
 
 private:
-	ModuleManager();
+    ModuleManager();
 
-	static ModuleManager *inst;
+    static ModuleManager *inst;
 
     int getNextId ();
 
 private:
-    QList<BaseModule*>* items;
-    QList<BaseDAqModule*>* daqItems;
-    QList<BaseInterfaceModule*>* interfaceItems;
+    list_type* items;
     QMap<QString, ModuleTypeDesc> registry;
-    BaseInterfaceModule* mainInterface;
 
 private: // no copying
 	ModuleManager(const ModuleManager &);
@@ -130,8 +97,8 @@ private: // no copying
 
 class ModuleRegistrar {
 public:
-    ModuleRegistrar (const QString &type, ModuleManager::ModuleFactory fac, AbstractModule::Type mclass) {
-        ModuleManager::ref ().registerModuleType (type, fac, mclass);
+    ModuleRegistrar (const QString &type, ModuleManager::ModuleFactory fac) {
+        ModuleManager::ref ().registerModuleType (type, fac);
     }
 
 private:

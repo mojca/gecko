@@ -28,9 +28,7 @@ SOURCES += main.cpp \
     modulemanager.cpp \
     dummymodule.cpp \
     scopechannel.cpp \
-    baseui.cpp \
     dummyui.cpp \
-    basemodule.cpp \
     sis3150ui.cpp \
     sis3150module.cpp \
     sis3350module.cpp \
@@ -42,7 +40,6 @@ SOURCES += main.cpp \
     runthread.cpp \
     pluginthread.cpp \
     threadbuffer.cpp \
-    baseinterfacemodule.cpp \
     sis3100module.cpp \
     sis3100ui.cpp \
     demuxsis3350plugin.cpp \
@@ -56,7 +53,6 @@ SOURCES += main.cpp \
     dspampspecplugin.cpp \
     caen792module.cpp \
     caen792ui.cpp \
-    basedaqmodule.cpp \
     dspqdcspecplugin.cpp \
     fanoutplugin.cpp \
     dspcalfilterplugin.cpp \
@@ -82,7 +78,8 @@ SOURCES += main.cpp \
     caen820ui.cpp \
     demuxcaen820plugin.cpp \
     eventbuilderplugin.cpp \
-    packsis3350plugin.cpp
+    packsis3350plugin.cpp \
+    interfacemanager.cpp
 HEADERS += sis3350.h \
     plot2d.h \
     sis3350ui.h \
@@ -107,7 +104,6 @@ HEADERS += sis3350.h \
     runthread.h \
     pluginthread.h \
     threadbuffer.h \
-    baseinterfacemodule.h \
     sis3100module.h \
     sis3100ui.h \
     demuxsis3350plugin.h \
@@ -123,7 +119,6 @@ HEADERS += sis3350.h \
     caen_v792.h \
     caen792module.h \
     caen792ui.h \
-    basedaqmodule.h \
     dspqdcspecplugin.h \
     fanoutplugin.h \
     dspcalfilterplugin.h \
@@ -154,4 +149,7 @@ HEADERS += sis3350.h \
     caen820ui.h \
     demuxcaen820plugin.h \
     eventbuilderplugin.h \
-    packsis3350plugin.h
+    packsis3350plugin.h \
+    abstractinterface.h \
+    interfacemanager.h \
+    baseinterface.h

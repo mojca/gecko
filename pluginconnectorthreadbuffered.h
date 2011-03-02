@@ -8,7 +8,7 @@ class PluginConnectorThreadBuffered : public virtual PluginConnector
 {
 
 public:
-    PluginConnectorThreadBuffered(BasePlugin* _plugin, QString _name,
+    PluginConnectorThreadBuffered(AbstractPlugin* _plugin, QString _name,
                                   int chunkSize, int bufferSize, int id);
 
     virtual void setData(std::vector<uint32_t>*);

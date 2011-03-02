@@ -1,10 +1,12 @@
 #include "runthread.h"
 
-#include "basedaqmodule.h"
+#include "abstractmodule.h"
+#include "modulemanager.h"
+#include "interfacemanager.h"
+#include "abstractinterface.h"
+#include "scopechannel.h"
 
-RunThread::RunThread(ModuleManager* _mmgr)
-        : mmgr(_mmgr)
-{
+RunThread::RunThread () {
     qRegisterMetaType<ScopeChannel*>("ScopeChannel*");
 
     triggered = false;
@@ -53,16 +55,16 @@ void RunThread::createLists()
 {
     triggerList = new QList<ScopeChannel*>;
     channelList = new QList<ScopeChannel*>;
-    moduleList  = new QList<BaseDAqModule*>;
+    moduleList  = new QList<AbstractModule*>;
 
-    const QList<BaseModule*>* mlist = mmgr->list();
+    const QList<AbstractModule*>* mlist = ModuleManager::ptr ()->list ();
     QList<ScopeChannel*>* trgCh;
-    QList<BaseModule*>::const_iterator it(mlist->begin());
+    QList<AbstractModule*>::const_iterator it(mlist->begin());
 
 
     for(;it != mlist->end(); ++it)
     {
-        BaseDAqModule* curModule = dynamic_cast<BaseDAqModule*>(*it);
+        AbstractModule* curModule = *it;
         if (!curModule) continue;
         trgCh = curModule->getChannels();
         QList<ScopeChannel*>::iterator ch(trgCh->begin());
@@ -123,11 +125,11 @@ void RunThread::acquire(ScopeChannel* _ch)
 
     //std::cout << currentThreadId() << ": Run thread acquiring." << std::endl;
 
-    QList<BaseDAqModule*>::iterator m(moduleList->begin());
+    QList<AbstractModule*>::iterator m(moduleList->begin());
 
     while(m != moduleList->end())
     {
-        BaseDAqModule* curM = (*m);
+        AbstractModule* curM = (*m);
         curM->acquire();
         m++;
     }
@@ -146,6 +148,7 @@ void RunThread::stop()
 
 void RunThread::pollLoop()
 {
+    InterfaceManager *imgr = InterfaceManager::ptr ();
     while(!abort)
     {
         nofPolls++;
@@ -153,9 +156,9 @@ void RunThread::pollLoop()
         {
             if(trg->getModule()->dataReady())
             {
-                mmgr->getMainInterface()->setOutput1(true);
+                imgr->getMainInterface()->setOutput1(true);
                 acquire(trg);
-                mmgr->getMainInterface()->setOutput1(false);
+                imgr->getMainInterface()->setOutput1(false);
                 nofSuccessfulEvents++;
             }
         }

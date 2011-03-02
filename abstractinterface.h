@@ -1,32 +1,49 @@
-#ifndef BASEINTERFACEMODULE_H
-#define BASEINTERFACEMODULE_H
+#ifndef ABSTRACTINTERFACE_H
+#define ABSTRACTINTERFACE_H
 
-#include <inttypes.h>
+#include <stdint.h>
 
-#include "basemodule.h"
+#include <QObject>
+#include <QString>
 
-/*! Base class for VME interfaces. */
-class BaseInterfaceModule : public BaseModule
-{
-    Q_OBJECT
+class BaseUI;
+class QSettings;
 
-protected:
-
-    QString addrMode;
-    QString dataMode;
-
+/*! Abstract base class for all VME interfaces.
+ * To implement a new interface please derive from BaseInterface which already handles ids names and types. */
+class AbstractInterface : public QObject {
 public:
-    BaseInterfaceModule(int id_, QString _name = "Base Interface");
+    virtual ~AbstractInterface () {}
 
-    void setAddrMode(QString newMode) { addrMode = newMode; }
-    void setDataMode(QString newMode) { dataMode = newMode; }
-    QString getAddrMode() { return addrMode; }
-    QString getDataMode() { return dataMode; }
+    /*! returns the interface name. */
+    virtual const QString& getName () const = 0;
 
-    AbstractModule::Type getModuleType () { return AbstractModule::TypeInterface; }
+    /*! returns the interface type. */
+    virtual QString getTypeName () const = 0;
+
+    /*! returns the UI for the interface. */
+    virtual BaseUI* getUI () const = 0;
+
+    /*! returns the interface id */
+    virtual int getId () const = 0;
+
+    /*! Save the interface settings to the given QSettings object.
+     *  The implementation should read the subsection named like the interface instance
+     *  and save all settings inside to a local data structure, because lifetime of the settings object
+     *  is not guaranteed to be longer than the lifetime of this object.
+     *  \sa #applySettings, InterfaceManager::saveSettings
+     */
+    virtual void saveSettings(QSettings*) = 0;
+
+    /*! Load the interface settings from the given QSettings object.
+     *  The implementation should create a new subsection named like the interface instance
+     *  and save all settings inside this section.
+     *  \sa #saveSettings, InterfaceManager::applySettings
+     */
+    virtual void applySettings(QSettings*) = 0;
 
     /*! check if the interface is open. */
-    virtual bool isOpen() = 0;
+    virtual bool isOpen() const = 0;
 
     /*! open the interface. After opening, the interface is ready to perform VME communication */
     virtual int open() = 0;
@@ -73,6 +90,15 @@ public:
 
     /*! Return whether the given error code is a bus error or not. */
     virtual bool isBusError (int err) const = 0;
+
+protected:
+    /*! Called by the interface manager when a name change is requested. */
+    virtual void setName (QString newName) = 0;
+
+    /*! Called by the interface manager to set the type for later retrieval. */
+    virtual void setTypeName (QString newtype) = 0;
+
+    friend class InterfaceManager;
 };
 
-#endif // BASEINTERFACEMODULE_H
+#endif // ABSTRACTINTERFACE_H

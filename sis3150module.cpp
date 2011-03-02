@@ -1,11 +1,13 @@
 #include <iostream>
 #include "sis3150module.h"
-#include "modulemanager.h"
+#include "interfacemanager.h"
 
-static ModuleRegistrar registrar ("sis3150", Sis3150Module::create, AbstractModule::TypeInterface);
+static InterfaceRegistrar registrar ("sis3150", Sis3150Module::create);
 
 Sis3150Module::Sis3150Module(int _id, QString _name)
-    : BaseInterfaceModule(_id, _name)
+    : BaseInterface(_id, _name)
+    , id (getId ())
+    , name (getName ())
 {
     deviceOpen = false;
 
@@ -66,7 +68,7 @@ int Sis3150Module::open()
     return 0;
 }
 
-bool Sis3150Module::isOpen()
+bool Sis3150Module::isOpen() const
 {
     return deviceOpen;
 }
@@ -84,48 +86,6 @@ int Sis3150Module::close()
     ui->moduleClosed ();
 
     return 0;
-}
-
-
-int Sis3150Module::vmeSingleRead(const uint32_t addr, uint32_t* data)
-{
-    Sis3150UI* ui = dynamic_cast<Sis3150UI*>(getUI());
-
-    if(addrMode == "A32")
-    {
-        if(dataMode == "D32")
-        {
-            ui->outputText("readA32D32\n");
-            return readA32D32(addr,data);
-        }
-        if(dataMode == "D16")
-        {
-            uint16_t data16 = 0xffff & (*data);
-            ui->outputText("readA32D16\n");
-            int ret = readA32D16(addr,&data16);
-            (*data) = 0x0000ffff & data16;
-            return ret;
-        }
-    }
-    else
-    {
-        return 0xDEADBEEF;
-    }
-    return -1;
-}
-
-int Sis3150Module::vmeSingleWrite(const uint32_t addr, const uint32_t data)
-{
-    if(addrMode == "A32")
-    {
-        if(dataMode == "D32") return writeA32D32(addr,data);
-        if(dataMode == "D16") return writeA32D16(addr,data);
-    }
-    else
-    {
-        return 0xDEADBEEF;
-    }
-    return -1;
 }
 
 int Sis3150Module::readA32D32(const uint32_t addr, uint32_t* data)

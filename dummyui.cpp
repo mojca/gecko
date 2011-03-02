@@ -1,7 +1,7 @@
 #include "dummyui.h"
 
 DummyUI::DummyUI(DummyModule* _module)
-    : BaseUI(dynamic_cast<BaseModule*>(_module))
+    : module (_module), name (_module->getName ())
 {
     createUI();
     std::cout << "Instantiated Dummy UI" << std::endl;
@@ -9,8 +9,6 @@ DummyUI::DummyUI(DummyModule* _module)
 
 void DummyUI::createUI()
 {
-    DummyModule* module = dynamic_cast<DummyModule*>(this->module);
-
     QGridLayout* l = new QGridLayout;
 
     QGroupBox* box = new QGroupBox;

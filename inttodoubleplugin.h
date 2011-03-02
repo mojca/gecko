@@ -10,7 +10,7 @@ class IntToDoublePlugin : public BasePlugin
 Q_OBJECT
 public:
     IntToDoublePlugin(int id, QString name, const Attributes &attrs);
-    static BasePlugin *create (int id, const QString &name, const Attributes &attrs) {
+    static AbstractPlugin *create (int id, const QString &name, const Attributes &attrs) {
         return new IntToDoublePlugin (id, name, attrs);
     }
 

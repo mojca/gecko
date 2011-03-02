@@ -1,12 +1,12 @@
 #ifndef ADDEDITDLGS_H
 #define ADDEDITDLGS_H
 
-#include "basemodule.h"
-#include "basedaqmodule.h"
-#include "baseinterfacemodule.h"
+#include "abstractmodule.h"
+#include "abstractinterface.h"
 
 #include "modulemanager.h"
 #include "pluginmanager.h"
+#include "interfacemanager.h"
 
 #include <QComboBox>
 #include <QMessageBox>
@@ -56,10 +56,89 @@ private:
     QRegExpValidator *v_;
 };
 
+class AddEditInterfaceDlg : public QDialog {
+    Q_OBJECT
+public:
+    AddEditInterfaceDlg (QWidget *parent, AbstractInterface *iface = NULL)
+    : QDialog (parent)
+    , iface_ (iface)
+    {
+        setModal (true);
+        createUI ();
+    }
+
+    void createUI () {
+        typeselector_ = new QComboBox (this);
+        typeselector_->setEditable (false);
+        typeselector_->setInsertPolicy (QComboBox::InsertAlphabetically);
+        typeselector_->addItems (InterfaceManager::ref().getAvailableTypes());
+
+        name_ = new QLineEdit (this);
+
+        if (iface_) {
+            setWindowTitle (tr("Edit Interface"));
+            name_->setText (iface_->getName ());
+            typeselector_->setCurrentIndex (typeselector_->findText (iface_->getTypeName ()));
+            typeselector_->setEnabled (false);
+        } else {
+            setWindowTitle (tr("Add Interface"));
+        }
+
+        QGridLayout *l = new QGridLayout (this);
+        QLabel *lbl = new QLabel (tr ("Interface name:"));
+        l->addWidget (lbl, 0, 0, 1, 1, Qt::AlignRight);
+        l->addWidget (name_, 0, 1, 1, 1);
+        lbl = new QLabel (tr ("Interface type:"));
+        l->addWidget (lbl, 1, 0, 1, 1, Qt::AlignRight);
+        l->addWidget (typeselector_, 1, 1, 1, 1);
+
+        QDialogButtonBox *bbox = new QDialogButtonBox (QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+        l->addWidget (bbox, 4, 0, 1, 2);
+        setLayout (l);
+
+        setTabOrder (name_, typeselector_);
+        setTabOrder (typeselector_, bbox);
+
+        name_->setFocus ();
+
+        connect (bbox, SIGNAL (accepted()), SLOT (accept()));
+        connect (bbox, SIGNAL (rejected()), SLOT (reject()));
+    }
+
+
+public slots:
+    virtual void accept () {
+        if (name_->text().trimmed().isEmpty()) {
+            QMessageBox::warning (this, tr ("Scope"), tr ("Please enter a name!"));
+            return;
+        }
+
+        if (iface_ != InterfaceManager::ref().get (name_->text()) ||
+            ModuleManager::ref().get (name_->text ()) ||
+            PluginManager::ref().get (name_->text ())) {
+            QMessageBox::warning (this, tr ("Scope"), tr ("A component with the same name already exists!"));
+            return;
+        }
+
+        if (iface_) {
+            InterfaceManager::ref ().setInterfaceName (iface_, name_->text ());
+        } else {
+            InterfaceManager::ref ().create (typeselector_->currentText (), name_->text ());
+        }
+        QDialog::accept ();
+    }
+
+private:
+    AbstractInterface *iface_;
+
+    QComboBox *typeselector_;
+    QLineEdit *name_;
+};
+
 class AddEditModuleDlg : public QDialog {
     Q_OBJECT
 public:
-    AddEditModuleDlg (QWidget *parent, BaseModule *mod = NULL)
+    AddEditModuleDlg (QWidget *parent, AbstractModule *mod = NULL)
     : QDialog (parent)
     , module_ (mod)
     {
@@ -79,7 +158,7 @@ public:
         typeselector_->setInsertPolicy (QComboBox::InsertAlphabetically);
         ifaceselector_->setEditable (false);
         QStringList ifacenames;
-        foreach (BaseInterfaceModule *iface, (*ModuleManager::ref().listInterfaces ())) {
+        foreach (AbstractInterface *iface, (*InterfaceManager::ref().list ())) {
             ifacenames.append (iface->getName ());
         }
         ifaceselector_->addItems (ifacenames);
@@ -95,17 +174,12 @@ public:
             name_->setText (module_->getName ());
             typeselector_->setCurrentIndex (typeselector_->findText (module_->getTypeName ()));
             typeselector_->setEnabled (false);
-            if (module_->getModuleType() == AbstractModule::TypeDAq) {
-                BaseDAqModule *daq =dynamic_cast<BaseDAqModule*> (module_);
-                if (daq->getInterface ())
-                    ifaceselector_->setCurrentIndex (ifaceselector_->findText (
-                            daq->getInterface ()->getName ()
-                            ));
-                baddr_->setValue (daq->getBaseAddress() >> 16);
-            } else {
-                ifaceselector_->setEnabled (false);
-                baddr_->setEnabled (false);
-            }
+
+            if (module_->getInterface ())
+                ifaceselector_->setCurrentIndex (ifaceselector_->findText (
+                        module_->getInterface ()->getName ()
+                        ));
+            baddr_->setValue (module_->getBaseAddress() >> 16);
         } else {
             setWindowTitle (tr("Add Module"));
         }
@@ -137,9 +211,6 @@ public:
 
         connect (bbox, SIGNAL (accepted()), SLOT (accept()));
         connect (bbox, SIGNAL (rejected()), SLOT (reject()));
-        connect (typeselector_, SIGNAL (currentIndexChanged(QString)), SLOT (typeChanged (QString)));
-
-        typeChanged (typeselector_->currentText ());
     }
 
 
@@ -156,39 +227,24 @@ public slots:
         }
 
         if (module_) {
-            if (module_->getModuleType () == AbstractModule::TypeDAq) {
-                BaseDAqModule *daq = static_cast<BaseDAqModule *> (module_);
-                if (ifaceselector_->currentText().isEmpty()) {
-                    QMessageBox::warning (this, tr("Scope"), tr("Please select an interface module!"));
-                    return;
-                }
-                daq->setInterface (
-                        ModuleManager::ref ().getIface (ifaceselector_->currentText()));
-                daq->setBaseAddress (baddr_->value() << 16);
+            if (ifaceselector_->currentText().isEmpty()) {
+                QMessageBox::warning (this, tr("Scope"), tr("Please select an interface module!"));
+                return;
             }
+            module_->setInterface (InterfaceManager::ref ().get (ifaceselector_->currentText()));
+            module_->setBaseAddress (baddr_->value() << 16);
 
             ModuleManager::ref ().setModuleName (module_, name_->text ());
         } else {
-            BaseModule *m = ModuleManager::ref ().create (typeselector_->currentText (), name_->text ());
-            if (m->getModuleType () == AbstractModule::TypeDAq) {
-                BaseDAqModule *daq = static_cast<BaseDAqModule *> (m);
-                daq->setInterface (
-                        ModuleManager::ref ().getIface (ifaceselector_->currentText()));
-                daq->setBaseAddress (baddr_->value() << 16);
-            }
+            AbstractModule *m = ModuleManager::ref ().create (typeselector_->currentText (), name_->text ());
+            m->setInterface (InterfaceManager::ref ().get (ifaceselector_->currentText()));
+            m->setBaseAddress (baddr_->value() << 16);
         }
         QDialog::accept ();
     }
 
-private slots:
-    void typeChanged (QString newType) {
-        bool isdaq = ModuleManager::ref().getModuleTypeClass (newType) == AbstractModule::TypeDAq;
-        ifaceselector_->setEnabled (isdaq);
-        baddr_->setEnabled (isdaq);
-    }
-
 private:
-    BaseModule *module_;
+    AbstractModule *module_;
 
     QComboBox *typeselector_;
     QLineEdit *name_;
@@ -199,7 +255,7 @@ private:
 class AddEditPluginDlg : public QDialog {
     Q_OBJECT
 public:
-    AddEditPluginDlg (QWidget *parent = NULL, BasePlugin *p = NULL)
+    AddEditPluginDlg (QWidget *parent = NULL, AbstractPlugin *p = NULL)
     : QDialog (parent)
     , plugin_ (p)
     {
@@ -342,7 +398,7 @@ private slots:
     }
 
 private:
-    BasePlugin *plugin_;
+    AbstractPlugin *plugin_;
     QLineEdit *name_;
     QComboBox *typeselector_;
     QComboBox *groupselector_;

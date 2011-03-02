@@ -1,11 +1,12 @@
 #include "caen785module.h"
 #include "modulemanager.h"
 #include "runmanager.h"
+#include "scopechannel.h"
 
-static ModuleRegistrar registrar ("caen785", Caen785Module::create, AbstractModule::TypeDAq);
+static ModuleRegistrar registrar ("caen785", Caen785Module::create);
 
 Caen785Module::Caen785Module(int _id, QString _name)
-        : BaseDAqModule(_id, _name)
+        : BaseModule(_id, _name)
 {
     setChannels();
     createOutputPlugin();
@@ -38,6 +39,7 @@ void Caen785Module::createOutputPlugin()
 
 int Caen785Module::softReset()
 {
+    AbstractInterface *iface = getInterface ();
     int ret;
 
     uint32_t addr;
@@ -59,6 +61,7 @@ int Caen785Module::softReset()
 
 int Caen785Module::dataReset()
 {
+    AbstractInterface *iface = getInterface ();
     int ret;
 
     uint32_t addr;
@@ -80,6 +83,7 @@ int Caen785Module::dataReset()
 
 int Caen785Module::counterReset()
 {
+    AbstractInterface *iface = getInterface ();
     int ret;
 
     uint32_t addr;
@@ -96,6 +100,7 @@ int Caen785Module::counterReset()
 
 int Caen785Module::configure()
 {
+    AbstractInterface *iface = getInterface ();
     int ret = 0;
 
     uint32_t addr;
@@ -173,6 +178,7 @@ int Caen785Module::configure()
 
 int Caen785Module::readInfo()
 {
+    AbstractInterface *iface = getInterface ();
     int ret = 0;
 
     uint32_t addr;
@@ -186,6 +192,7 @@ int Caen785Module::readInfo()
 
 int Caen785Module::readStatus1()
 {
+    AbstractInterface *iface = getInterface ();
     int ret = 0;
 
     uint32_t addr;
@@ -199,6 +206,7 @@ int Caen785Module::readStatus1()
 
 int Caen785Module::readStatus2()
 {
+    AbstractInterface *iface = getInterface ();
     int ret = 0;
 
     uint32_t addr;
@@ -212,6 +220,7 @@ int Caen785Module::readStatus2()
 
 int Caen785Module::readStatus()
 {
+    AbstractInterface *iface = getInterface ();
     int ret = 0;
 
     uint32_t addr;
@@ -311,6 +320,7 @@ int Caen785Module::writeToBuffer(uint32_t nofWords)
 
 int Caen785Module::acquireSingleEvent()
 {
+    AbstractInterface *iface = getInterface ();
     int ret = 0;
     uint32_t addr;
 
@@ -329,6 +339,7 @@ int Caen785Module::acquireSingleEvent()
 
 int Caen785Module::acquireSingleEventMBLT()
 {
+    AbstractInterface *iface = getInterface ();
     int ret = 0;
 
     uint32_t addr;
@@ -348,6 +359,7 @@ int Caen785Module::acquireSingleEventMBLT()
 
 int Caen785Module::acquireSingleEventFIFO()
 {
+    AbstractInterface *iface = getInterface ();
     int ret = 0;
 
     uint32_t addr;

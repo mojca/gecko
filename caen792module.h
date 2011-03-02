@@ -1,7 +1,7 @@
 #ifndef CAEN792MODULE_H
 #define CAEN792MODULE_H
 
-#include "basedaqmodule.h"
+#include "basemodule.h"
 #include "baseplugin.h"
 #include "demuxcaenadcplugin.h"
 #include "pluginmanager.h"
@@ -63,47 +63,47 @@ struct Caen792ModuleConfig {
     }
 };
 
-class Caen792Module : public virtual BaseDAqModule {
+class Caen792Module : public BaseModule {
 	Q_OBJECT
 public:
     // Factory method
-    static BaseModule *createQdc (int id, const QString &name) {
+    static AbstractModule *createQdc (int id, const QString &name) {
         return new Caen792Module (id, name, true);
     }
-    static BaseModule *createTdc (int id, const QString &name) {
+    static AbstractModule *createTdc (int id, const QString &name) {
         return new Caen792Module (id, name, false);
     }
 
-	virtual void saveSettings (QSettings*);
-	virtual void applySettings (QSettings*);
+    virtual void saveSettings (QSettings*);
+    virtual void applySettings (QSettings*);
 
     ThreadBuffer<uint32_t> *getBuffer () { return NULL; }
 
-	int counterReset ();
-	int dataReset ();
-	int softReset ();
+    int counterReset ();
+    int dataReset ();
+    int softReset ();
 
-	virtual void setChannels ();
-	virtual int acquire ();
-	virtual bool dataReady ();
-	virtual int reset ();
-	virtual int configure ();
+    virtual void setChannels ();
+    virtual int acquire ();
+    virtual bool dataReady ();
+    virtual int reset ();
+    virtual int configure ();
 
     virtual uint32_t getBaseAddress () const;
     virtual void setBaseAddress (uint32_t baddr);
 
     uint16_t getInfo () const;
-	int readStatus ();
+    int readStatus ();
 
-	uint16_t getStatus1 () const { return status1; }
-	uint16_t getStatus2 () const { return status2; }
-	uint16_t getBitset1 () const { return bitset1; }
-	uint16_t getBitset2 () const { return bitset2; }
-	uint32_t getEventCount () const { return evcnt; }
+    uint16_t getStatus1 () const { return status1; }
+    uint16_t getStatus2 () const { return status2; }
+    uint16_t getBitset1 () const { return bitset1; }
+    uint16_t getBitset2 () const { return bitset2; }
+    uint32_t getEventCount () const { return evcnt; }
 
-	Caen792ModuleConfig *getConfig () { return &conf_; }
+    Caen792ModuleConfig *getConfig () { return &conf_; }
 
-	int acquireSingle (uint32_t *data, uint32_t *rd);
+    int acquireSingle (uint32_t *data, uint32_t *rd);
 
 private:
     Caen792Module (int _id, const QString &, bool _isqdc);

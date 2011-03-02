@@ -1,10 +1,11 @@
 #include "sis3350module.h"
 #include "modulemanager.h"
+#include "scopechannel.h"
 
-static ModuleRegistrar registrar ("sis3350", Sis3350Module::create, AbstractModule::TypeDAq);
+static ModuleRegistrar registrar ("sis3350", Sis3350Module::create);
 
 Sis3350Module::Sis3350Module(int _id, QString _name)
-        : BaseDAqModule(_id, _name)
+        : BaseModule(_id, _name)
 {
     getConfigFromCode();
 
@@ -133,7 +134,7 @@ unsigned int Sis3350Module::configureControlStatus()
         data += SIS3350_CTRL_ENABLE_LEMO_IN_INVERT;
     }
     data += SIS3350_CTRL_ENABLE_USER_LED;
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface ()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SET STATUS\n",ret);
 
     return ret;
@@ -148,12 +149,12 @@ unsigned int Sis3350Module::configureEndAddressThresholds()
         // End address threshold
         addr = conf.base_addr + SIS3350_END_ADDRESS_THRESHOLD_ADC12;
         data = conf.sample_length;
-        ret = iface->writeA32D32(addr,data);
+        ret = getInterface()->writeA32D32(addr,data);
         if(ret != 0) printf("Error %d at END_ADDRESS_THRESHOLD_ADC12\n",ret);
 
         addr = conf.base_addr + SIS3350_END_ADDRESS_THRESHOLD_ADC34;
         data = conf.sample_length;
-        ret = iface->writeA32D32(addr,data);
+        ret = getInterface()->writeA32D32(addr,data);
         if(ret != 0) printf("Error %d at END_ADDRESS_THRESHOLD_ADC34\n",ret);
     }
 
@@ -177,7 +178,7 @@ unsigned int Sis3350Module::configureAcquisitionMode()
     if(conf.acq_multi_event) {
         data += SIS3350_ACQ_ENABLE_MULTIEVENT;
     }
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SET ACQUISITION MODE\n",ret);
 
     return ret;
@@ -190,13 +191,13 @@ unsigned int Sis3350Module::configureExternalDAC()
     // Ext DAC Trigger setup
     addr = conf.base_addr + SIS3350_EXT_CLOCK_TRIGGER_DAC_CONTROL_STATUS;
     data = (conf.ext_clock_trigger_dac_control << 4);
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at EXT DAC TRG SETUP\n",ret);
 
     // Ext DAC Threshold
     addr = conf.base_addr + SIS3350_EXT_CLOCK_TRIGGER_DAC_DATA;
     data = (conf.ext_clock_trigger_daq_data & 0xffff);
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at EXT DAC THR\n",ret);
 
     return ret;
@@ -209,19 +210,19 @@ unsigned int Sis3350Module::configureDirectMemory()
     // Direct Memory Stop Mode Sample Wrap Length (only STOP mode)
     addr = conf.base_addr + SIS3350_DIRECT_MEMORY_SAMPLE_WRAP_LENGTH_ALL_ADC;
     data = (conf.direct_mem_wrap_length & 0x07FFFFF8);
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at DIRECT MEM STOP MODE SAMPLE WRAP LENGTH SETUP\n",ret);
 
     // Direct Memory Sample Length (only START mode)
     addr = conf.base_addr + SIS3350_DIRECT_MEMORY_SAMPLE_LENGTH;
     data = (conf.direct_mem_sample_length & 0x07FFFFF8);
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at DIRECT MEM SAMPLE LENGTH SETUP\n",ret);
 
     // Direct Memory Pretrigger Length
     addr = conf.base_addr + SIS3350_TRIGGER_DELAY;
     data = (conf.direct_mem_pretrigger_length & 0x03FFFFFE);
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at DIRECT MEM PRETRIGGER LENGTH SETUP\n",ret);
 
     return ret;
@@ -269,7 +270,7 @@ unsigned int Sis3350Module::configureInputGains()
         }
 
         data = (conf.variable_gain[i] & 0xfff);
-        ret = iface->writeA32D32(addr,data);
+        ret = getInterface()->writeA32D32(addr,data);
         if(ret != 0) printf("Error %d at ADC GAIN %d\n",ret,i);
     }
 
@@ -299,7 +300,7 @@ unsigned int Sis3350Module::configureMultiEventRegister()
     // Setup multi event register
     addr = conf.base_addr + SIS3350_MULTIEVENT_MAX_NOF_EVENTS;
     data = conf.multievent_max_nof_events;
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SETUP MULTIEVENT\n",ret);
 
     return ret;
@@ -311,12 +312,12 @@ unsigned int Sis3350Module::configureRingBuffer()
 
     // Set ringbuffer length
     addr = conf.base_addr + SIS3350_RINGBUFFER_SAMPLE_LENGTH_ALL_ADC;
-    ret = iface->writeA32D32(addr,conf.sample_length);
+    ret = getInterface()->writeA32D32(addr,conf.sample_length);
     if(ret != 0) printf("Error %d at SET RB LENGTH\n",ret);
 
     // Ringbuffer pre-delay
     addr = conf.base_addr + SIS3350_RINGBUFFER_PRE_DELAY_ALL_ADC;
-    ret = iface->writeA32D32(addr,conf.pre_delay);
+    ret = getInterface()->writeA32D32(addr,conf.pre_delay);
     if(ret != 0) printf("Error %d at SET RB PREDELAY\n",ret);
 
     return ret;
@@ -330,7 +331,7 @@ unsigned int Sis3350Module::configureClock()
     addr = conf.base_addr + SIS3350_FREQUENCE_SYNTHESIZER;
     data = (conf.clock2 & 3) << 9;
     data |= (conf.clock1 & 0x1FF);
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SET CLOCK\n",ret);
 
     return ret;
@@ -377,7 +378,7 @@ unsigned int Sis3350Module::configureTriggers()
         data += ((conf.trigger_pulse_length[i] & 0xff) << 16);
         data += ((conf.trigger_gap_length[i]   & 0x1f) <<  8);
         data += ( conf.trigger_peak_length[i]  & 0x1f);
-        ret = iface->writeA32D32(addr,data);
+        ret = getInterface()->writeA32D32(addr,data);
         if(ret != 0) printf("Error %d at TRIGGER SETUP %d\n",ret,i);
 
 
@@ -404,7 +405,7 @@ unsigned int Sis3350Module::configureTriggers()
         data = 0;
         data += ( conf.trigger_threshold[i]     & 0xfff);
         data += ((conf.trigger_offset[i] & 0xfff) << 16);
-        ret = iface->writeA32D32(addr,data);
+        ret = getInterface()->writeA32D32(addr,data);
         if(ret != 0)
         {
             printf("Error %d at TRIGGER THR %d\n",ret,i);
@@ -423,7 +424,7 @@ int Sis3350Module::ledOff()
     addr = conf.base_addr + SIS3350_CONTROL_STATUS;
     data = 0;
     data += SIS3350_CTRL_DISABLE_USER_LED;
-    status = iface->writeA32D32(addr,data);
+    status = getInterface()->writeA32D32(addr,data);
     if(status != 0)
     {
         printf("Error %d at VME READ POLL\n",status);
@@ -438,7 +439,7 @@ int Sis3350Module::ledOn()
     addr = conf.base_addr + SIS3350_CONTROL_STATUS;
     data = 0;
     data += SIS3350_CTRL_ENABLE_USER_LED;
-    status = iface->writeA32D32(addr,data);
+    status = getInterface()->writeA32D32(addr,data);
     if(status != 0)
     {
         printf("Error %d at VME READ POLL\n",status);
@@ -451,7 +452,7 @@ int Sis3350Module::reset()
     int ret;
 
     addr = conf.base_addr + SIS3350_KEY_RESET;
-    ret = iface->writeA32D32(addr,0x1);
+    ret = getInterface()->writeA32D32(addr,0x1);
     if(ret != 0) printf("Error %d at KEY RESET\n",ret);
 
     return ret;
@@ -461,7 +462,7 @@ int Sis3350Module::timestampClear()
 {
     int ret = 0;
     addr = conf.base_addr + SIS3350_KEY_TIMESTAMP_CLR;
-    ret = iface->writeA32D32(addr,0);
+    ret = getInterface()->writeA32D32(addr,0);
     if(ret != 0) printf("Error %d at KEY TIMESTAMP_CLR\n",ret);
     return ret;
 }
@@ -470,7 +471,7 @@ int Sis3350Module::arm()
 {
     int ret = 0;
     addr = conf.base_addr + SIS3350_KEY_ARM;
-    ret = iface->writeA32D32(addr,0);
+    ret = getInterface()->writeA32D32(addr,0);
     if(ret != 0) printf("Error %d at KEY ARM\n",ret);
     return ret;
 }
@@ -479,7 +480,7 @@ int Sis3350Module::disarm()
 {
     int ret = 0;
     addr = conf.base_addr + SIS3350_KEY_DISARM;
-    ret = iface->writeA32D32(addr,0);
+    ret = getInterface()->writeA32D32(addr,0);
     if(ret != 0) printf("Error %d at KEY DISARM\n",ret);
     return ret;
 }
@@ -488,7 +489,7 @@ int Sis3350Module::trigger()
 {
     int ret = 0;
     addr = conf.base_addr + SIS3350_KEY_TRIGGER;
-    ret = iface->writeA32D32(addr,0);
+    ret = getInterface()->writeA32D32(addr,0);
     if(ret != 0) printf("Error %d at KEY TRIGGER",ret);
     return ret;
 }
@@ -525,7 +526,7 @@ bool Sis3350Module::dataReady()
     int ret = 0;
     addr = conf.base_addr + SIS3350_ACQUISITION_CONTROL;
     data = 0;
-    ret = iface->readA32D32(addr,&data);
+    ret = getInterface()->readA32D32(addr,&data);
     if(ret != 0)
     {
         printf("Error %d at VME READ POLL\n",ret);
@@ -672,7 +673,7 @@ int Sis3350Module::acquireRingBufferASync()
             default:
                 break;
         }
-        ret = iface->readA32D32(addr,&data);
+        ret = getInterface()->readA32D32(addr,&data);
         if(ret != 0) printf("Error %d at VME READ ACTUAL SAMPLE ADDR %d\n",ret,j);
         stop_next_sample_addr[j] = data;
         printf("Stop next sample address 0x%08x\n",stop_next_sample_addr[j]);
@@ -776,7 +777,7 @@ int Sis3350Module::acquireRingBufferSync()
             default:
                 break;
         }
-        ret = iface->readA32D32(addr,&data);
+        ret = getInterface()->readA32D32(addr,&data);
         if(ret != 0) printf("Error %d at VME READ ACTUAL SAMPLE ADDR %d\n",ret,j);
         stop_next_sample_addr[j] = data;
         //printf("Stop next sample address 0x%08x\n",stop_next_sample_addr[j]);
@@ -855,7 +856,7 @@ int Sis3350Module::writeDacOffset(uint32_t module_dac_control_status_addr,
 
         data =  dac_value ;
         addr = module_dac_control_status_addr + 4 ;         // DAC_DATA
-        if ((error = iface->writeA32D32(addr,data)) != 0)
+        if ((error = getInterface()->writeA32D32(addr,data)) != 0)
         {
                 //sisVME_ErrorHandling (error, addr, "sub_vme_A32D32_write");
                 return -1;
@@ -863,7 +864,7 @@ int Sis3350Module::writeDacOffset(uint32_t module_dac_control_status_addr,
 
         data =  1 + (dac_select_no << 4);                   // write to DAC Register
         addr = module_dac_control_status_addr ;
-        if ((error = iface->writeA32D32(addr,data)) != 0)
+        if ((error = getInterface()->writeA32D32(addr,data)) != 0)
         {
                 //sisVME_ErrorHandling (error, addr, "sub_vme_A32D32_write");
                 return -1;
@@ -874,7 +875,7 @@ int Sis3350Module::writeDacOffset(uint32_t module_dac_control_status_addr,
         addr = module_dac_control_status_addr  ;
         do
         {
-            if ((error = iface->readA32D32(addr,&data)) != 0)
+            if ((error = getInterface()->readA32D32(addr,&data)) != 0)
             {
                     //sisVME_ErrorHandling (error, addr, "sub_vme_A32D32_read");
                     return -1;
@@ -890,7 +891,7 @@ int Sis3350Module::writeDacOffset(uint32_t module_dac_control_status_addr,
 
         data =  2 + (dac_select_no << 4);                   // Load DACs
         addr = module_dac_control_status_addr;
-        if ((error = iface->writeA32D32(addr,data)) != 0) {
+        if ((error = getInterface()->writeA32D32(addr,data)) != 0) {
                 printf("Error %d at Load DACs\n",error);
                 return -1;
         }
@@ -899,7 +900,7 @@ int Sis3350Module::writeDacOffset(uint32_t module_dac_control_status_addr,
         addr = module_dac_control_status_addr;
         do
         {
-            if ((error = iface->readA32D32(addr,&data)) != 0)
+            if ((error = getInterface()->readA32D32(addr,&data)) != 0)
             {
                 printf("Error %d at Load DACs 2\n",error);
                 return -1;
@@ -981,7 +982,7 @@ int Sis3350Module::readDmaMblt64AdcDataBuffer(uint32_t module_address, uint32_t 
             // set page
             addr = module_address + SIS3350_ADC_MEMORY_PAGE_REGISTER  ;
             data = sub_page_addr_offset ;
-            if ((return_code = iface->writeA32D32(addr,data)) != 0)
+            if ((return_code = getInterface()->writeA32D32(addr,data)) != 0)
             {
                 printf("Error at ADC MEM PAGE REG Setup\n");
                 return return_code;
@@ -1009,7 +1010,7 @@ int Sis3350Module::readDmaMblt64AdcDataBuffer(uint32_t module_address, uint32_t 
 //                                           req_nof_lwords,
 //                                           &got_nof_lwords);
 
-            return_code = iface->readA322E(addr,
+            return_code = getInterface()->readA322E(addr,
                                            &uint_adc_buffer[index_num_data],
                                            req_nof_lwords,
                                            &got_nof_lwords);

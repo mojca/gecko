@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-PluginConnectorThreadBuffered::PluginConnectorThreadBuffered(BasePlugin* _plugin, QString _name,
+PluginConnectorThreadBuffered::PluginConnectorThreadBuffered(AbstractPlugin* _plugin, QString _name,
                                                              int _chunkSize, int _bufferSize, int _id)
 : PluginConnector(_plugin,ScopeCommon::out,_name,PluginConnector::VectorUint32)
 , buffer(_bufferSize,_chunkSize,_id)

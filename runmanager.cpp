@@ -8,8 +8,9 @@
 #include "scopemainwindow.h"
 #include "runthread.h"
 #include "pluginthread.h"
-#include "basedaqmodule.h"
-#include "baseinterfacemodule.h"
+#include "interfacemanager.h"
+#include "abstractmodule.h"
+#include "abstractinterface.h"
 
 #include <stdexcept>
 #include <iostream>
@@ -66,16 +67,16 @@ void RunManager::start (QString info) {
     running = true;
     state.setBit(StateRunning,true);
 
-    foreach(BaseInterfaceModule* iface, (*ModuleManager::ref().listInterfaces()))
+    foreach(AbstractInterface* iface, (*InterfaceManager::ref ().list ()))
     {
         if(!iface->isOpen())
             iface->open();
     }
 
-    runthread = new RunThread(ModuleManager::ptr ());
+    runthread = new RunThread ();
 
     // FIXME
-    foreach (BaseDAqModule *m, *ModuleManager::ref().listDaqModules()) {
+    foreach (AbstractModule *m, *ModuleManager::ref().list ()) {
         connect(runthread,SIGNAL(acquisitionDone()), m, SLOT(prepareForNextAcquisition()));
     }
 
@@ -116,7 +117,7 @@ void RunManager::stop () {
     pluginthread = NULL;
 
     // Reset buffers
-    foreach(BaseDAqModule* m, (*ModuleManager::ref().listDaqModules()))
+    foreach(AbstractModule* m, (*ModuleManager::ref ().list ()))
     {
         foreach(PluginConnector* bpc, (*m->getOutputPlugin()->getOutputs()))
         {
