@@ -1550,6 +1550,7 @@ void ScopeMainWindow::loadChannelList()
 
     triggerList->addTopLevelItems(trgItems);
     channelList->addTopLevelItems(chItems);
+    singleEventModeBox->setChecked (RunManager::ref ().isSingleEventMode ());
 }
 
 void ScopeMainWindow::updateRunPage(float evspersec, unsigned evs)
@@ -1810,6 +1811,7 @@ void ScopeMainWindow::saveConfig (QSettings *s) {
     int i = 0;
     s->beginGroup ("Configuration");
 
+    s->setValue ("SingleEventMode", RunManager::ref ().isSingleEventMode ());
     if (InterfaceManager::ref ().getMainInterface ())
         s->setValue ("MainInterface", InterfaceManager::ref().getMainInterface()->getName ());
 
@@ -1884,6 +1886,7 @@ void ScopeMainWindow::loadConfig (QSettings *s) {
     InterfaceManager::ref().clear ();
 
     s->beginGroup ("Configuration");
+    RunManager::setSingleEventMode (s->value ("SingleEventMode", false));
     size = s->beginReadArray ("Interfaces");
     for (int i = 0; i < size; ++i) {
         s->setArrayIndex (i);
