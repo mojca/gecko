@@ -2,6 +2,7 @@
 #include "addeditdlgs.h"
 #include "scopechannel.h"
 #include "baseui.h"
+#include "systeminfo.h"
 
 #include <QThreadPool>
 #include <QUdpSocket>
@@ -1886,7 +1887,7 @@ void ScopeMainWindow::loadConfig (QSettings *s) {
     InterfaceManager::ref().clear ();
 
     s->beginGroup ("Configuration");
-    RunManager::setSingleEventMode (s->value ("SingleEventMode", false));
+    RunManager::ref().setSingleEventMode (s->value ("SingleEventMode", false).toBool ());
     size = s->beginReadArray ("Interfaces");
     for (int i = 0; i < size; ++i) {
         s->setArrayIndex (i);
