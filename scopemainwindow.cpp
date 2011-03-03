@@ -19,7 +19,6 @@ ScopeMainWindow::ScopeMainWindow(QWidget *parent) :
 {
     oneSecondTimer = new QTimer();
     oneSecondTimer->start(1000);
-    sysinfo = new SystemInfo();
 
     localPort = 43256; // Port is "gecko" on phone keyboard
     localAddress = QHostAddress::Any;
@@ -994,7 +993,7 @@ void ScopeMainWindow::processQuery(QStringList query, QHostAddress sender)
         QByteArray datagram = "POST ";
         datagram += "update ";
         datagram += "state ";
-        QByteArray state(RunManager::ref().getStateString().toStdString().c_str());
+        QByteArray state(RunManager::ref().getStateString().toAscii());
         datagram += state;
         udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
 
@@ -1489,7 +1488,7 @@ void ScopeMainWindow::setStatusText(QString newString)
 
 void ScopeMainWindow::oneSecondTimerTimeout() {
     //std::cout << "CPU: " << sysinfo->getCpuLoad() << std::endl;
-    statusCpuLabel->setText(tr("CPU: %1 %").arg((int)(sysinfo->getCpuLoad()*100),3));
+    statusCpuLabel->setText(tr("CPU: %1 %").arg((int)(RunManager::ref().getSystemInfo()->getCpuLoad()*100),3));
 }
 
 void ScopeMainWindow::loadChannelList()

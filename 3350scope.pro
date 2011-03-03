@@ -6,7 +6,6 @@ TEMPLATE = app
 CONFIG += qt
 QT += network
 CONFIG += thread
-
 QMAKE_CXXFLAGS_RELEASE += -march=native \
     -O3
 LIBS += -g \
@@ -152,4 +151,5 @@ HEADERS += sis3350.h \
     packsis3350plugin.h \
     abstractinterface.h \
     interfacemanager.h \
-    baseinterface.h
+    baseinterface.h \
+    systeminfo.h
