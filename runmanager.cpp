@@ -11,6 +11,7 @@
 #include "interfacemanager.h"
 #include "abstractmodule.h"
 #include "abstractinterface.h"
+#include "systeminfo.h"
 
 #include <stdexcept>
 #include <iostream>
@@ -38,6 +39,7 @@ RunManager::RunManager()
 , runthread (NULL)
 , pluginthread (NULL)
 , updateTimer (new QTimer (this))
+, sysinfo (new SystemInfo ())
 {
     state.resize(2);
     state.setBit(StateRunning,false);
@@ -64,6 +66,7 @@ void RunManager::start (QString info) {
     if (running)
         throw std::logic_error ("start while running");
 
+    runInfo = info;
     running = true;
     state.setBit(StateRunning,true);
 
@@ -101,6 +104,7 @@ void RunManager::stop () {
     emit runStopping ();
 
     updateTimer->stop ();
+    runInfo = QString ();
 
     runthread->stop ();
     runthread->wait (1000);
@@ -129,6 +133,10 @@ void RunManager::stop () {
     state.setBit(StateRunning,false);
 
     emit runStopped ();
+}
+
+float RunManager::getEventRate () const {
+    return (1000.0 * (evcnt - lastevcnt)) / updateTimer->interval () / 2;
 }
 
 void RunManager::sendUpdate () {

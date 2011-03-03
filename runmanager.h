@@ -13,6 +13,7 @@ class PluginThread;
 class QTimer;
 class QBitArray;
 class ScopeMainWindow;
+class SystemInfo;
 
 /*! Manages data acquisition runs.
  *  Each time the user starts a run a start file is written to the run directory,
@@ -37,6 +38,7 @@ class RunManager : public QObject
       */
     bool localRun;
     QString runName;
+    QString runInfo;
     QDateTime startTime;
     QDateTime stopTime;
     unsigned evcnt;
@@ -48,6 +50,7 @@ class RunManager : public QObject
     RunThread *runthread;
     PluginThread *pluginthread;
     QTimer *updateTimer;
+    SystemInfo *sysinfo;
 
 public:
 
@@ -63,6 +66,8 @@ public:
     bool isRemoteControlled() const {return state.at(StateRemoteControlled);}
     /*! Returns the name of the current run */
     const QString getRunName() const {return runName;}
+    /*! Returns the info text for the current run */
+    const QString getRunInfo() const {return runInfo;}
     /*! Returns a string containing the current states */
     const QString getStateString() const;
     /*! Returns the start time of the currently active run */
@@ -71,7 +76,17 @@ public:
     const QDateTime getStopTime() const {return stopTime;}
     /*! Returns the run time of the currently active run */
     int getRunSeconds() const {return startTime.secsTo(QDateTime::currentDateTime());}
+    /*! Returns the number of events collected during this run. */
+    unsigned getEventCount () const {return evcnt;}
+    /*! Returns the current event rate. */
+    float getEventRate () const;
+    /*! Returns whether single event mode is active.
+     *  In single event mode, only the first event on each module is processed in each acquisition round.
+     *  The remaining events are discarded.
+     */
     bool isSingleEventMode () const { return singleeventmode; }
+    /*! Returns a pointer to a SystemInfo object for reading the current cpu/net load. */
+    const SystemInfo *getSystemInfo () const {return sysinfo;}
 
     // set
     /*! sets a pointer to the main window for saving the active settings to the run directory.
