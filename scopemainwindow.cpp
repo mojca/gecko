@@ -3,6 +3,7 @@
 #include "scopechannel.h"
 #include "baseui.h"
 #include "systeminfo.h"
+#include "geckoremote.h"
 
 #include <QThreadPool>
 #include <QUdpSocket>
@@ -20,8 +21,7 @@ ScopeMainWindow::ScopeMainWindow(QWidget *parent) :
     oneSecondTimer = new QTimer();
     oneSecondTimer->start(1000);
 
-    localPort = 43256; // Port is "gecko" on phone keyboard
-    localAddress = QHostAddress::Any;
+    geckoremote = new GeckoRemote (43256);
 
     fileName = defaultIni;
 
@@ -32,13 +32,9 @@ ScopeMainWindow::ScopeMainWindow(QWidget *parent) :
 
     settings = new QSettings(fileName,QSettings::IniFormat);
 
-    setLocalAddress();
-
     createActions();
     createUI();
     createConnections();
-    createUdpSocket();
-    createTcpSocket();
 
     applySettings();
 
@@ -46,11 +42,6 @@ ScopeMainWindow::ScopeMainWindow(QWidget *parent) :
     setStatusText(tr("Idle"));
 
     configEditAllowed = true;
-    connectedToRemote = false;
-    tcpIsConnected = false;
-    tcpServerIsConnected = false;
-    remoteIsControlled = false;
-    remoteIsRunning = false;
 }
 
 ScopeMainWindow::~ScopeMainWindow()
@@ -59,14 +50,7 @@ ScopeMainWindow::~ScopeMainWindow()
     mmgr->clear();
     pmgr->clear();
 
-    // Disconnect from remote, if necessary
-    if(connectedToRemote == true) remoteConnectClicked();
     remoteUpdateTimer->stop();
-    delete remoteUpdateTimer;
-
-    if(tcpServer) delete tcpServer;
-    if(tcpSocket) delete tcpSocket;
-    if(udpSocket) delete udpSocket;
 
     delete settings;
 }
@@ -727,12 +711,12 @@ void ScopeMainWindow::createRemoteControlPage()
     remoteRunStartButton = new QPushButton(tr("Start Remote Run"));
     remoteRunStartButton->setMinimumHeight(60);
     connect(remoteRunStartButton,SIGNAL(clicked()), SLOT(remoteRunStartClicked()));
+    connect(remoteConnectButton, SIGNAL(clicked()), SLOT(remoteConnectClicked()));
     remoteRunNameButton = new QPushButton(tr("Change"));
     connect(remoteRunNameButton,SIGNAL(clicked()),this,SLOT(remoteRunNameButtonClicked()));
     connect(remoteRunNameEdit, SIGNAL(textChanged(QString)), RunManager::ptr (), SLOT(setRemoteRunName(QString)));
-    connect(remoteDiscoverButton,SIGNAL(clicked()),this,SLOT(remoteDiscoverClicked()));
-    connect(remoteUpdateButton,SIGNAL(clicked()),this,SLOT(remoteUpdateClicked()));
-    connect(remoteConnectButton,SIGNAL(clicked()),this,SLOT(remoteConnectClicked()));
+    connect(remoteDiscoverButton, SIGNAL(clicked()), geckoremote, SLOT(startDiscover()));
+    connect(remoteUpdateButton, SIGNAL(clicked()), geckoremote,  SLOT(startUpdate()));
     connect(remoteIpAddressEdit,SIGNAL(currentIndexChanged(int)),SLOT(remoteIpAddressChanged(int)));
     connect(remoteIpAddressEdit->lineEdit(),SIGNAL(editingFinished()),SLOT(remoteIpAddressTextChanged()));
 
@@ -789,599 +773,34 @@ void ScopeMainWindow::createRemoteControlPage()
     addRunPageToTree(remoteControl);
 }
 
-void ScopeMainWindow::setLocalAddress()
-{
-    QList<QHostAddress> addresses = findOutIpAddresses();
-    if(addresses.size() > 0)
-    {
-        localAddress = addresses.at(0);
-        std::cout << "Setting local address to " << localAddress.toString().toStdString() << std::endl;
-    }
-}
-
-void ScopeMainWindow::createUdpSocket()
-{
-    udpSocket = new QUdpSocket(this);
-
-    // half-second timer
-    remoteUpdateTimer = new QTimer(this);
-    remoteUpdateTimer->setInterval(500);
-
-    if(!udpSocket->bind(localPort,QUdpSocket::ShareAddress))
-    {
-        std::cerr << "Could not bind to port" << std::dec << localPort << std::endl;
-    }
-
-    connect(udpSocket,SIGNAL(readyRead()),this,SLOT(readUdpDatagram()));
-    connect(remoteUpdateTimer,SIGNAL(timeout()),this,SLOT(remoteUpdateClicked()));
-}
-
-void ScopeMainWindow::createTcpSocket()
-{
-    tcpSocket = new QTcpSocket(this);
-
-    tcpServer = new QTcpServer(this);
-    tcpServer->listen(QHostAddress::Any,localPort+1);
-
-    connect(tcpSocket,SIGNAL(readyRead()),this,SLOT(readTcpSocket()));
-    connect(tcpSocket,SIGNAL(connected()),this,SLOT(tcpConnected()));
-    connect(tcpSocket,SIGNAL(disconnected()),this,SLOT(tcpDisconnected()));
-
-    connect(tcpServer,SIGNAL(newConnection()),this,SLOT(tcpServerNewConnection()));
-
-    qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
-    connect(tcpSocket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(tcpError(QAbstractSocket::SocketError)));
-}
-
-void ScopeMainWindow::connectTcp()
-{
-    tcpSocket->connectToHost(currentRemoteAddress,localPort+1,QAbstractSocket::ReadWrite);
-}
-
-void ScopeMainWindow::disconnectTcp()
-{
-    tcpSocket->disconnectFromHost();
-}
-
-void ScopeMainWindow::tcpConnected()
-{
-    tcpIsConnected = true;
-}
-
-void ScopeMainWindow::tcpDisconnected()
-{
-    tcpIsConnected = false;
-}
-
-void ScopeMainWindow::tcpError(QAbstractSocket::SocketError e)
-{
-    std::cerr << "TCP Error: " << e << std::endl;
-}
-
-void ScopeMainWindow::readTcpSocket()
-{
-
-}
-
-void ScopeMainWindow::tcpServerConnected()
-{
-    tcpServerIsConnected = true;
-}
-
-void ScopeMainWindow::tcpServerDisconnected()
-{
-    tcpServerIsConnected = false;
-}
-
-void ScopeMainWindow::tcpServerError(QAbstractSocket::SocketError e)
-{
-    std::cerr << "TCP Server Error: " << e  << ", " << tcpServer->errorString().toStdString() << std::endl;
-    if(e == QAbstractSocket::RemoteHostClosedError)
-    {
-        RunManager::ref().setRemoteControlled(false);
-        controllerAddress = QHostAddress::Any;
-    }
-}
-
-void ScopeMainWindow::readTcpServerSocket()
-{
-
-}
-
-void ScopeMainWindow::tcpServerNewConnection()
-{
-    disconnect(tcpServerSocket);
-    tcpServerSocket = tcpServer->nextPendingConnection();
-
-    connect(tcpServerSocket,SIGNAL(readyRead()),this,SLOT(readTcpServerSocket()));
-    connect(tcpServerSocket,SIGNAL(connected()),this,SLOT(tcpServerConnected()));
-    connect(tcpServerSocket,SIGNAL(disconnected()),this,SLOT(tcpServerDisconnected()));
-
-    qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
-    connect(tcpServerSocket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(tcpServerError(QAbstractSocket::SocketError)));
-}
-
-QList<QHostAddress> ScopeMainWindow::findOutIpAddresses()
-{
-     QList<QHostAddress> list = QNetworkInterface::allAddresses();
-     int i = 0;
-     foreach(QHostAddress addr, list)
-     {
-         // Only return ip V4 addresses and omit local host
-         if(addr == QHostAddress::LocalHost || addr.protocol() == QAbstractSocket::IPv6Protocol)
-         {
-             list.removeAt(i);
-         }
-         else
-         {
-            i++;
-         }
-     }
-
-     return list;
-}
-
-void ScopeMainWindow::readUdpDatagram()
-{
-    while(udpSocket->hasPendingDatagrams())
-    {
-        QByteArray datagram;
-        datagram.resize(udpSocket->pendingDatagramSize());
-        QHostAddress sender;
-        quint16 senderPort;
-
-        udpSocket->readDatagram(datagram.data(),datagram.size(),&sender,&senderPort);
-
-        //std::cout << "Received datagram from " << sender.toString().toStdString() << " on port " << (uint16_t)senderPort << std::endl;
-
-        if(sender != localAddress) processDatagram(datagram, sender, senderPort);
-    }
-}
-
-void ScopeMainWindow::processDatagram(QByteArray datagram, QHostAddress sender, quint16 senderPort)
-{
-    std::cout << "Data: " << std::hex;
-    for(int i = 0; i < datagram.size(); i++)
-    {
-        std::cout << datagram.at(i);
-    }
-    std::cout << std::dec << std::endl;
-
-    QString data(datagram.data());
-
-    if(data.startsWith("ping"))
-    {
-        QByteArray ret = "pong";
-        udpSocket->writeDatagram(ret.data(),ret.size(),sender,senderPort);
-    }
-    else if(data.startsWith("pong"))
-    {
-        std::cout << "Discovered gecko on " << sender.toString().toStdString() << std::endl;
-        if(!remoteAddresses.contains(sender))
-        {
-            remoteAddresses.append(sender);
-            QVariant var;
-            var.setValue(sender);
-            remoteIpAddressEdit->addItem(sender.toString(),var);
-        }
-    }
-    else if(data.startsWith("QUERY"))
-    {
-        QStringList args = data.split(QRegExp(" "));
-        processQuery(args, sender);
-    }
-    else if(data.startsWith("POST"))
-    {
-        QStringList args = data.split(QRegExp(" "));
-        processPost(args, sender);
-    }
-}
-
-void ScopeMainWindow::processQuery(QStringList query, QHostAddress sender)
-{
-//    std::cout << "Processing query ";
-//    foreach(QString part, query)
-//    {
-//        std::cout << part.toStdString() << ". ";
-//    }
-//    std::cout << std::endl;
-
-    if(query.size() < 2) return;
-
-    if(query.at(1) == "update")
-    {
-        QByteArray datagram = "POST ";
-        datagram += "update ";
-        datagram += "state ";
-        QByteArray state(RunManager::ref().getStateString().toAscii());
-        datagram += state;
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-
-        datagram = "POST ";
-        datagram += "update ";
-        datagram += "runname \"";
-        datagram += runNameEdit->text();
-        datagram += "\"";
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-
-        datagram = "POST ";
-        datagram += "update ";
-        datagram += "start ";
-        datagram += startTimeEdit->dateTime().toString();
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-
-        datagram = "POST ";
-        datagram += "update ";
-        datagram += "stop ";
-        datagram += stopTimeEdit->dateTime().toString();
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-
-        datagram = "POST ";
-        datagram += "update ";
-        datagram += "numberofevents ";
-        datagram += nofEventsEdit->text();
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-
-        datagram = "POST ";
-        datagram += "update ";
-        datagram += "eventrate ";
-        datagram += eventsPerSecondEdit->text();
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-
-        datagram = "POST ";
-        datagram += "update ";
-        datagram += "info ";
-        datagram += runInfoEdit->toPlainText();
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-
-        datagram = "POST ";
-        datagram += "update ";
-        datagram += "cpu ";
-        datagram += statusCpuLabel->text();
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-    }
-    else if(query.at(1) == "connect")
-    {
-        QByteArray datagram;
-        datagram = "POST ";
-        datagram += "connect ";
-
-        if(RunManager::ref().isRemoteControlled())
-        {
-            datagram += "failed ";
-            datagram += controllerAddress.toString();
-        }
-        else
-        {
-            datagram += "success ";
-
-            RunManager::ref().setRemoteControlled(true);
-            controllerAddress = sender;
-        }
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-    }
-    else if(query.at(1) == "disconnect")
-    {
-        QByteArray datagram;
-        datagram = "POST ";
-        datagram += "disconnect ";
-
-        if(!RunManager::ref().isRemoteControlled() || controllerAddress != sender)
-        {
-            datagram += "failed ";
-            datagram += controllerAddress.toString();
-        }
-        else
-        {
-            datagram += "success ";
-
-            RunManager::ref().setRemoteControlled(false);
-            controllerAddress = QHostAddress::Any;
-        }
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-    }
-    else if(query.at(1) == "start")
-    {
-        QByteArray datagram;
-        datagram = "POST ";
-        datagram += "start ";
-
-        if(RunManager::ref().isRunning() == false && sender == controllerAddress) {
-            datagram += "success ";
-            startAcquisition();
-        }
-        else if(sender != controllerAddress){
-            datagram += "failed ";
-            datagram += controllerAddress.toString();
-        }
-        else if(RunManager::ref().isRunning() == true) {
-            datagram += "state ";
-            datagram += "running ";
-        }
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-    }
-    else if(query.at(1) == "stop")
-    {
-        QByteArray datagram;
-        datagram = "POST ";
-        datagram += "stop ";
-
-        if(RunManager::ref().isRunning() == true && sender == controllerAddress) {
-            datagram += "success ";
-            stopAcquisition();
-        }
-        else if(sender != controllerAddress){
-            datagram += "failed ";
-            datagram += controllerAddress.toString();
-        }
-        else if(RunManager::ref().isRunning() == false) {
-            datagram += "state ";
-            datagram += "not_running ";
-        }
-        udpSocket->writeDatagram(datagram.data(),datagram.size(),sender,localPort);
-    }
-    else if(query.at(1) == "set")
-    {
-        if(query.size() < 4) return;
-    }
-}
-
-void ScopeMainWindow::processPost(QStringList post, QHostAddress sender)
-{
-    Q_UNUSED(sender)
-
-//    std::cout << "Processing post ";
-//    foreach(QString part, post)
-//    {
-//        std::cout << part.toStdString() << ". ";
-//    }
-//    std::cout << std::endl;
-
-    if(post.size() < 2) return;
-
-    if(post.at(1) == "update")
-    {
-        if(post.size() < 3) return;
-
-        post.removeFirst();
-        post.removeFirst();
-
-        if(post.first() == "state")
-        {
-            post.removeFirst();
-            processRemoteState(post);
-            remoteStateEdit->setText(post.join(" "));
-        }
-        else if(post.first() == "runname")
-        {
-            post.removeFirst();
-            remoteRunNameEdit->setText(post.join(" ").remove(QChar('"')));
-        }
-        else if(post.first() == "start")
-        {
-            post.removeFirst();
-            remoteStartTimeEdit->setDateTime(QDateTime::fromString(post.join(" ")));
-        }
-        else if(post.first() == "stop")
-        {
-            post.removeFirst();
-            remoteStopTimeEdit->setDateTime(QDateTime::fromString(post.join(" ")));
-        }
-        else if(post.first() == "numberofevents")
-        {
-            post.removeFirst();
-            remoteNofEventsEdit->setText(post.join(" "));
-        }
-        else if(post.first() == "eventrate")
-        {
-            post.removeFirst();
-            remoteEventsPerSecondEdit->setText(post.join(" "));
-        }
-        else if(post.first() == "info")
-        {
-            post.removeFirst();
-            remoteRunInfoEdit->setText(post.join(" "));
-        }
-        else if(post.first() == "cpu")
-        {
-            post.removeFirst();
-            remoteCpuEdit->setText(post.join(" "));
-        }
-        else
-        {
-            post.clear();
-            std::cerr << "Unknown update parameter" << std::endl;
-        }
-    }
-
-    else if(post.at(1) == "connect")
-    {
-        if(post.size() < 3) return;
-
-        post.removeFirst();
-        post.removeFirst();
-
-        if(post.first() == "failed")
-        {
-            if(post.size() > 1)
-            {
-                std::cout << "Error: Connection failed. Already connected to " << post.at(1).toStdString() << std::endl;
-                QMessageBox::critical(0,tr("Connection failed"),
-                                      tr("Connection failed. Already connected to %1").arg(post.at(1)));
-            }
-        }
-        else if(post.first() == "success")
-        {
-
-            remoteUpdateTimer->start();
-            connectedToRemote = true;
-            remoteConnectButton->setText(tr("Disconnect"));
-            remoteUpdateClicked();
-            remoteRunStartButton->setEnabled(true);
-            remoteRunNameButton->setEnabled(true);
-            remoteRunInfoEdit->setEnabled(true);
-            remoteRunNameEdit->setEnabled(true);
-            connectTcp();
-        }
-        else
-        {
-            post.clear();
-            std::cerr << "Unknown connection reply from host." << std::endl;
-        }
-    }
-
-    else if(post.at(1) == "disconnect")
-    {
-        if(post.size() < 3) return;
-
-        post.removeFirst();
-        post.removeFirst();
-
-        if(post.first() == "failed")
-        {
-            if(post.size() > 1)
-            {
-                std::cout << "Error: Disconnecting failed. Only " << post.at(1).toStdString() << " can do that." << std::endl;
-                QMessageBox::critical(0,tr("Connection failed"),
-                                      tr("Disconnecting failed. Only %1 can do that.").arg(post.at(1)));
-            }
-        }
-        else if(post.first() == "success")
-        {
-            remoteUpdateTimer->stop();
-            connectedToRemote = false;
-            remoteConnectButton->setText(tr("Connect"));
-            remoteUpdateClicked();
-            remoteRunStartButton->setEnabled(false);
-            remoteRunNameButton->setEnabled(false);
-            remoteRunInfoEdit->setEnabled(false);
-            remoteRunNameEdit->setEnabled(false);
-            disconnectTcp();
-        }
-        else
-        {
-            post.clear();
-            std::cerr << "Unknown disconnect reply from host." << std::endl;
-        }
-    }
-
-    else if(post.at(1) == "start") {
-        if(post.size() < 3) return;
-
-        post.removeFirst();
-        post.removeFirst();
-
-        if(post.first() == "failed") {
-            if(post.size() > 1) {
-                std::cout << "Error: Starting failed. Only " << post.at(1).toStdString() << " can do that." << std::endl;
-                QMessageBox::critical(0,tr("Starting failed"),
-                                      tr("Starting failed. Only %1 can do that.").arg(post.at(1)));
-            }
-        }
-        else if(post.first() == "success") {
-        }
-        else if(post.first() == "state") {
-            if(post.size() > 1 && post.at(1) == "running") {
-                QMessageBox::critical(0,tr("Starting failed"), tr("Starting failed. Already running."));
-            }
-        }
-        else {
-            post.clear();
-            std::cerr << "Unknown start reply from host." << std::endl;
-        }
-    }
-
-    else if(post.at(1) == "stop") {
-        if(post.size() < 3) return;
-
-        post.removeFirst();
-        post.removeFirst();
-
-        if(post.first() == "failed") {
-            if(post.size() > 1) {
-                std::cout << "Error: Stopping failed. Only " << post.at(1).toStdString() << " can do that." << std::endl;
-                QMessageBox::critical(0,tr("Stopping failed"),
-                                      tr("Stopping failed. Only %1 can do that.").arg(post.at(1)));
-            }
-        }
-        else if(post.first() == "success") {
-        }
-        else if(post.first() == "state") {
-            if(post.size() > 1 && post.at(1) == "not_running") {
-                QMessageBox::critical(0,tr("Stopping failed"), tr("Stopping failed. Already running."));
-            }
-        }
-        else {
-            post.clear();
-            std::cerr << "Unknown stop reply from host." << std::endl;
-        }
-    }
-}
-
-void ScopeMainWindow::processRemoteState(QStringList state)
-{
-    foreach(QString item, state)
-    {
-        if(item == "running") { remoteIsRunning = true; }
-        if(item == "not_running") { remoteIsRunning = false; }
-        if(item == "remoteControlled") { remoteIsControlled = true; }
-        if(item == "not_remoteControlled") { remoteIsControlled = false; }
-    }
-
-    if(remoteIsRunning)
-    {
-        remoteRunStartButton->setText("Stop Remote Run");
-    }
-    else
-    {
-        remoteRunStartButton->setText("Start Remote Run");
-    }
-}
-
-void ScopeMainWindow::remoteDiscoverClicked()
-{
-    QByteArray datagram = "ping";
-    udpSocket->writeDatagram(datagram.data(),datagram.size(),QHostAddress::Broadcast,localPort);
-}
-
-void ScopeMainWindow::remoteUpdateClicked()
-{
-    QByteArray datagram = "QUERY update";
-    udpSocket->writeDatagram(datagram.data(),datagram.size(),currentRemoteAddress,localPort);
-}
-
 void ScopeMainWindow::remoteRunStartClicked()
 {
-    QByteArray datagram;
-    if(remoteIsRunning == false)
+    if(geckoremote->getRemoteState ().running == false)
     {
-        datagram = "QUERY start";
+        geckoremote->startRemoteRun ();
     }
     else
     {
-        datagram = "QUERY stop";
+        geckoremote->stopRemoteRun ();
     }
-    udpSocket->writeDatagram(datagram.data(),datagram.size(),currentRemoteAddress,localPort);
 }
 
 void ScopeMainWindow::remoteConnectClicked()
 {
-    QByteArray datagram;
-    if(connectedToRemote == false)
+    if(geckoremote->isConnected () == false)
     {
-        datagram = "QUERY connect";
+        geckoremote->connectRemote ();
     }
     else
     {
-        datagram = "QUERY disconnect";
+        geckoremote->disconnectRemote ();
     }
-    udpSocket->writeDatagram(datagram.data(),datagram.size(),currentRemoteAddress,localPort);
 }
 
 void ScopeMainWindow::setCurrentRemoteAddress(QHostAddress newAddress)
 {
-    currentRemoteAddress = newAddress;
-    std::cout << "Changed current remote address to " << currentRemoteAddress.toString().toStdString() << std::endl;
+    geckoremote->setRemote (newAddress);
+    std::cout << "Changed current remote address to " << newAddress.toString().toStdString() << std::endl;
 }
 
 void ScopeMainWindow::remoteIpAddressChanged(int idx)
@@ -1396,13 +815,102 @@ void ScopeMainWindow::remoteIpAddressChanged(int idx)
 void ScopeMainWindow::remoteIpAddressTextChanged()
 {
     QString newIp = remoteIpAddressEdit->lineEdit()->text();
-    QHostAddress newAddr(newIp);
-    if(!remoteAddresses.contains(newAddr))
+    QHostAddress newAddr (newIp);
+    if(!newAddr.isNull () && remoteIpAddressEdit->findData (QVariant::fromValue (newAddr)) == -1)
     {
-        remoteAddresses.append(newAddr);
-        QVariant var;
-        var.setValue(newAddr);
-        remoteIpAddressEdit->addItem(newAddr.toString(),var);
+        remoteIpAddressEdit->addItem(newAddr.toString(),QVariant::fromValue (newAddr));
+    }
+}
+
+void ScopeMainWindow::discoveredRemote (QHostAddress remote) {
+    if (remoteIpAddressEdit->findData (QVariant::fromValue (remote)) == -1) {
+        remoteIpAddressEdit->addItem(remote.toString (), QVariant::fromValue (remote));
+    }
+}
+
+void ScopeMainWindow::remoteUpdateComplete () {
+    const RemoteGeckoState &gs = geckoremote->getRemoteState ();
+    remoteStateEdit->setText (
+            (QStringList ()
+             << (gs.running ? tr ("running") : tr ("not running"))
+             << (gs.controlled ? tr ("remote controlled") : tr ("not remote controlled"))).join (tr(", ")));
+
+    remoteRunNameEdit->setText (gs.runname);
+    remoteStartTimeEdit->setDateTime (gs.starttime);
+    remoteStopTimeEdit->setDateTime (gs.stoptime);
+    remoteNofEventsEdit->setText (QString::number (gs.nofevents));
+    remoteEventsPerSecondEdit->setText (QString::number (gs.eventrate, 'f', 2));
+    remoteRunInfoEdit->setText (gs.runinfo);
+    remoteCpuEdit->setText (tr("%1 %%").arg (gs.cpuload));
+}
+
+void ScopeMainWindow::remoteConnected (QHostAddress controller) {
+    if (!controller.isNull ()) {
+        QMessageBox::warning (this, tr ("Gecko"),
+                              tr ("Connect failed! Remote already controlled by %1.").arg (controller.toString ()), QMessageBox::Ok);
+        return;
+    } else {
+        geckoremote->startUpdate ();
+        remoteUpdateTimer->start ();
+        remoteConnectButton->setText(tr("Disconnect"));
+        remoteRunStartButton->setEnabled(true);
+        remoteRunNameButton->setEnabled(true);
+        remoteRunInfoEdit->setEnabled(true);
+        remoteRunNameEdit->setEnabled(true);
+    }
+}
+
+void ScopeMainWindow::remoteDisconnected (QHostAddress controller) {
+    if (!controller.isNull ()) {
+        QMessageBox::warning (this, tr ("Gecko"),
+                              tr ("Disconnect failed! Remote already controlled by %1.").arg (controller.toString ()), QMessageBox::Ok);
+        return;
+    } else {
+        geckoremote->startUpdate ();
+        remoteUpdateTimer->stop ();
+        remoteConnectButton->setText (tr ("Connect"));
+        remoteRunStartButton->setEnabled (false);
+        remoteRunNameButton->setEnabled (false);
+        remoteRunInfoEdit->setEnabled (false);
+        remoteRunNameEdit->setEnabled (false);
+    }
+}
+
+void ScopeMainWindow::remoteStarted (GeckoRemote::StartStopResult res) {
+    switch (res) {
+    case GeckoRemote::Ok:
+        break;
+    case GeckoRemote::NotContr:
+        QMessageBox::warning (this, tr ("Gecko"),
+                              tr ("Start failed! Remote is controlled by %1.")
+                              .arg (geckoremote->getRemoteState ().controller.toString ()),
+                              QMessageBox::Ok);
+        break;
+    case GeckoRemote::Already:
+        QMessageBox::warning (this, tr ("Gecko"),
+                              tr ("Start failed! Remote is already running.")
+                              .arg (geckoremote->getRemoteState ().controller.toString ()),
+                              QMessageBox::Ok);
+        break;
+    }
+}
+
+void ScopeMainWindow::remoteStopped (GeckoRemote::StartStopResult res) {
+    switch (res) {
+    case GeckoRemote::Ok:
+        break;
+    case GeckoRemote::NotContr:
+        QMessageBox::warning (this, tr ("Gecko"),
+                              tr ("Stop failed! Remote is controlled by %1.")
+                              .arg (geckoremote->getRemoteState ().controller.toString ()),
+                              QMessageBox::Ok);
+        break;
+    case GeckoRemote::Already:
+        QMessageBox::warning (this, tr ("Gecko"),
+                              tr ("Stop failed! Remote is not running.")
+                              .arg (geckoremote->getRemoteState ().controller.toString ()),
+                              QMessageBox::Ok);
+        break;
     }
 }
 

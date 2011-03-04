@@ -50,6 +50,7 @@
 
 #include "modulemanager.h"
 #include "abstractinterface.h"
+#include "geckoremote.h"
 
 class QStandardItem;
 class QTreeWidget;
@@ -172,29 +173,21 @@ public slots:
 
     void jumpToPlugin (AbstractPlugin *);
 
-    void readUdpDatagram();
-    void remoteDiscoverClicked();
+    // Network
+    void discoveredRemote (QHostAddress remote);
+    void remoteUpdateComplete ();
+    void remoteConnected (QHostAddress controller);
+    void remoteDisconnected (QHostAddress controller);
+    void remoteStarted (GeckoRemote::StartStopResult res);
+    void remoteStopped (GeckoRemote::StartStopResult res);
+
     void remoteConnectClicked();
     void remoteRunStartClicked();
-    void remoteUpdateClicked();
     void remoteIpAddressChanged(int);
     void remoteIpAddressTextChanged();
     void setCurrentRemoteAddress(QHostAddress);
 
     void oneSecondTimerTimeout();
-
-    // TCP communication
-    void connectTcp();
-    void disconnectTcp();
-    void tcpConnected();
-    void tcpDisconnected();
-    void tcpError(QAbstractSocket::SocketError);
-    void readTcpSocket();
-    void tcpServerConnected();
-    void tcpServerDisconnected();
-    void tcpServerError(QAbstractSocket::SocketError);
-    void readTcpServerSocket();
-    void tcpServerNewConnection();
 
 private:
     const QString defaultIni;
@@ -278,15 +271,7 @@ private:
     QTimer* oneSecondTimer;
 
     // Network
-    QUdpSocket* udpSocket;
-    QTcpSocket* tcpSocket;
-    QTcpSocket* tcpServerSocket;
-    QTcpServer* tcpServer;
-    int localPort;
-    QHostAddress localAddress;
-    QHostAddress currentRemoteAddress;
-    QHostAddress controllerAddress;
-    QList<QHostAddress> remoteAddresses;
+    GeckoRemote *geckoremote;
 
     // Layout
     QStackedWidget *mainArea;

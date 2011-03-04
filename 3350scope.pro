@@ -78,7 +78,8 @@ SOURCES += main.cpp \
     demuxcaen820plugin.cpp \
     eventbuilderplugin.cpp \
     packsis3350plugin.cpp \
-    interfacemanager.cpp
+    interfacemanager.cpp \
+    geckoremote.cpp
 HEADERS += sis3350.h \
     plot2d.h \
     sis3350ui.h \
@@ -152,4 +153,5 @@ HEADERS += sis3350.h \
     abstractinterface.h \
     interfacemanager.h \
     baseinterface.h \
-    systeminfo.h
+    systeminfo.h \
+    geckoremote.h
