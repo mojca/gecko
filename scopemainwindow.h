@@ -60,6 +60,7 @@ class QTextEdit;
 class QComboBox;
 
 class SystemInfo;
+class RemoteControlPanel;
 
 Q_DECLARE_METATYPE(QWidget*)
 Q_DECLARE_METATYPE(ScopeChannel*)
@@ -173,20 +174,6 @@ public slots:
 
     void jumpToPlugin (AbstractPlugin *);
 
-    // Network
-    void discoveredRemote (QHostAddress remote);
-    void remoteUpdateComplete ();
-    void remoteConnected (QHostAddress controller);
-    void remoteDisconnected (QHostAddress controller);
-    void remoteStarted (GeckoRemote::StartStopResult res);
-    void remoteStopped (GeckoRemote::StartStopResult res);
-
-    void remoteConnectClicked();
-    void remoteRunStartClicked();
-    void remoteIpAddressChanged(int);
-    void remoteIpAddressTextChanged();
-    void setCurrentRemoteAddress(QHostAddress);
-
     void oneSecondTimerTimeout();
 
 private:
@@ -248,30 +235,11 @@ private:
     QLineEdit* eventsPerSecondEdit;
     QCheckBox *singleEventModeBox;
 
-    // Remote control
-    QPushButton* remoteRunStartButton;
-    QPushButton* remoteRunNameButton;
-    QPushButton* remoteDiscoverButton;
-    QPushButton* remoteUpdateButton;
-    QPushButton* remoteConnectButton;
-    QLineEdit* remoteRunNameEdit;
-    QTextEdit* remoteRunInfoEdit;
-    QDateTimeEdit* remoteStartTimeEdit;
-    QDateTimeEdit* remoteStopTimeEdit;
-    QLineEdit* remoteNofEventsEdit;
-    QLineEdit* remoteEventsPerSecondEdit;
-    QCheckBox* remoteSingleEventModeBox;
-    QComboBox* remoteIpAddressEdit;
-    QLineEdit* remoteStateEdit;
-    QLineEdit* remoteCpuEdit;
-    QLineEdit* remoteNetEdit;
-
     // Timers
-    QTimer* remoteUpdateTimer;
     QTimer* oneSecondTimer;
 
-    // Network
-    GeckoRemote *geckoremote;
+    // Remote control
+    RemoteControlPanel* remoteControl;
 
     // Layout
     QStackedWidget *mainArea;
@@ -283,11 +251,6 @@ private:
     QSettings* settings;
 
     bool configEditAllowed;    // Configuration can be changed
-    bool connectedToRemote;    // This client is connected to a remote peer via udp
-    bool tcpIsConnected;       // A tcp connection to the remote peer has been established
-    bool tcpServerIsConnected; // A tcp connection to the local server has been established
-    bool remoteIsRunning;      // The remote peer is running
-    bool remoteIsControlled;   // The remote peer is being controlled by a peer
 };
 
 #endif // SCOPEMAINWINDOW_H

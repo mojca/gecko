@@ -79,7 +79,8 @@ SOURCES += main.cpp \
     eventbuilderplugin.cpp \
     packsis3350plugin.cpp \
     interfacemanager.cpp \
-    geckoremote.cpp
+    geckoremote.cpp \
+    remotecontrolpanel.cpp
 HEADERS += sis3350.h \
     plot2d.h \
     sis3350ui.h \
@@ -154,4 +155,5 @@ HEADERS += sis3350.h \
     interfacemanager.h \
     baseinterface.h \
     systeminfo.h \
-    geckoremote.h
+    geckoremote.h \
+    remotecontrolpanel.h
