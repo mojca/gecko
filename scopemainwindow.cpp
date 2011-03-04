@@ -569,8 +569,6 @@ void ScopeMainWindow::createRunSetupPage()
     channelList->setHeaderLabels(headerLabels);
     headerLabels.clear();
 
-    loadChannelList();
-
     connect(triggerList,SIGNAL(itemChanged(QTreeWidgetItem*,int)),SLOT(triggerListChanged(QTreeWidgetItem*,int)));
     connect(channelList,SIGNAL(itemChanged(QTreeWidgetItem*,int)),SLOT(channelListChanged(QTreeWidgetItem*,int)));
 
@@ -588,6 +586,8 @@ void ScopeMainWindow::createRunSetupPage()
 
     runSetup->setLayout(layout);
     addRunPageToTree(runSetup);
+
+    loadChannelList();
 }
 
 void ScopeMainWindow::createRunControlPage()
