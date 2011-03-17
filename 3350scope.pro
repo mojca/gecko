@@ -152,4 +152,5 @@ HEADERS += sis3350.h \
     abstractinterface.h \
     interfacemanager.h \
     baseinterface.h \
-    systeminfo.h
+    systeminfo.h \
+    eventbuffer.h
