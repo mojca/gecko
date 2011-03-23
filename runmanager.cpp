@@ -12,6 +12,7 @@
 #include "abstractmodule.h"
 #include "abstractinterface.h"
 #include "systeminfo.h"
+#include "eventbuffer.h"
 
 #include <stdexcept>
 #include <iostream>
@@ -40,6 +41,7 @@ RunManager::RunManager()
 , pluginthread (NULL)
 , updateTimer (new QTimer (this))
 , sysinfo (new SystemInfo ())
+, evbuf (new EventBuffer (10))
 {
     state.resize(2);
     state.setBit(StateRunning,false);

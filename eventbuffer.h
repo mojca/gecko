@@ -23,13 +23,25 @@ public:
     size_t size () const; /*!< Returns the maximum size of the event buffer. */
     size_t level () const; /*!< Returns the current number of events in the buffer. */
 
+    /*! Changes the size of the underlying queue to contain \c newsz elements.
+        This function should never be called while the buffer is in use (eg. during a run) because
+        all data in the buffer will be lost and and undefined behaviour could occur if the buffer is accessed
+        while its size is changed.
+        \param newsz the new size of the event buffer.
+     */
+    void setSize (size_t newsz);
+
     /*! Create a new event. The object has to be deleted when it is not used anymore. */
     Event* createEvent () const;
 
-    /*! Queues an event in the buffer. The buffer takes ownership of the event. */
+    /*! Queues an event in the buffer. The buffer takes ownership of the event.
+        This call is synchronous. It waits until there is enough room inside the buffer to queue the event.
+     */
     bool queue (Event *ev);
 
-    /*! Returns the first event in the buffer, or NULL if the buffer is empty. The caller takes ownership of the event object. */
+    /*! Returns the first event in the buffer. The caller takes ownership of the event object.
+        This call is synchronous. The function will wait until a buffer becomes available.
+     */
     Event* dequeue ();
 
     // EventSlot management
@@ -56,7 +68,7 @@ private:
     typedef std::map< const AbstractModule*, std::vector<EventSlot*> > SlotMap;
     SlotMap Slots_;
 
-    ThreadBuffer<Event*> Buffer_;
+    ThreadBuffer<Event*>* Buffer_;
 };
 
 class Event {
@@ -67,9 +79,12 @@ public:
     void put (const EventSlot *, const void *data);
     const void* get (const EventSlot *) const;
 
+    EventBuffer *getBuffer () const;
+
 private:
     typedef std::map<const EventSlot *, const void *> DataMap;
     DataMap Data_;
+    EventBuffer* EvBuf_;
 };
 
 class EventSlot {

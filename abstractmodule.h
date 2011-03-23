@@ -6,12 +6,13 @@
 #include <stdint.h>
 
 class QSettings;
-template<typename T> class QList;
+template<typename T> class QVector;
 template<typename T> class ThreadBuffer;
 
 class AbstractInterface;
-class AbstractPlugin;
 class BaseUI;
+class EventSlot;
+class OutputPlugin;
 class PluginConnector;
 class ScopeChannel;
 
@@ -19,9 +20,9 @@ class ScopeChannel;
  *  This class is used by all modules that receive data from VME modules.
  *  All daq modules feature an output plugin that provides output PluginConnectors
  *  for plugins to connect to. All modules are polled by the RunThread using the #acquire method.
- *  They should retrieve new data from their VME module and pass it to their output plugin (and call the plugin's
- *  \link BasePlugin::userProcess userProcess \endlink method), so the data becomes available on the output connectors.
- *  The output connectors have to be of type PluginConnectorThreadBuffered.
+ *  They should retrieve new data from their VME module and pass it back to the runthread using the supplied Event object.
+ *  This is done by calling Event::put with the EventSlot object the data belongs to. The PluginThread will make the data
+ *  available on the output connectors of the output plugin.
  *
  *  All daq modules communicate via an interface and have the VME base address of their VME module.
  *
@@ -47,15 +48,11 @@ public:
     /*! return a pointer the ui set via #setUI. */
     virtual BaseUI* getUI() const = 0;
 
-    /*! retrieve the list of channels made available by this module. */
-    virtual QList<ScopeChannel*>* getChannels() = 0;
+    /*! retrieve the list of slots made available by this module. */
+    virtual QVector<const EventSlot*> getSlots() const = 0;
 
     /*! return a pointer to this module's output plugin. */
-    virtual AbstractPlugin* getOutputPlugin() const = 0;
-    virtual PluginConnector* getRootConnector() const = 0;
-
-    /*! return the ThreadBuffer the module writes its data to. \deprecated */
-    virtual ThreadBuffer<uint32_t>* getBuffer() = 0;
+    virtual OutputPlugin* getOutputPlugin() const = 0;
 
     /*! retrieve the module used for VME communication */
     virtual AbstractInterface *getInterface () const = 0;

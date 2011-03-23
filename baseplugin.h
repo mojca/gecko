@@ -86,10 +86,6 @@ public:
      */
     virtual Attributes getAttributes () const { return Attributes (); }
 
-    void setData(uint32_t*, int n);
-
-    uint32_t* getData(int n);
-
     /*! update the connections displayed in the input and output boxes. */
     void updateDisplayedConnections();
 

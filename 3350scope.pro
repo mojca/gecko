@@ -78,7 +78,9 @@ SOURCES += main.cpp \
     demuxcaen820plugin.cpp \
     eventbuilderplugin.cpp \
     packsis3350plugin.cpp \
-    interfacemanager.cpp
+    interfacemanager.cpp \
+    outputplugin.cpp \
+    eventbuffer.cpp
 HEADERS += sis3350.h \
     plot2d.h \
     sis3350ui.h \
@@ -153,4 +155,6 @@ HEADERS += sis3350.h \
     interfacemanager.h \
     baseinterface.h \
     systeminfo.h \
-    eventbuffer.h
+    eventbuffer.h \
+    outputplugin.h \
+    pluginconnectorplain.h
