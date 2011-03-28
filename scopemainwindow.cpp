@@ -1309,8 +1309,7 @@ void ScopeMainWindow::channelListChanged(QTreeWidgetItem* item, int col)
         return;
 
     ScopeChannel* ch = item->data(0,Qt::UserRole + 1).value<ScopeChannel*>();
-    if (ch)
-        ch->setEnabled(item->checkState (0) == Qt::Checked);
+    ch->setEnabled(item->checkState (0) == Qt::Checked);
 }
 
 void ScopeMainWindow::setStatusText(QString newString)
@@ -1327,6 +1326,8 @@ void ScopeMainWindow::loadChannelList()
 {
     triggerList->clear();
     channelList->clear();
+
+    QSettings *s = settings;
 
     QList<QTreeWidgetItem *> trgItems;
     QList<QTreeWidgetItem *> chItems;
@@ -1372,16 +1373,54 @@ void ScopeMainWindow::loadChannelList()
                 break;
             }
 
-            QTreeWidgetItem *item = new QTreeWidgetItem(vals);
-            l->append (item);
-            item->setData(0,Qt::UserRole + 1,QVariant::fromValue(curCh));
-            item->setCheckState(0, curCh->isEnabled() ? Qt::Checked : Qt::Unchecked);
-            tw->addTopLevelItem (item);
+            l->append(new QTreeWidgetItem(tw,vals));
+            l->back()->setData(0,Qt::UserRole + 1,QVariant::fromValue(curCh));
+            l->back()->setCheckState(0, curCh->isEnabled() ? Qt::Checked : Qt::Unchecked);
         }
     }
 
     triggerList->addTopLevelItems(trgItems);
     channelList->addTopLevelItems(chItems);
+
+    // Load config from triggers and channels
+    s->beginGroup ("Configuration");
+    int size = s->beginReadArray("TriggerConfig");
+    QTreeWidgetItemIterator it2(triggerList);
+    for(int i = 0; i < size; ++i){
+        if(*it2) {
+            s->setArrayIndex(i);
+            bool cs = s->value("checked").toBool();
+//            std::cout << "Trigger " << i << ((cs) ? " is checked" : "is not checked") ;
+//            std::cout << std::endl;
+            if(cs) (*it2)->setCheckState(0,Qt::Checked);
+            else (*it2)->setCheckState(0,Qt::Unchecked);
+            it2++;
+        }
+        else {
+            //fail << tr ("Not enough triggers in trigger list to be filled.");
+        }
+    }
+    s->endArray ();
+
+    size = s->beginReadArray("ChannelConfig");
+    it2 = QTreeWidgetItemIterator(channelList);
+    for(int i = 0; i < size; ++i){
+        if(*it2) {
+            s->setArrayIndex(i);
+            bool cs = s->value("checked").toBool();
+//            std::cout << "Channel " << i << ((cs) ? " is checked" : "is not checked") ;
+//            std::cout << std::endl;
+            if(cs) (*it2)->setCheckState(0,Qt::Checked);
+            else (*it2)->setCheckState(0,Qt::Unchecked);
+            it2++;
+        }
+        else {
+            //fail << tr ("Not enough triggers in trigger list to be filled.");
+        }
+    }
+    s->endArray ();
+
+    s->endGroup ();
 }
 
 void ScopeMainWindow::updateRunPage(float evspersec, unsigned evs)
@@ -1665,13 +1704,6 @@ void ScopeMainWindow::saveConfig (QSettings *s) {
 
         if (daq->getOutputPlugin())
             roots.insert (daq->getOutputPlugin(), daq->getName ());
-
-        s->beginWriteArray ("ScopeChannels");
-        for (int j = 0; j < daq->getChannels ()->size (); ++j) {
-            s->setArrayIndex (j);
-            s->setValue("enabled", daq->getChannels ()->at (j)->isEnabled ());
-        }
-        s->endArray ();
     }
     s->endArray ();
 
@@ -1703,6 +1735,27 @@ void ScopeMainWindow::saveConfig (QSettings *s) {
         }
     }
     s->endArray ();
+
+    // Save config from triggers and channels
+    i = 0;
+    s->beginWriteArray("TriggerConfig");
+    QTreeWidgetItemIterator it(triggerList);
+    while (*it) {
+        s->setArrayIndex(i++);
+        s->setValue("checked",(*it)->checkState (0) == Qt::Checked);
+        it++;
+    }
+    s->endArray ();
+    i = 0;
+    s->beginWriteArray("ChannelConfig");
+    it = QTreeWidgetItemIterator(channelList);
+    while (*it) {
+        s->setArrayIndex(i++);
+        s->setValue("checked",(*it)->checkState (0) == Qt::Checked);
+        it++;
+    }
+    s->endArray ();
+
     s->endGroup ();
 }
 
@@ -1752,13 +1805,6 @@ void ScopeMainWindow::loadConfig (QSettings *s) {
 
         if (daq->getOutputPlugin ())
             roots.insert (daq->getName (), daq->getOutputPlugin ());
-
-        int chans = s->beginReadArray ("ScopeChannels");
-        for (int j = 0; j < chans; ++j) {
-            s->setArrayIndex (j);
-            daq->getChannels ()->at (j)->setEnabled (s->value("enabled").toBool ());
-        }
-        s->endArray ();
     }
     s->endArray ();
 
