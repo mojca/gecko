@@ -81,7 +81,9 @@ SOURCES += main.cpp \
     caen820ui.cpp \
     demuxcaen820plugin.cpp \
     eventbuilderplugin.cpp \
-    packsis3350plugin.cpp
+    packsis3350plugin.cpp \
+    sis3302module.cpp \
+    sis3302ui.cpp
 HEADERS += sis3350.h \
     plot2d.h \
     sis3350ui.h \
@@ -153,4 +155,11 @@ HEADERS += sis3350.h \
     caen820ui.h \
     demuxcaen820plugin.h \
     eventbuilderplugin.h \
-    packsis3350plugin.h
+    packsis3350plugin.h \
+    sis3302module.h \
+    sis3302.h \
+    sis3302ui.h \
+    HexSpinBox.h \
+    hexspinbox.h
+
+OTHER_FILES +=

@@ -49,7 +49,7 @@ public:
     void saveSettings (QSettings *);
 
 public slots:
-    void prepareForNextAcquisition () {};
+    void prepareForNextAcquisition () {}
 
 private:
     Caen820Module (int id, const QString &name);
