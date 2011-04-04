@@ -31,7 +31,8 @@ void Sis3302UI::createUI()
 
     gn.append("Advanced Setup"); ng++; addGroupToTab(tn[nt],gn[ng]);
     addCheckBoxToGroup(tn[nt],gn[ng],"Autostart Acquisition");
-    addCheckBoxToGroup(tn[nt],gn[ng],"Internal Trigger as Stop");
+    addCheckBoxToGroup(tn[nt],gn[ng],"Use Internal Trigger");
+    addCheckBoxToGroup(tn[nt],gn[ng],"Use External Trigger (LEMO)");
     addCheckBoxToGroup(tn[nt],gn[ng],"ADC value as Big Endian");
 
     gn.append("Control"); ng++; addGroupToTab(tn[nt],gn[ng]);
@@ -46,7 +47,7 @@ void Sis3302UI::createUI()
     addButtonToGroup(tn[nt],gn[ng]+"b2_","Clear Timestamp");
 
     // TAB TRIGGER
-    tn.append("Trigger 0-3"); nt++; addTab(tn[nt]);
+    tn.append("Ch 0-3"); nt++; addTab(tn[nt]);
 
     int ch = 0;
     for(int i=0; i<2; i++)
@@ -64,7 +65,7 @@ void Sis3302UI::createUI()
         }
     }
 
-    tn.append("Trigger 4-7"); nt++; addTab(tn[nt]);
+    tn.append("Ch 4-7"); nt++; addTab(tn[nt]);
 
     ch = 4;
     for(int i=0; i<2; i++)
@@ -105,6 +106,28 @@ void Sis3302UI::createUI()
     {
         addSpinnerToGroup(tn[nt],gn[ng],tr("DAC offset %1").arg(ch),0,0xffff);
     }
+
+    // TAB Clock and IRQ
+    tn.append("Clock && IRQ"); nt++; addTab(tn[nt]);
+
+    gn.append("Clock"); ng++; addGroupToTab(tn[nt],gn[ng]);
+    addPopupToGroup(tn[nt],gn[ng],"Clock source",(QStringList()
+             << "Internal 100 MHz"
+             << "Internal 50 MHz"
+             << "Internal 25 MHz"
+             << "Internal 10 MHz"
+             << "Internal 1 MHz"
+             << "random clock (from internal)"
+             << "external clock (from LEMO)"
+             << "Real 100 MHz internal"));
+
+    gn.append("Interrupt Setup"); ng++; addGroupToTab(tn[nt],gn[ng]);
+    addCheckBoxToGroup(tn[nt],gn[ng],"VME enable IRQ");
+    addPopupToGroup(tn[nt],gn[ng],"IRQ Mode",(QStringList() << "RORA" << "ROAK"));
+    addSpinnerToGroup(tn[nt],gn[ng],"IRQ level",0,7);
+    addHexSpinnerToGroup(tn[nt],gn[ng],"IRQ vector",0,0xff);
+    addCheckBoxToGroup(tn[nt],gn[ng],"Interrupt on End of Event");
+    addCheckBoxToGroup(tn[nt],gn[ng],"Interrupt on End of Multi Event");
 
     //###
 
@@ -254,6 +277,25 @@ void Sis3302UI::addDoubleSpinnerToGroup(QString _tname, QString _gname, QString 
     if (groups.contains(identifier)) {
         QWidget* g = groups.value(identifier);
         QDoubleSpinBox* b = new QDoubleSpinBox(g);
+        b->setMinimum(min);
+        b->setMaximum(max);
+        QWidget* w = attachLabel(b,_name);
+        g->layout()->addWidget(w);
+        identifier += _name;
+        sm.setMapping(b,identifier);
+        widgets.insert(identifier,b);
+        b->setAccessibleName(identifier);
+        connect(b,SIGNAL(valueChanged(int)),&sm,SLOT(map()));
+    }
+}
+
+void Sis3302UI::addHexSpinnerToGroup(QString _tname, QString _gname, QString _name, int min, int max)
+{
+    QString identifier = _tname+_gname;
+    if (groups.contains(identifier)) {
+        QWidget* g = groups.value(identifier);
+        HexSpinBox* b = new HexSpinBox(g);
+        b->setPrefix ("0x");
         b->setMinimum(min);
         b->setMaximum(max);
         QWidget* w = attachLabel(b,_name);

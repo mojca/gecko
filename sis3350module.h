@@ -104,10 +104,6 @@ public:
     void setChannels();
     ThreadBuffer<uint32_t> *getBuffer () { return buffer; }
 
-    // Configuration
-    int getConfigFromCode();
-    int getConfigFromFile();
-
     // Internal functions
     unsigned int configureControlStatus();
     unsigned int configureAcquisitionMode();

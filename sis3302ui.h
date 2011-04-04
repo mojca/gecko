@@ -20,6 +20,7 @@
 #include <QTabWidget>
 #include <QTimer>
 #include "viewport.h"
+#include "hexspinbox.h"
 
 #include "sis3302module.h"
 #include "baseui.h"
@@ -59,6 +60,7 @@ protected:
     void addButtonToGroup(QString _tname, QString _gname, QString _name);
     void addSpinnerToGroup(QString _tname, QString _gname, QString _name, int min, int max);
     void addDoubleSpinnerToGroup(QString _tname, QString _gname, QString _name, double min, double max);
+    void addHexSpinnerToGroup(QString _tname, QString _gname, QString _name, int min, int max);
     void addCheckBoxToGroup(QString _tname, QString _gname, QString _name);
     void addPopupToGroup(QString _tname, QString _gname, QString _name, QStringList _itNames);
 

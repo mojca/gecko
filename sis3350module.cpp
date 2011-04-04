@@ -6,8 +6,6 @@ static ModuleRegistrar registrar ("sis3350", Sis3350Module::create, AbstractModu
 Sis3350Module::Sis3350Module(int _id, QString _name)
         : BaseDAqModule(_id, _name)
 {
-    getConfigFromCode();
-
     setDefaultConfig();
     setUI (new Sis3350UI(this));
 
@@ -79,21 +77,6 @@ void Sis3350Module::setChannels()
     getChannels ()->push_back(new ScopeChannel(this,"Sis3350 Raw 3",ScopeCommon::trace,1000,4));
     getChannels ()->push_back(new ScopeChannel(this,"Sis3350 Meta info",ScopeCommon::trace,1000,4));
     getChannels ()->push_back(new ScopeChannel(this,"Sis3350 Poll Trigger",ScopeCommon::trigger,4,4));
-}
-
-// This is the default configuration for the module
-// This functions reads the configuration from a *.conf file
-// DEPRECATED since use of .ini files
-int Sis3350Module::getConfigFromFile()
-{
-    return 0;
-}
-
-// This is the default configuration for the module
-// DEPRECATED since use of .ini files
-int Sis3350Module::getConfigFromCode()
-{
-    return 0;
 }
 
 int Sis3350Module::configure()
