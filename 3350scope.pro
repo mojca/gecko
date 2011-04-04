@@ -160,7 +160,6 @@ HEADERS += sis3350.h \
     sis3302module.h \
     sis3302.h \
     sis3302ui.h \
-    HexSpinBox.h \
     hexspinbox.h \
     demuxsis3302plugin.h
 
