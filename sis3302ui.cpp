@@ -193,7 +193,7 @@ void Sis3302UI::uiInput(QString _name)
             int ch = _name.right(1).toInt();
             module->conf.trgMode[ch] = static_cast<Sis3302config::TrgMode>(cbb->currentIndex());
         }
-        //QMessageBox::information(this,"uiInput","You changed the combobox "+_name);
+        ////QMessageBox::information(this,"uiInput","You changed the combobox "+_name);
     }
     QSpinBox* sb = findChild<QSpinBox*>(_name);
     if(sb != 0)
