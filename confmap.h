@@ -2,6 +2,7 @@
 #define CONFMAP_H
 
 #include <stdint.h>
+#include <cstdio>
 #include <QString>
 #include <QSettings>
 

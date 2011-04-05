@@ -11,12 +11,13 @@ Sis3302Module::Sis3302Module(int _id, QString _name)
     setChannels();
     createOutputPlugin();
 
+
     std::cout << "Instantiated Sis3302 Module" << std::endl;
 }
 
 Sis3302Module::~Sis3302Module()
 {
-    delete buffer;
+    //delete buffer;
 }
 
 void Sis3302Module::createOutputPlugin()
@@ -318,6 +319,8 @@ static const confmap_t confmap [] = {
 };
 
 void Sis3302Module::applySettings (QSettings *s) {
+    if(s==0) return;
+
     std::cout << "Applying settings for " << getName ().toStdString () << "... ";
     s->beginGroup (getName ());
     ConfMap::apply (s, &conf, confmap);
@@ -358,6 +361,8 @@ void Sis3302Module::applySettings (QSettings *s) {
 }
 
 void Sis3302Module::saveSettings (QSettings *s) {
+    if(s==0) return;
+
     std::cout << "Saving settings for " << getName ().toStdString () << "... ";
     s->beginGroup (getName ());
     ConfMap::save (s, &conf, confmap);

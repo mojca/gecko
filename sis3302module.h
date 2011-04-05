@@ -48,8 +48,8 @@ public:
     unsigned int stop_delay;
     unsigned int nof_events;
 
-    uint8_t irq_level;
-    uint8_t irq_vector;
+    int irq_level;
+    int irq_vector;
 
     bool autostart_acq;
     bool internal_trg_as_stop;

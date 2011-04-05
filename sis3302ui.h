@@ -35,7 +35,7 @@ public:
     Sis3302UI(Sis3302Module* _module);
     ~Sis3302UI();
 
-    void applySettings() {};
+    void applySettings();
 
 protected:
     Sis3302Module* module;
@@ -51,23 +51,32 @@ protected:
     QStringList gn; // Group names
     QStringList wn; // WidgetNames
 
-    void createUI();
+    void createUI(); // Has to be implemented
+
+    // Generic methods for ui creation
     void addTab(QString _name);
     void addGroupToTab(QString _tname, QString _name);
     void addUnnamedGroupToTab(QString _tname, QString _name);
     void addGroupToGroup(QString _tname, QString _gname, QString _name);
     void addUnnamedGroupToGroup(QString _tname, QString _gname, QString _name);
-    void addButtonToGroup(QString _tname, QString _gname, QString _name);
-    void addSpinnerToGroup(QString _tname, QString _gname, QString _name, int min, int max);
-    void addDoubleSpinnerToGroup(QString _tname, QString _gname, QString _name, double min, double max);
-    void addHexSpinnerToGroup(QString _tname, QString _gname, QString _name, int min, int max);
-    void addCheckBoxToGroup(QString _tname, QString _gname, QString _name);
-    void addPopupToGroup(QString _tname, QString _gname, QString _name, QStringList _itNames);
+
+    void addButtonToGroup (QString _tname, QString _gname, QString _name, QString _cname);
+    void addSpinnerToGroup (QString _tname, QString _gname, QString _name, QString _cname, int min, int max);
+    void addDoubleSpinnerToGroup (QString _tname, QString _gname, QString _name, QString _cname, double min, double max);
+    void addHexSpinnerToGroup (QString _tname, QString _gname, QString _name, QString _cname, int min, int max);
+    void addCheckBoxToGroup (QString _tname, QString _gname, QString _name, QString _cname);
+    void addPopupToGroup (QString _tname, QString _gname, QString _name, QString _cname, QStringList _itNames);
 
     QWidget* attachLabel(QWidget* w,QString _label);
 
 public slots:
     void uiInput(QString _name);
+    void clicked_start_button();
+    void clicked_stop_button();
+    void clicked_arm_button();
+    void clicked_disarm_button();
+    void clicked_reset_button();
+    void clicked_clear_button();
 };
 
 #endif // SIS3302UI_H
