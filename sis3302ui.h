@@ -53,6 +53,8 @@ protected:
 
     void createUI(); // Has to be implemented
 
+    bool applyingSettings;
+
     // Generic methods for ui creation
     void addTab(QString _name);
     void addGroupToTab(QString _tname, QString _name);

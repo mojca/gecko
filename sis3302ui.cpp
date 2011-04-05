@@ -4,6 +4,7 @@ Sis3302UI::Sis3302UI(Sis3302Module* _module)
     : BaseUI(_module)
 {
     module = _module;
+    applyingSettings = false;
 
     createUI();
     std::cout << "Instantiated Sis3302 UI" << std::endl;
@@ -143,6 +144,8 @@ void Sis3302UI::createUI()
 
 void Sis3302UI::uiInput(QString _name)
 {
+    if(applyingSettings == true) return;
+
     QCheckBox* cb = findChild<QCheckBox*>(_name);
     if(cb != 0)
     {
@@ -176,6 +179,7 @@ void Sis3302UI::uiInput(QString _name)
         }
         //QMessageBox::information(this,"uiInput","You changed the checkbox "+_name);
     }
+
     QComboBox* cbb = findChild<QComboBox*>(_name);
     if(cbb != 0)
     {
@@ -270,6 +274,8 @@ void Sis3302UI::clicked_clear_button()
 
 void Sis3302UI::applySettings()
 {
+    applyingSettings = true;
+
     QList<QCheckBox*> cbs = findChildren<QCheckBox*>();
     if(!cbs.empty())
     {
@@ -336,6 +342,7 @@ void Sis3302UI::applySettings()
             it++;
         }
     }
+    applyingSettings = false;
 }
 
 
