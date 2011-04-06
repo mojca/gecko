@@ -57,9 +57,9 @@ protected:
 
     // Generic methods for ui creation
     void addTab(QString _name);
-    void addGroupToTab(QString _tname, QString _name);
+    void addGroupToTab(QString _tname, QString _name, QString _cname = QString(""));
     void addUnnamedGroupToTab(QString _tname, QString _name);
-    void addGroupToGroup(QString _tname, QString _gname, QString _name);
+    void addGroupToGroup(QString _tname, QString _gname, QString _name, QString _cname = QString(""));
     void addUnnamedGroupToGroup(QString _tname, QString _gname, QString _name);
 
     void addButtonToGroup (QString _tname, QString _gname, QString _name, QString _cname);

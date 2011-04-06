@@ -44,9 +44,11 @@ public:
 
     unsigned int base_addr;
     unsigned int event_length;
+    unsigned int event_sample_start_addr;
     unsigned int start_delay;
     unsigned int stop_delay;
     unsigned int nof_events;
+    unsigned int poll_count;
 
     int irq_level;
     int irq_vector;
@@ -65,6 +67,7 @@ public:
     int trigger_threshold[8];
 
     unsigned int dac_offset[8];
+    bool ch_enabled[8];
 
     Sis3302config() : acMode(singleEvent),
                     wrapSize(ws16M),
@@ -74,9 +77,11 @@ public:
                     irqMode(modeRoak),
                     base_addr(0x0),
                     event_length(100),
+                    event_sample_start_addr(0),
                     start_delay(0x0),
                     stop_delay(50),
                     nof_events(1),
+                    poll_count(0x10000000),
                     irq_level(7),
                     irq_vector(0xff),
                     autostart_acq(true),
@@ -95,6 +100,7 @@ public:
             trigger_peak_length[i]  = 4;
             trigger_threshold[i]    = 50;
             dac_offset[i]           = 0;
+            ch_enabled[i]           = true;
         }
     }
 };
@@ -118,21 +124,30 @@ public:
     virtual void applySettings(QSettings*);
     void setChannels();
     ThreadBuffer<uint32_t> *getBuffer () { return buffer; }
-    virtual int acquire() {return 0;}
+    virtual int acquire();
     virtual bool dataReady() {return false;}
     virtual int configure();
     virtual int reset();
-    virtual uint32_t getBaseAddress () const {return 0xffff0000;}
-    virtual void setBaseAddress (uint32_t baddr) {};
+    virtual uint32_t getBaseAddress () const { return conf.base_addr; }
+    virtual void setBaseAddress (uint32_t baddr) { conf.base_addr = baddr; }
 
     // Supplementary methods
-    int getModuleId(unsigned int* _modId);
+    int getModuleId(uint32_t* _modId);
+    int getEventCounter(uint32_t*);
+    int getNextSampleAddr(int adc, uint32_t* _addr);
     int arm();
     int disarm();
     int start_sampling();
     int stop_sampling();
     int reset_DDR2_logic();
     int timestamp_clear();
+    int waitForSamplingComplete();
+    int readAdcChannel(int ch);
+    int writeToBuffer();
+    bool isArmedNotBusy();
+    bool isNotArmedNotBusy();
+
+
 
     int sis3302_write_dac_offset(unsigned int *offset_value_array);
 
@@ -143,6 +158,9 @@ private:
     ThreadBuffer<uint32_t> *buffer;
     virtual void createOutputPlugin();
     unsigned int addr,data;
+
+    uint32_t readBuffer[8][SIS3302_MAX_NOF_LWORDS]; // 1 GB total
+    uint32_t readLength[8];
 };
 
 #endif // SIS3302MODULE_H

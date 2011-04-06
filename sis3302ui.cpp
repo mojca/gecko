@@ -57,7 +57,7 @@ void Sis3302UI::createUI()
         gn.append(un); ng++; addUnnamedGroupToTab(tn[nt],gn[ng]);
         for(int j=0; j<2; j++)
         {
-            gn.append(tr("Channel %1").arg(ch)); ng++; addGroupToGroup(tn[nt],un,gn[ng]);
+            gn.append(tr("Channel %1").arg(ch)); ng++; addGroupToGroup(tn[nt],un,gn[ng],tr("ch_enabled%1").arg(ch));
             addPopupToGroup(tn[nt],un+gn[ng],"Mode",tr("trgMode_%1").arg(ch),(QStringList() << "LED, rising" << "LED, falling" << "FIR, rising" << "FIR, falling"));
             addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),0,0xffff); // 16 bits
             addSpinnerToGroup(tn[nt],un+gn[ng],"Sum time",tr("trigger_gap_length_%1").arg(ch),1,16);
@@ -76,7 +76,7 @@ void Sis3302UI::createUI()
         gn.append(un); ng++; addUnnamedGroupToTab(tn[nt],gn[ng]);
         for(int j=0; j<2; j++)
         {
-            gn.append(tr("Channel %1").arg(ch)); ng++; addGroupToGroup(tn[nt],un,gn[ng]);
+            gn.append(tr("Channel %1").arg(ch)); ng++; addGroupToGroup(tn[nt],un,gn[ng],tr("ch_enabled%1").arg(ch));
             addPopupToGroup(tn[nt],un+gn[ng],"Mode",tr("trgMode_%1").arg(ch),(QStringList() << "LED, rising" << "LED, falling" << "FIR, rising" << "FIR, falling"));
             addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),0,0xffff); // 16 bits
             addSpinnerToGroup(tn[nt],un+gn[ng],"Sum time",tr("trigger_gap_length_%1").arg(ch),1,16);
@@ -138,6 +138,12 @@ void Sis3302UI::createUI()
     this->setLayout(l);
 
     connect(&sm,SIGNAL(mapped(QString)),this,SLOT(uiInput(QString)));
+
+//    QList<QWidget*> li = this->findChildren<QWidget*>();
+//    foreach(QWidget* w, li)
+//    {
+//        printf("%s\n",w->objectName().toStdString().c_str());
+//    }
 }
 
 // Slot handling
@@ -145,6 +151,17 @@ void Sis3302UI::createUI()
 void Sis3302UI::uiInput(QString _name)
 {
     if(applyingSettings == true) return;
+
+    QGroupBox* gb = findChild<QGroupBox*>(_name);
+    if(gb != 0)
+    {
+        if(_name.startsWith("ch_enabled")) {
+            int ch = _name.right(1).toInt();
+            if(gb->isChecked()) module->conf.ch_enabled[ch] = true;
+            else module->conf.ch_enabled[ch] = false;
+            printf("Changed ch_enabled %d\n",ch);
+        }
+    }
 
     QCheckBox* cb = findChild<QCheckBox*>(_name);
     if(cb != 0)
@@ -193,7 +210,7 @@ void Sis3302UI::uiInput(QString _name)
             int ch = _name.right(1).toInt();
             module->conf.trgMode[ch] = static_cast<Sis3302config::TrgMode>(cbb->currentIndex());
         }
-        ////QMessageBox::information(this,"uiInput","You changed the combobox "+_name);
+        //QMessageBox::information(this,"uiInput","You changed the combobox "+_name);
     }
     QSpinBox* sb = findChild<QSpinBox*>(_name);
     if(sb != 0)
@@ -276,6 +293,20 @@ void Sis3302UI::applySettings()
 {
     applyingSettings = true;
 
+    QList<QGroupBox*> gbs = findChildren<QGroupBox*>();
+    if(!gbs.empty())
+    {
+        QList<QGroupBox*>::const_iterator it = gbs.begin();
+        while(it != gbs.end())
+        {
+            QGroupBox* w = (*it);
+            for(int ch=0; ch<8; ch++)
+            {
+                if(w->objectName() == tr("ch_enabled%1").arg(ch)) w->setChecked(module->conf.ch_enabled[ch]);
+            }
+            it++;
+        }
+    }
     QList<QCheckBox*> cbs = findChildren<QCheckBox*>();
     if(!cbs.empty())
     {
@@ -359,20 +390,27 @@ void Sis3302UI::addTab(QString _name)
     tabsMap.insert(_name,tabs.widget(idx));
 }
 
-void Sis3302UI::addGroupToTab(QString _tname, QString _name)
+void Sis3302UI::addGroupToTab(QString _tname, QString _name, QString _cname)
 {
     if (tabsMap.contains(_tname)) {
         QWidget* c = tabsMap.value(_tname);
-        QGroupBox* g = new QGroupBox(_name,c);
+        QGroupBox* b = new QGroupBox(_name,b);
         QString identifier = _tname+_name;
         QGridLayout* l = new QGridLayout;
         l->setMargin(0);
         l->setVerticalSpacing(0);
-        g->setLayout(l);
-        g->setObjectName(identifier);
-        c->layout()->addWidget(g);
-        groups.insert(identifier,g);
+        b->setLayout(l);
+        c->layout()->addWidget(b);
+        groups.insert(identifier,b);
         //cout << "Adding " << identifier.toStdString() << " to groups." << endl;
+        if(!_cname.isEmpty())
+        {
+            b->setCheckable(true);
+            b->setObjectName(_cname);
+            widgets.insert(_cname,b);
+            sm.setMapping(b,_cname);
+            connect(b,SIGNAL(toggled(bool)),&sm,SLOT(map()));
+        }
     }
 }
 
@@ -393,7 +431,7 @@ void Sis3302UI::addUnnamedGroupToTab(QString _tname, QString _name)
     }
 }
 
-void Sis3302UI::addGroupToGroup(QString _tname, QString _gname, QString _name)
+void Sis3302UI::addGroupToGroup(QString _tname, QString _gname, QString _name, QString _cname)
 {
     QString identifier = _tname+_gname;
     if (groups.contains(identifier)) {
@@ -408,6 +446,14 @@ void Sis3302UI::addGroupToGroup(QString _tname, QString _gname, QString _name)
         groups.insert(identifier,b);
         //cout << "Adding " << identifier.toStdString() << " to groups." << endl;
         b->setObjectName(identifier);
+        if(!_cname.isEmpty())
+        {
+            b->setCheckable(true);
+            b->setObjectName(_cname);
+            widgets.insert(_cname,b);
+            sm.setMapping(b,_cname);
+            connect(b,SIGNAL(toggled(bool)),&sm,SLOT(map()));
+        }
     }
 }
 
@@ -435,9 +481,9 @@ void Sis3302UI::addButtonToGroup(QString _tname, QString _gname, QString _name, 
         QWidget* g = groups.value(identifier);
         QPushButton* b = new QPushButton(_name,g);
         g->layout()->addWidget(b);
-        sm.setMapping(b,_cname);
         widgets.insert(_cname,b);
         b->setObjectName(_cname);
+        sm.setMapping(b,_cname);
         connect(b,SIGNAL(clicked()),&sm,SLOT(map()));
     }
 }
