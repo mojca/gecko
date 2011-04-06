@@ -70,13 +70,11 @@ private:
     QSet<int> actChans;
     QWaitCondition cond;
 
-    QList<PluginConnectorThreadBuffered*> bufferList;
     QList<PluginConnector*> unconnectedList;
 
     QMap<AbstractPlugin*, int> processList;
     int maxDepth;
 
-    void addBuffers();
     void createProcessList();
     void addChildrenToProcessList();
     void execProcessList();

@@ -27,7 +27,7 @@ CacheSignalPlugin::CacheSignalPlugin(int _id, QString _name)
 void CacheSignalPlugin::userProcess()
 {
     //std::cout << "CacheSignalPlugin userProcess" << std::endl;
-    const vector<double>* pdata = reinterpret_cast<const std::vector<double>*>(inputs->first()->getData());
+    QVector<double> idata = inputs->first()->getData().value< QVector<double> > ();
 
     SamDSP dsp;
 
@@ -63,14 +63,14 @@ void CacheSignalPlugin::userProcess()
         if(scheduleReset)
         {
             signal.clear();
-            signal.resize(pdata->size(),0);
+            signal.resize(idata.size(),0);
             scheduleReset = false;
             plot->resetBoundaries(0);
         }
 
-        if(signal.size() != pdata->size()) signal.resize(pdata->size(),0);
+        if(signal.size() != idata.size()) signal.resize(idata.size(),0);
 
-        curData.assign((*pdata).begin(),(*pdata).end());
+        curData.assign(idata.begin(), idata.end());
 
         if(conf.inputWeight != 1.0) dsp.fast_scale(curData,conf.inputWeight);
         if(conf.useInputWeight == true) dsp.fast_add(signal,curData);
@@ -85,7 +85,8 @@ void CacheSignalPlugin::userProcess()
         if(signal.size() != 0) plot->getChannelById(0)->setData(signal);
     }
 
-    outputs->at(0)->setData(&signal);
-    outputs->at(1)->setData(&signal);
+    QVector<double> out = QVector<double>::fromStdVector (signal);
+    outputs->at(0)->setData(QVariant::fromValue (out));
+    outputs->at(1)->setData(QVariant::fromValue (out));
 }
 

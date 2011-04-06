@@ -276,7 +276,7 @@ void CacheHistogramPlugin::scheduleResetHistogram()
 void CacheHistogramPlugin::userProcess()
 {
     //std::cout << "CacheHistogramPlugin userProcess" << std::endl;
-    const vector<double>* pdata = reinterpret_cast<const std::vector<double>*>(inputs->first()->getData());
+    QVector<double> idata = inputs->first()->getData().value< QVector<double> > ();
 
     SamDSP dsp;
 
@@ -300,7 +300,7 @@ void CacheHistogramPlugin::userProcess()
     if((int)(cache.size()) != conf.nofBins) cache.resize(conf.nofBins,0);
 
     // Add data to histogram
-    foreach(double datum, (*pdata))
+    foreach(double datum, idata)
     {
         //std::cout << "CacheHistogramPlugin: adding " << std::dec << datum << endl;
         if(datum < conf.xmax && datum >= conf.xmin)
@@ -317,6 +317,7 @@ void CacheHistogramPlugin::userProcess()
 
     if(cache.size() != 0) plot->getChannelById(0)->setData(cache);
 
-    outputs->at(0)->setData(&cache);
-    outputs->at(1)->setData(&cache);
+    QVector<double> out = QVector<double>::fromStdVector (cache);
+    outputs->at(0)->setData(QVariant::fromValue (out));
+    outputs->at(1)->setData(QVariant::fromValue (out));
 }

@@ -91,8 +91,8 @@ void RawWriteSis3350Plugin::userProcess()
 {
     //std::cout << "RawWriteSis3350Plugin Processing" << std::endl;
 
-    const std::vector<uint32_t>* data = reinterpret_cast<const std::vector<uint32_t>*>(inputs->at(0)->getData());
-    const std::vector<uint32_t>* meta = reinterpret_cast<const std::vector<uint32_t>*>(inputs->at(1)->getData());
+    QVector<uint32_t> data = inputs->at(0)->getData().value< QVector<uint32_t> > ();
+    QVector<uint32_t> meta = inputs->at(1)->getData().value< QVector<uint32_t> > ();
 
     QFile file(fileName);
     file.open(QIODevice::WriteOnly|QIODevice::Append);
@@ -105,19 +105,19 @@ void RawWriteSis3350Plugin::userProcess()
         QDataStream out(&file);
         out.setByteOrder(QDataStream::LittleEndian); //!
 
-        if(data->size() == 0)
+        if(data.empty ())
         {
             std::cout << "No data." << std::endl;
             return;
         }
 
-        for(unsigned int i = 0; i < meta->size(); i++)
+        for(int i = 0; i < meta.size(); i++)
         {
-            out << meta->at(i);
+            out << meta.at(i);
         }
-        for(unsigned int i = 0; i < data->size(); i++)
+        for(int i = 0; i < data.size(); i++)
         {
-            out << (uint16_t)(data->at(i) & 0xFFFF);
+            out << (uint16_t)(data.at(i) & 0xFFFF);
         }
     }
     else

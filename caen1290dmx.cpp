@@ -1,29 +1,20 @@
-#include "demuxcaen1290plugin.h"
-#include "pluginconnectorthreadbuffered.h"
-#include "pluginmanager.h"
+#include "caen1290dmx.h"
+#include "eventbuffer.h"
 
 #include <cstdio>
+#include <iostream>
 
-static PluginRegistrar registrar ("demuxcaen1290", AbstractPlugin::GroupDemux);
-
-DemuxCaen1290Plugin::DemuxCaen1290Plugin (int id, const QString &name, int channels, bool hires)
-: BasePlugin (id, name)
-, status_ (Start)
+Caen1290Demux::Caen1290Demux (const QVector<EventSlot*> &evslots, int channels, bool hires)
+: status_ (Start)
 , chans_ (channels)
 , measurementBits_ (hires ? 21 : 19)
 , channelBits_ (hires ? 5 : 7)
+, evslots_ (evslots)
 {
     evbuf_.resize (chans_);
-    for (int i = 0; i < chans_; ++i) {
-        int cid = (id << 16) + i;
-        addConnector (new PluginConnectorThreadBuffered (
-                this, QString ("out %1").arg (i), 1, 32, cid
-                ));
-
-    }
 }
 
-bool DemuxCaen1290Plugin::processData (const std::vector<uint32_t> &data, bool singleev) {
+bool Caen1290Demux::processData (Event *ev, const std::vector<uint32_t> &data, bool singleev) {
     for (std::vector<uint32_t>::const_iterator i = data.begin (); i != data.end (); ++i) {
         uint32_t tag = (*i >> 27) & 0x1F;
 
@@ -31,7 +22,7 @@ bool DemuxCaen1290Plugin::processData (const std::vector<uint32_t> &data, bool s
         case GlobalHeader:
             if (status_ != Start) {
                 printf ("DemuxCaen1290: Header while event processing\n");
-                endEvent ();
+                endEvent (ev);
             }
             startEvent (*i);
             break;
@@ -39,7 +30,7 @@ bool DemuxCaen1290Plugin::processData (const std::vector<uint32_t> &data, bool s
             if (status_ != Measurements) {
                 std::cout << "DemuxCaen1290: Trailer while not processing" << std::endl;
             } else {
-                bool go_on = endEvent ();
+                bool go_on = endEvent (ev);
                 if (*i & (1 << 25))
                     std::cout << "MHTDC Overflow!" << std::endl;
 
@@ -68,32 +59,23 @@ bool DemuxCaen1290Plugin::processData (const std::vector<uint32_t> &data, bool s
     return true;
 }
 
-void DemuxCaen1290Plugin::startEvent (uint32_t info) {
+void Caen1290Demux::startEvent (uint32_t info) {
     Q_UNUSED (info);
     status_ = Measurements;
     for (int i = 0; i < chans_; ++i)
         evbuf_ [i].clear ();
 }
 
-void DemuxCaen1290Plugin::processEvent (uint32_t ev) {
+void Caen1290Demux::processEvent (uint32_t ev) {
     uint16_t channel = (ev >> measurementBits_) & ((1 << channelBits_) - 1);
     uint32_t value = ev & ((1 << measurementBits_) - 1);
 
     evbuf_ [channel].push_back (value);
 }
 
-bool DemuxCaen1290Plugin::endEvent () {
-    bool isfirst = true;
+bool Caen1290Demux::endEvent (Event *ev) {
     for (int i = 0; i < chans_; ++i) {
-        if (outputs->at (i)->hasOtherSide ()) {
-            if (isfirst) {
-                isfirst = false;
-                if (!dynamic_cast<PluginConnectorThreadBuffered*> (outputs->at (0))->elementsFree())
-                    return false;
-            }
-
-            outputs->at (i)->setData (new std::vector<uint32_t> (evbuf_ [i]));
-        }
+        ev->put (evslots_.at (i), QVariant::fromValue (evbuf_ [i]));
     }
     status_ = Start;
 

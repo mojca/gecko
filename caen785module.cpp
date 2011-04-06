@@ -7,6 +7,7 @@ static ModuleRegistrar registrar ("caen785", Caen785Module::create);
 
 Caen785Module::Caen785Module(int _id, QString _name)
         : BaseModule(_id, _name)
+        , dmx (evslots)
 {
     setChannels();
     createOutputPlugin();
@@ -27,14 +28,9 @@ Caen785Module::Caen785Module(int _id, QString _name)
 void Caen785Module::setChannels()
 {
     // Setup channels
+    EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
     for (int i= 0; i < 32; ++i)
-        getChannels()->push_back(new ScopeChannel(this,QString ("spectrum %1").arg (i),ScopeCommon::eventBuffer,34,1));
-    getChannels()->push_back(new ScopeChannel(this,"Poll Trigger",ScopeCommon::trigger,1,1));
-}
-
-void Caen785Module::createOutputPlugin()
-{
-    output = new DemuxCaenADCPlugin (-getId (), getName () + " dmx", AbstractPlugin::Attributes ());
+        evbuf->registerSlot (this, QString ("out %1").arg (i), PluginConnector::VectorUint32);
 }
 
 int Caen785Module::softReset()
@@ -298,21 +294,19 @@ bool Caen785Module::pollTrigger()
     }
 }
 
-int Caen785Module::acquire()
+int Caen785Module::acquire(Event *ev)
 {
     int ret = 0;
     ret = acquireSingleEventMBLT();
     //ret =  acquireSingleEvent();
     //ret =  acquireSingleEventFIFO();
-    if(ret > 0) writeToBuffer(ret);
+    if(ret > 0) writeToBuffer(ev, ret);
     return ret;
 }
 
-int Caen785Module::writeToBuffer(uint32_t nofWords)
+int Caen785Module::writeToBuffer(Event *ev, uint32_t nofWords)
 {
-    DemuxCaenADCPlugin *o = dynamic_cast<DemuxCaenADCPlugin*> (output);
-
-    bool go_on = o->processData (data, nofWords, RunManager::ref ().isSingleEventMode ());
+    bool go_on = dmx.processData (ev, data, nofWords, RunManager::ref ().isSingleEventMode ());
     if (!go_on)
         dataReset ();
     return 0;

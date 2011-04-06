@@ -34,8 +34,6 @@ protected:
     QSpinBox* samplesLeftSpinner;
     QSpinBox* samplesRightSpinner;
 
-    vector<double> outData;
-
 public:
     DspPileUpCorrectionPlugin(int _id, QString _name);
     static AbstractPlugin *create (int id, const QString &name, const Attributes &attrs) {

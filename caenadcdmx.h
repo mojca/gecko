@@ -5,18 +5,15 @@
 #include <map>
 #include <cstdio>
 #include <stdint.h>
-#include <QPushButton>
-#include "baseplugin.h"
 #include "caen_v785.h"
 
-class BasePlugin;
+class Event;
+class EventSlot;
+template <typename T> class QVector;
 
-class DemuxCaenADCPlugin : public virtual BasePlugin
+class CaenADCDemux
 {
-    Q_OBJECT
-
 private:
-    bool scheduleReset;
     bool inEvent;
     int cnt;
 
@@ -27,33 +24,20 @@ private:
     uint32_t eventCounter;
     uint8_t id;
     std::map<uint8_t, uint16_t> chData;
+    const QVector<EventSlot*>& evslots;
 
     uint32_t* it;
 
     void startNewEvent();
     void continueEvent();
-    bool finishEvent();
+    bool finishEvent(Event *ev);
     void printHeader();
     void printEob();
 
-    QPushButton* resetButton;
-
-protected:
-    virtual void createSettings(QGridLayout*);
-
 public:
-    DemuxCaenADCPlugin(int _id, QString _name, const Attributes &attrs);
+    CaenADCDemux(const QVector<EventSlot*>& _evslots, uint chans = 32, uint bits = 12);
 
-    virtual void process() {}
-    virtual void userProcess() {}
-    bool processData (uint32_t* data, uint32_t len, bool singleev);
-
-    virtual void applySettings(QSettings*) {}
-    virtual void saveSettings(QSettings*) {}
-    AttributeMap getAttributeList () const;
-
-public slots:
-    void resetSpectra();
+    bool processData (Event *ev, uint32_t* data, uint32_t len, bool singleev);
 };
 
 #endif // DEMUXCAENADCPLUGIN_H

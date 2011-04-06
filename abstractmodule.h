@@ -6,8 +6,7 @@
 #include <stdint.h>
 
 class QSettings;
-template<typename T> class QVector;
-template<typename T> class ThreadBuffer;
+template<typename T> class QList;
 
 class AbstractInterface;
 class BaseUI;
@@ -15,6 +14,7 @@ class EventSlot;
 class OutputPlugin;
 class PluginConnector;
 class ScopeChannel;
+class Event;
 
 /*! Base class for data acquisition modules.
  *  This class is used by all modules that receive data from VME modules.
@@ -49,7 +49,7 @@ public:
     virtual BaseUI* getUI() const = 0;
 
     /*! retrieve the list of slots made available by this module. */
-    virtual QVector<const EventSlot*> getSlots() const = 0;
+    virtual QList<const EventSlot*> getSlots() const = 0;
 
     /*! return a pointer to this module's output plugin. */
     virtual OutputPlugin* getOutputPlugin() const = 0;
@@ -78,7 +78,7 @@ public:
     /*! Retrieve data from the vme module and put it into the buffer.
      *  This function is called repeatedly from the RunThread to get the data as soon as it is available.
      */
-    virtual int acquire() = 0;
+    virtual int acquire(Event *ev) = 0;
 
     /*! Return whether data is available for retrieval.
      *  This function is called repeatedly from the RunThread to determine whether new data is available.
@@ -106,7 +106,7 @@ public slots:
     virtual void prepareForNextAcquisition() = 0;
 
 signals:
-    void triggered(ScopeChannel*);
+    void triggered(AbstractModule*);
 
 protected:
     /*! set the module's UI object. This object is shown in the main window when the module's tree entry is selected. */

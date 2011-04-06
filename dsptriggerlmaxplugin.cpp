@@ -121,31 +121,28 @@ void DspTriggerLMAXPlugin::saveSettings(QSettings* settings)
 void DspTriggerLMAXPlugin::userProcess()
 {
     //std::cout << "DspTriggerLMAXPlugin Processing" << std::endl;
-    const vector<double>* pdata = reinterpret_cast<const std::vector<double>*>(inputs->at(0)->getData());
-    const vector<double>* pveto = reinterpret_cast<const std::vector<double>*>(inputs->at(1)->getData());
+    QVector<double> idata = inputs->at(0)->getData().value< QVector<double> > ();
+    QVector<double> iveto = inputs->at(1)->getData().value< QVector<double> > ();
 
-    if(pveto == NULL)
+    if(inputs->at(1)->getData().isNull ())
     {
-        veto.clear ();
-        veto.resize (pdata->size (), 0);
-        pveto = &veto;
+        iveto.fill (0., idata.size ());
     }
-    if(pdata->size() != pveto->size())
+    if(idata.size() != iveto.size())
     {
         std::cout << getName().toStdString() << ": data and veto have different lengths";
         return;
     }
 
-    trigger.clear();
-    trigger.resize(pdata->size(),0);
+    trigger.fill (0., idata.size());
 
-    for(unsigned int i = 1; i<pdata->size()-1; i++)
+    for(int i = 1; i<idata.size()-1; i++)
     {
         if(conf.positive)
         {
-            if(pdata->at(i) > conf.threshold && pveto->at(i) == 0)
+            if(idata.at(i) > conf.threshold && iveto.at(i) == 0)
             {
-                if(pdata->at(i-1) < pdata->at(i) && pdata->at(i+1) < pdata->at(i))
+                if(idata.at(i-1) < idata.at(i) && idata.at(i+1) < idata.at(i))
                 {
                     //std::cout << std::dec << "Trigger at " << i << std::endl;
                     //std::cout << pdata->at(i-1) << "  " << pdata->at(i) << "  " << pdata->at(i+1) << std::endl;
@@ -160,9 +157,9 @@ void DspTriggerLMAXPlugin::userProcess()
         }
         else
         {
-            if(pdata->at(i) < -conf.threshold && pveto->at(i) == 0)
+            if(idata.at(i) < -conf.threshold && iveto.at(i) == 0)
             {
-                if(pdata->at(i-1) > pdata->at(i) && pdata->at(i+1) > pdata->at(i))
+                if(idata.at(i-1) > idata.at(i) && idata.at(i+1) > idata.at(i))
                 {
                     trigger[i] = 1;
                     i += conf.holdoff;
@@ -175,7 +172,7 @@ void DspTriggerLMAXPlugin::userProcess()
         }
     }
 
-    outputs->at(0)->setData(&trigger);
-    outputs->at(1)->setData(pdata);
-    outputs->at(2)->setData(pveto);
+    outputs->at(0)->setData(QVariant::fromValue (trigger));
+    outputs->at(1)->setData(QVariant::fromValue (idata));
+    outputs->at(2)->setData(QVariant::fromValue (iveto));
 }

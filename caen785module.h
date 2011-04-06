@@ -9,7 +9,7 @@
 #include "baseplugin.h"
 #include "caen_v785.h"
 #include "caen785ui.h"
-#include "demuxcaenadcplugin.h"
+#include "caenadcdmx.h"
 #include "pluginmanager.h"
 
 class Caen785config
@@ -63,8 +63,6 @@ class Caen785Module : public BaseModule
     Q_OBJECT
 
 private:
-    ThreadBuffer<uint32_t> *buffer;
-    void createOutputPlugin();
 
     Caen785Module(int _id, QString _name);
 
@@ -96,7 +94,7 @@ public:
     bool pollTrigger();
 
     virtual bool dataReady();
-    virtual int acquire();
+    virtual int acquire(Event *);
     virtual int reset() {return softReset(); }
     virtual int configure();
 
@@ -107,17 +105,15 @@ public:
     int acquireSingleEvent();
     int acquireSingleEventFIFO();
     int acquireSingleEventMBLT();
-    int writeToBuffer(uint32_t nofWords);
-
-    ThreadBuffer<uint32_t> *getBuffer () { return NULL; }
+    int writeToBuffer(Event *ev, uint32_t nofWords);
 
     // Factory method
     static AbstractModule *create (int id, const QString &name) {
         return new Caen785Module (id, name);
     }
-
-public slots:
-    virtual void prepareForNextAcquisition() {}
+private:
+    QVector<EventSlot*> evslots;
+    CaenADCDemux dmx;
 };
 
 #endif // CAEN785_H

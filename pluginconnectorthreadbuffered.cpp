@@ -5,8 +5,8 @@
 PluginConnectorThreadBuffered::PluginConnectorThreadBuffered(AbstractPlugin* _plugin, QString _name,
                                                              int _chunkSize, int _bufferSize, int _id)
 : PluginConnector(_plugin,ScopeCommon::out,_name,PluginConnector::VectorUint32)
-, buffer(_bufferSize,_chunkSize,_id)
-, data(NULL)
+, buffer(_bufferSize,_chunkSize,_id, QVariant ())
+, data()
 , valid(false)
 {
 
@@ -15,30 +15,21 @@ PluginConnectorThreadBuffered::PluginConnectorThreadBuffered(AbstractPlugin* _pl
 void PluginConnectorThreadBuffered::reset()
 {
     valid = false;
-    if(data)
-    {
-        data->clear();
-        //delete data;
-        data = NULL;
-    }
+    data.clear ();
     buffer.reset();
 }
 
-void PluginConnectorThreadBuffered::setData(std::vector<uint32_t>* _data)
+void PluginConnectorThreadBuffered::setData(QVariant _data)
 {
     assert(getType() == ScopeCommon::out);
     buffer.write(&_data,1);
 }
 
-void PluginConnectorThreadBuffered::setData(const void * _data) {
-    setData ((std::vector<uint32_t>*) _data); // FIXME!
-}
-
-const void* PluginConnectorThreadBuffered::getData()
+QVariant PluginConnectorThreadBuffered::getData()
 {
     if(!valid)
     {
-        std::vector<std::vector<uint32_t> *> tmp(1, static_cast<std::vector<uint32_t> *> (NULL));
+        std::vector< QVariant > tmp(1, QVariant ());
         buffer.read(tmp,1);
         data = tmp.front();
         valid = true;
@@ -50,20 +41,10 @@ const void* PluginConnectorThreadBuffered::getData()
     }
 }
 
-const void* PluginConnectorThreadBuffered::getDataDummy()
+QVariant PluginConnectorThreadBuffered::getDataDummy()
 {
-    if(!valid)
-    {
-        std::vector<std::vector<uint32_t> *> tmp(1, static_cast<std::vector<uint32_t> *> (NULL));
-        buffer.read(tmp,1);
-        data = tmp.front ();
-        valid = true;
-        return NULL;
-    }
-    else
-    {
-        return NULL;
-    }
+    getData ();
+    return QVariant ();
 }
 
 int PluginConnectorThreadBuffered::dataAvailable()
@@ -78,12 +59,10 @@ bool PluginConnectorThreadBuffered::useData()
     if(valid)
     {
         valid = false;
-        if(data)
+        if(!data.isNull())
         {
             //std::cout << getName() << ": Deleting Data" << std::endl;
-            data->clear();
-            delete data;
-            data = NULL;
+            data.clear ();
             return true;
         }
         else

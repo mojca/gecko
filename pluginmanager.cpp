@@ -29,7 +29,6 @@ PluginManager::PluginManager()
     mmgr = ModuleManager::ptr ();
     items = new QList<AbstractPlugin*>;
     roots = new QList<PluginConnector*>;
-    inBuffers = new QList<ThreadBuffer<uint32_t>*>;
 
     createPluginGroups();
 }
@@ -38,10 +37,8 @@ PluginManager::~PluginManager()
 {
     clear();
     roots->clear();
-    inBuffers->clear();
     delete items;
     delete roots;
-    delete inBuffers;
 }
 
 void PluginManager::clear()
@@ -185,20 +182,6 @@ BasePlugin::AttributeMap PluginManager::getAttributeMap (const QString &type) {
         return registry.value (type).attrs;
     else
         return BasePlugin::AttributeMap ();
-}
-
-int PluginManager::addBuffer(ThreadBuffer<uint32_t>* _inBuffer)
-{
-    int threadId = _inBuffer->getModuleId();
-    AbstractPlugin* newRootPlugin = mmgr->get (threadId)->getOutputPlugin();
-
-    std::cout << "Adding buffer from module " << threadId << std::endl;
-    std::cout << "Adding plugin " << newRootPlugin->getName().toStdString() << " as root" << std::endl;
-
-    roots->append(newRootPlugin->getOutputs()->first());
-    inBuffers->append(_inBuffer);
-
-    return roots->size();
 }
 
 int PluginManager::getNextId () {

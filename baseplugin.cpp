@@ -1,6 +1,7 @@
 #include "baseplugin.h"
 #include "pluginmanager.h"
 #include "abstractmodule.h"
+#include "outputplugin.h"
 
 #include <stdint.h>
 #include <vector>

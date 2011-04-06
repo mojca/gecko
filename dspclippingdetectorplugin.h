@@ -32,7 +32,7 @@ protected:
     vector<double>* curData;
     vector<double>* outData;
 
-    vector<double> clip;
+    QVector<double> clip;
 
 public:
     DspClippingDetectorPlugin(int _id, QString _name);

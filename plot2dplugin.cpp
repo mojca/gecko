@@ -132,12 +132,12 @@ void Plot2DPlugin::userProcess()
     int i = 0;
     foreach(PluginConnector* input, (*inputs))
     {
-        const std::vector<double>* pdata = reinterpret_cast<const std::vector<double>*>(input->getData());
-        if(pdata != NULL)
+        if(input->getData().canConvert< QVector<double> > ())
         {
-            outData.at(i).assign((*pdata).begin(),(*pdata).end());
+            QVector<double> data = input->getData().value< QVector<double> > ();
+            outData.at(i).assign(data.begin(),data.end());
 
-            if(outData.at(i).size() != 0) plot->getChannelById(i)->setData(outData.at(i));
+            if(!outData.at(i).empty ()) plot->getChannelById(i)->setData(outData.at(i));
         }
         i++;
     }

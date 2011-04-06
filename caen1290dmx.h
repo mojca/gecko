@@ -1,25 +1,23 @@
 #ifndef DEMUXCAEN1290PLUGIN_H
 #define DEMUXCAEN1290PLUGIN_H
 
-#include "baseplugin.h"
+#include <stdint.h>
+#include <vector>
 
-class DemuxCaen1290Plugin : public BasePlugin
+template <typename T> class QVector;
+class EventSlot;
+class Event;
+
+class Caen1290Demux
 {
 public:
-    DemuxCaen1290Plugin (int id, const QString &name, int channels, bool hires);
+    Caen1290Demux (const QVector<EventSlot*> &evslots, int channels, bool hires);
 
-    bool processData (const std::vector<uint32_t> &data, bool singleev);
-    virtual void process () {}
-    virtual void userProcess () {}
-    virtual void applySettings (QSettings*) {}
-    virtual void saveSettings (QSettings*) {}
-
-protected:
-    void createSettings (QGridLayout*) {}
+    bool processData (Event *ev, const std::vector<uint32_t> &data, bool singleev);
 
 private:
     void startEvent (uint32_t info);
-    bool endEvent ();
+    bool endEvent (Event *ev);
     void processEvent (uint32_t ev);
 
 private:
@@ -28,10 +26,11 @@ private:
               TDCHeader = 0x01, TDCMeasurement = 0x00, TDCError = 0x04, TDCTrailer = 0x03};
 
     Status status_;
-    std::vector< std::vector<uint32_t> > evbuf_;
+    std::vector< QVector<uint32_t> > evbuf_;
     int chans_;
     int measurementBits_;
     int channelBits_;
+    const QVector<EventSlot*> &evslots_;
 };
 
 #endif // DEMUXCAEN1290PLUGIN_H

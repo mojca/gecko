@@ -63,8 +63,6 @@ public:
     /*! make all plugins save their settings to the specified QSettings object */
     void saveSettings(QSettings* s);
 
-    int addBuffer(ThreadBuffer<uint32_t>*);
-
     /*! register a plugin type with the PluginManager.
      *  All but the demux plugins must be registered with the manager to be usable.
      *
@@ -136,7 +134,6 @@ private:
 
     QList<AbstractPlugin*>* items;
     QList<PluginConnector*>* roots;
-    QList<ThreadBuffer<uint32_t>*>* inBuffers;
     QMap<QString, PluginTypeDesc> registry;
     QMap<AbstractPlugin::Group,QString> groupMap;
 

@@ -26,7 +26,6 @@ public:
     virtual void saveSettings(QSettings*) {}
 
 private:
-    std::vector< std::vector<double> > outData_;
     Attributes attrs_;
 
     int nofChannels_;

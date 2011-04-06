@@ -1,64 +1,23 @@
-#include "demuxsis3350plugin.h"
-#include "pluginmanager.h"
+#include "sis3350dmx.h"
+#include "runmanager.h"
+#include "eventbuffer.h"
+#include <iostream>
 
-#include <QGridLayout>
-#include <QLabel>
-
-static PluginRegistrar registrar ("demuxsis3350", AbstractPlugin::GroupDemux);
-
-DemuxSis3350Plugin::DemuxSis3350Plugin(int _id, QString _name)
-    : BasePlugin(_id, _name)
+Sis3350Demux::Sis3350Demux (const QVector<EventSlot *> &_evslots)
+    : evslots (_evslots)
 {
     inHeader = false;
     inTrace = false;
     cnt = 0;
-
-    createSettings(settingsLayout);
-
-    int nofBuffers = 2;
-
-    for(int i = 0; i < 4; i++)
-    {
-        int connectorId = (getId () << 16) + i;
-        addConnector(new PluginConnectorThreadBuffered(this,QString("out %1").arg(i),
-                                                       1,nofBuffers*1,connectorId));
-        curEvent[i] = new struct Sis3350Event;
-        //this->outputs->at(i)->setData(NULL);
-    }
-    addConnector(new PluginConnectorThreadBuffered(this,"meta info",
-                                                   1,nofBuffers*1,(getId () << 16)+5));
-
-    std::cout << "Instantiated DemuxSis3350Plugin" << std::endl;
+    //std::cout << "Instantiated Sis3350Demux" << std::endl;
 }
 
-void DemuxSis3350Plugin::createSettings(QGridLayout * l)
+void Sis3350Demux::process (Event *_ev, uint32_t *_data, uint32_t _len)
 {
-    // Plugin specific code here
-
-    QWidget* container = new QWidget();
-    {
-        QGridLayout* cl = new QGridLayout;
-
-        QLabel* label = new QLabel(tr("This plugin decodes the raw data to individual channels."));
-
-        cl->addWidget(label);
-        container->setLayout(cl);
-    }
-
-    // End
-
-    l->addWidget(container,0,0,1,1);
-}
-
-void DemuxSis3350Plugin::setData(uint32_t* _data, uint32_t _len)
-{
-    len = _len;
+    //std::cout << "Sis3350Demux Processing" << std::endl;
     data = _data;
-}
-
-void DemuxSis3350Plugin::process()
-{
-    //std::cout << "DemuxSis3350Plugin Processing" << std::endl;
+    len = _len;
+    ev = _ev;
     it = data;
 
     while(it != (data+len))
@@ -86,18 +45,18 @@ void DemuxSis3350Plugin::process()
     //usleep(10000); // FIXME
 }
 
-void DemuxSis3350Plugin::startNewHeader()
+void Sis3350Demux::startNewHeader()
 {
-    //std::cout << "DemuxSis3350Plugin: Header start" << std::endl;
+    //std::cout << "Sis3350Demux: Header start" << std::endl;
     cnt = 0;
     inHeader = true;
 }
 
-void DemuxSis3350Plugin::startNewTrace()
+void Sis3350Demux::startNewTrace()
 {
     uint32_t chMask = 0x0000000F;
 
-    //std::cout << "DemuxSis3350Plugin: Trace start" << std::endl;
+    //std::cout << "Sis3350Demux: Trace start" << std::endl;
     cnt = 0;
     inHeader = false;
     curEvent[curChannel]->data.resize(curEvent[curChannel]->sampleLen);
@@ -106,28 +65,24 @@ void DemuxSis3350Plugin::startNewTrace()
     // Publish meta info
     if(curChannel == 3)
     {
-        if(outputs->at(4)->hasOtherSide())
-        {
-            int len = curEvent[curChannel]->sampleLen + 8;
-            std::vector<uint32_t>* metainfo = new std::vector<uint32_t>(8,0); // Standard container for meta info
-            metainfo->at(0) = 0xBBBB3000;   // base address
-            metainfo->at(1) = len;
-            metainfo->at(2) = curEvent[curChannel]->timeStamp >> 32;
-            metainfo->at(3) = curEvent[curChannel]->timeStamp & 0xFFFFFFFF;
-            metainfo->at(4) = curEvent[curChannel]->sampleLen;
-            metainfo->at(5) = chMask;
-            metainfo->at(6) = 0x0;          // Module count
-            metainfo->at(7) = 0xFFFFFFFF;   // unused
+        int len = curEvent[curChannel]->sampleLen + 8;
+        QVector<uint32_t> metainfo (8,0); // Standard container for meta info
+        metainfo [0] = 0xBBBB3000;   // base address
+        metainfo [1] = len;
+        metainfo [2] = curEvent[curChannel]->timeStamp >> 32;
+        metainfo [3] = curEvent[curChannel]->timeStamp & 0xFFFFFFFF;
+        metainfo [4] = curEvent[curChannel]->sampleLen;
+        metainfo [5] = chMask;
+        metainfo [6] = 0x0;          // Module count
+        metainfo [7] = 0xFFFFFFFF;   // unused
 
-            PluginConnectorThreadBuffered* bpc = dynamic_cast<PluginConnectorThreadBuffered*>(outputs->at(4));
-            bpc->setData(metainfo);
-        }
+        ev->put (evslots.at (4), QVariant::fromValue (metainfo));
     }
 }
 
-void DemuxSis3350Plugin::continueTrace()
+void Sis3350Demux::continueTrace()
 {
-    //std::cout << "DemuxSis3350Plugin: Trace continue" << std::endl;
+    //std::cout << "Sis3350Demux: Trace continue" << std::endl;
     while(cnt < (int)curEvent[curChannel]->sampleLen && it != (data+len))
     {
         curEvent[curChannel]->data[cnt] = ((0x00000fff & (*it)));
@@ -142,26 +97,21 @@ void DemuxSis3350Plugin::continueTrace()
 
         inTrace = false;
 
-        //std::cout << "DemuxSis3350Plugin: Trace end" << std::endl;
+        //std::cout << "Sis3350Demux: Trace end" << std::endl;
 
         // Publish event data
-        if(outputs->at(curChannel)->hasOtherSide())
-        {
-            PluginConnectorThreadBuffered* bpc = dynamic_cast<PluginConnectorThreadBuffered*>(outputs->at(curChannel));
-            std::vector<uint32_t>* outData = new std::vector<uint32_t>(curEvent[curChannel]->sampleLen,0);
-            outData->assign(curEvent[curChannel]->data.begin(),curEvent[curChannel]->data.end());
-            bpc->setData(outData);
-        }
+        QVector<uint32_t> outData (QVector<uint32_t>::fromStdVector (curEvent[curChannel]->data));
+        ev->put (evslots.at (curChannel), QVariant::fromValue (outData));
     }
     else
     {
-        //std::cout << "DemuxSis3350Plugin: Block end" << std::endl;
+        //std::cout << "Sis3350Demux: Block end" << std::endl;
     }
 }
 
-void DemuxSis3350Plugin::continueHeader()
+void Sis3350Demux::continueHeader()
 {
-    //std::cout << "DemuxSis3350Plugin: Header continue" << std::endl;
+    //std::cout << "Sis3350Demux: Header continue" << std::endl;
     while(cnt < 4 && it != (data+len))
     {
         switch(cnt)
@@ -189,17 +139,17 @@ void DemuxSis3350Plugin::continueHeader()
             inTrace = true;
             break;
         default:
-            std::cout << "DemuxSis3350Plugin: Weird..." << std::endl;
+            std::cout << "Sis3350Demux: Weird..." << std::endl;
             break;
 
         }
         cnt++;
         it++;
     }
-    //std::cout << "DemuxSis3350Plugin: Header end" << std::endl;
+    //std::cout << "Sis3350Demux: Header end" << std::endl;
 }
 
-void DemuxSis3350Plugin::printHeader()
+void Sis3350Demux::printHeader()
 {
 //    printf("Time: %012llx\n",(unsigned long long)curEvent[curChannel]->timeStamp);
 //    std::cout << "channel "      << std::dec << (int)curEvent[curChannel]->channel << std::endl;

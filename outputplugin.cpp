@@ -4,18 +4,22 @@
 #include "eventbuffer.h"
 #include "pluginconnectorplain.h"
 
-#include <QLabel>
+#include <algorithm>
+
+static bool evslsort (EventSlot* a, EventSlot* b) {
+    return a->getName() < b->getName ();
+}
 
 OutputPlugin::OutputPlugin (AbstractModule *mod)
 : BasePlugin (-1, mod->getName () + " out")
 {
-    std::vector<const EventSlot*> evslots = RunManager::ref ().getEventBuffer()->getEventSlots (mod);
-    for (std::vector<const EventSlot*>::const_iterator i = evslots.begin ();
-         i != evslots.end ();
-         ++i)
+    const QSet<EventSlot*>* evslots = RunManager::ref ().getEventBuffer()->getEventSlots (mod);
+    QList<EventSlot*> l = evslots->toList ();
+    std::sort (l.begin(), l.end (), evslsort);
+    foreach (EventSlot *i, l)
     {
-        PluginConnector *conn = new PluginConnectorPlain (this, ScopeCommon::out, (*i)->getName ());
-        datamap_ [*i] = conn;
+        PluginConnector *conn = new PluginConnectorPlain (this, ScopeCommon::out, i->getName (), i->getDataType ());
+        datamap_ [i] = conn;
         addConnector (conn);
     }
 }
@@ -25,8 +29,8 @@ void OutputPlugin::latchData (Event *ev) {
          i != datamap_.end ();
          ++i)
     {
-        const void* d = ev->get (i->first);
-        if (d != NULL)
+        QVariant d = ev->get (i->first);
+        if (!d.isNull ())
             i->second->setData (d);
     }
 }

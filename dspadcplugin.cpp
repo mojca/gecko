@@ -71,19 +71,19 @@ void DspAdcPlugin::saveSettings(QSettings* settings)
 void DspAdcPlugin::userProcess()
 {
     //std::cout << "DspPileUpCorrectionPlugin Processing" << std::endl;
-    const vector<double>* ptrigger = reinterpret_cast<const std::vector<double>*>(inputs->at(0)->getData());
-    const vector<double>* pcalorimetry = reinterpret_cast<const std::vector<double>*>(inputs->at(1)->getData());
-    const vector<double>* pbase = reinterpret_cast<const std::vector<double>*>(inputs->at(2)->getData());
+    std::vector<double> itrigger = inputs->at(0)->getData().value< QVector<double> > ().toStdVector ();
+    std::vector<double> icalorimetry = inputs->at(1)->getData().value< QVector<double> > ().toStdVector ();
+    QVector<double> ibase = inputs->at(2)->getData().value< QVector<double> > ();
 	
     double baseline = 0;
     double pointsForBaseline = 0;
 
     SamDSP dsp;
 
-    if(pbase && pbase->size() > 0)
+    if(!ibase.empty())
     {
-        baseline = pbase->at(0);
-        pointsForBaseline = pbase->at(1);
+        baseline = ibase.at(0);
+        pointsForBaseline = ibase.at(1);
 //      std::cout << "Using baseline value: " << baseline << " from " << pointsForBaseline << " points" << std::endl;
     }
     else
@@ -93,11 +93,9 @@ void DspAdcPlugin::userProcess()
 
 
     // Compact input data
-    vector<double> calorimetry = dsp.addC((*pcalorimetry),-baseline);
-    vector<vector<double> > amplitudes = dsp.select(calorimetry,(*ptrigger));
+    vector<double> calorimetry = dsp.addC(icalorimetry,-baseline);
+    vector<vector<double> > amplitudes = dsp.select(calorimetry,itrigger);
 
-    outData.resize(amplitudes[0].size(),0);
-    outData = amplitudes[AMP];
-
-    outputs->first()->setData(&outData);
+    QVector<double> outData = QVector<double>::fromStdVector (amplitudes[AMP]);
+    outputs->first()->setData(QVariant::fromValue (outData));
 }

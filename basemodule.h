@@ -9,11 +9,11 @@
 #include "pluginconnector.h"
 #include "runmanager.h"
 #include "eventbuffer.h"
+#include "outputplugin.h"
 
 class BaseUI;
 class ScopeChannel;
 class ModuleManager;
-class OutputPlugin;
 
 /*! base class for all modules.
  *  Each module is registered with the module manager to allow generalised access.
@@ -27,13 +27,23 @@ class BaseModule : public AbstractModule
 public:
     BaseModule(int _id, QString _name)
     : iface (NULL)
+    , output (NULL)
     , id (_id)
     , name (_name)
     , ui (NULL)
     {
     }
 
-    virtual ~BaseModule() {}
+    virtual ~BaseModule() {
+        EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
+        const QSet<EventSlot*>* s = evbuf->getEventSlots(this);
+        for (QSet<EventSlot*>::const_iterator i = s->begin (); i != s->end (); ++i)
+            evbuf->destroyEventSlot (*i);
+
+        if (output)
+            delete output;
+        output = NULL;
+    }
 
     int getId () const { return id; }
     const QString& getName() const { return name; }
@@ -53,8 +63,14 @@ public:
     }
 
     /*! Returns a list of all slots belonging to this module. */
-    const QVector<const EventSlot*> &getSlots () const {
-        return QVector<const EventSlot*>::fromStdVector (RunManager::ref ().getEventBuffer ()->getEventSlots(this));
+    QList<const EventSlot*> getSlots () const {
+        const QSet<EventSlot*>* s = RunManager::ref ().getEventBuffer ()->getEventSlots(this);
+        QList<const EventSlot*> out;
+        out.reserve (s->size ());
+        for (QSet<EventSlot*>::const_iterator i = s->begin (); i != s->end (); ++i)
+            out.append (*i);
+
+        return out;
     }
 
 
@@ -77,7 +93,7 @@ protected:
         available to other plugins. It also handles the transition between the run thread and the plugin thread.
 
         \remarks only call this function after registering all the slots the module will export as the number
-        of connectors is derived from this number.
+        and names of connectors are derived from them. The plugin will be deleted when the module is destroyed.
      */
     void createOutputPlugin () {
         output = new OutputPlugin (this);

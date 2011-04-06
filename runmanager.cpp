@@ -13,6 +13,7 @@
 #include "abstractinterface.h"
 #include "systeminfo.h"
 #include "eventbuffer.h"
+#include "outputplugin.h"
 
 #include <stdexcept>
 #include <iostream>

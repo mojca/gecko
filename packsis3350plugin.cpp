@@ -60,16 +60,17 @@ void PackSis3350Plugin::userProcess()
 {
     //std::cout << "PackSis3350Plugin Processing" << std::endl;
 
-    const std::vector<uint32_t>* data = reinterpret_cast<const std::vector<uint32_t>*>(inputs->at(0)->getData());
-    const std::vector<uint32_t>* meta = reinterpret_cast<const std::vector<uint32_t>*>(inputs->at(1)->getData());
+    QVector<uint32_t> data = inputs->at(0)->getData().value< QVector<uint32_t> > ();
+    QVector<uint32_t> meta = inputs->at(1)->getData().value< QVector<uint32_t> > ();
 
-    if(data->size() == 0)
+    if(data.empty())
     {
         std::cout << "No data." << std::endl;
         return;
     }
-    outData = (*meta);
-    outData.insert(outData.end(),data->begin(),data->end());
 
-    outputs->first()->setData(&outData);
+    QVector<uint32_t> out (meta);
+    out << data;
+
+    outputs->first()->setData(QVariant::fromValue (out));
 }

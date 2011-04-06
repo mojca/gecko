@@ -3,7 +3,7 @@
 
 #include "basemodule.h"
 #include "baseplugin.h"
-#include "demuxcaenadcplugin.h"
+#include "caenadcdmx.h"
 #include "pluginmanager.h"
 
 struct Caen792ModuleConfig {
@@ -77,14 +77,13 @@ public:
     virtual void saveSettings (QSettings*);
     virtual void applySettings (QSettings*);
 
-    ThreadBuffer<uint32_t> *getBuffer () { return NULL; }
 
     int counterReset ();
     int dataReset ();
     int softReset ();
 
     virtual void setChannels ();
-    virtual int acquire ();
+    virtual int acquire (Event* ev);
     virtual bool dataReady ();
     virtual int reset ();
     virtual int configure ();
@@ -108,9 +107,7 @@ public:
 private:
     Caen792Module (int _id, const QString &, bool _isqdc);
     void singleShot (uint32_t *data, uint32_t *rd);
-    void writeToBuffer();
-    void createBuffer ();
-    void createOutputPlugin();
+    void writeToBuffer(Event *ev);
 
 public slots:
     virtual void prepareForNextAcquisition () {}
@@ -127,6 +124,9 @@ private:
     uint32_t evcnt;
     uint32_t data [34];
     uint32_t rd;
+
+    CaenADCDemux dmx_;
+    QVector<EventSlot*> evslots_;
 };
 
 #endif // CAEN792MODULE_H

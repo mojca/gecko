@@ -21,34 +21,29 @@ public:
         q.clear();
     }
 
-    void setData (const T* _data) {
+    void setData (QVariant _data) {
         assert(getType() == ScopeCommon::out);
         q.enqueue(_data);
     }
 
-    void setData(const void* _data)
-    {
-        setData (reinterpret_cast<const T*> (_data));
-    }
-
     // may only be called from input connectors
-    const void* getData()
+    QVariant getData()
     {
         if(getType() == ScopeCommon::in)
         {
             if(hasOtherSide()) return getOtherSide()->getData();
-            else return NULL;
+            else return QVariant ();
         }
         else
         {
             if(!q.empty()) return q.head();
-            else return NULL;
+            else return QVariant ();
         }
     }
 
-    const void* getDataDummy()
+    QVariant getDataDummy()
     {
-        return NULL;
+        return QVariant ();
     }
 
     bool useData()
@@ -100,10 +95,10 @@ public:
     }
 
 protected:
-    QQueue<const T*> q;
+    QQueue< QVariant > q;
 };
 
-typedef PluginConnectorQueued< std::vector<uint32_t> > PluginConnectorQVUint;
-typedef PluginConnectorQueued< std::vector<double> > PluginConnectorQVDouble;
+typedef PluginConnectorQueued< QVector<uint32_t> > PluginConnectorQVUint;
+typedef PluginConnectorQueued< QVector<double> > PluginConnectorQVDouble;
 
 #endif // PLUGINCONNECTORQUEUED_H

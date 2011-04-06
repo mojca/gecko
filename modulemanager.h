@@ -6,12 +6,14 @@
 #include <QSettings>
 #include <QList>
 #include <QMap>
+#include <QSet>
 
 #include <stdint.h>
 
 class AbstractInterface;
 struct ModuleTypeDesc;
 class AbstractModule;
+class EventSlot;
 
 template<typename T> class ThreadBuffer;
 
@@ -74,6 +76,20 @@ public:
     bool remove (int id); /*!< \overload remove(BaseModule*) */
     bool remove (const QString &name); /*!< \overload remove(BaseModule*) */
 
+    /*! Makes a slot mandatory. If this slot does not contain any data, the event is discarded. */
+    void setMandatory (const EventSlot* sl, bool mandatory) { if (mandatory) mandatoryslots.insert (sl); else mandatoryslots.remove (sl); }
+    /*! Returns whether the given channel is mandatory. */
+    bool isMandatory (const EventSlot* sl) const { return mandatoryslots.contains (sl); }
+
+    const QSet<const EventSlot*>& getMandatorySlots () const { return mandatoryslots; }
+
+    /*! Adds the given module to the list of triggers. A data available signal from this module will cause an event to be generated. */
+    void setTrigger (AbstractModule* mod, bool istrg) { if (istrg) triggers.insert (mod); else triggers.remove (mod); }
+    /*! Removes the given module from the trigger list. */
+    bool isTrigger (AbstractModule* mod) const { return triggers.contains (mod); }
+
+    const QSet<AbstractModule*>& getTriggers () const { return triggers; }
+
 signals:
     void moduleAdded (AbstractModule *); /*!< signalled when a module is added. */
     void moduleRemoved (AbstractModule *); /*!< signalled when a module is removed. */
@@ -89,6 +105,8 @@ private:
 private:
     list_type* items;
     QMap<QString, ModuleTypeDesc> registry;
+    QSet<AbstractModule*> triggers;
+    QSet<const EventSlot*> mandatoryslots;
 
 private: // no copying
 	ModuleManager(const ModuleManager &);

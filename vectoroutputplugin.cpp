@@ -70,12 +70,12 @@ void VectorOutputPlugin::userProcess()
     {
         QTextStream out(&file);
 
-        const std::vector<double>* d = reinterpret_cast<const std::vector<double>*>(inputs->first()->getData());
-        if(d->size() == 0) std::cout << "No data." << std::endl;
+        QVector<double> d = inputs->first()->getData().value< QVector<double> > ();
+        if(d.empty()) std::cout << "No data." << std::endl;
 
-        for(unsigned int i = 0; i < d->size(); i++)
+        for(int i = 0; i < d.size(); i++)
         {
-            out << d->at(i) << "\n";
+            out << d.at(i) << "\n";
         }
     }
     else

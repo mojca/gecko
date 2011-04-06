@@ -15,7 +15,7 @@ DspAmpSpecPlugin::DspAmpSpecPlugin(int _id, QString _name)
     nofHiClip = 0;
 
     estimateForBaseline = 0;
-    outData = new vector<double>(4096,0.);
+    outData = new QVector<double>(4096,0.);
 
     createSettings(settingsLayout);
 
@@ -128,11 +128,11 @@ void DspAmpSpecPlugin::userProcess()
     double pol = -1.;
 
     //std::cout << "DspAmpSpecPlugin Processing" << std::endl;
-    const vector<uint32_t>* pdata = reinterpret_cast<const std::vector<uint32_t>*>(inputs->first()->getData());
+    QVector<uint32_t> idata = inputs->first()->getData().value< QVector<uint32_t> > ();
     SamDSP dsp;
 
     // Convert to double
-    vector<double> data((*pdata).begin(),(*pdata).end());
+    vector<double> data(idata.begin(), idata.end());
 
     // Correct baseline
     tmp = 0.;
@@ -201,16 +201,15 @@ void DspAmpSpecPlugin::userProcess()
     if(estimateForAmplitude > 1 && estimateForAmplitude < 4095)
     {
         //std::cout << "amp: "  << estimateForAmplitude << std::endl;
-        outData->at((int)(estimateForAmplitude))++;
+        (*outData) [(int)(estimateForAmplitude)]++;
     }
 
-    outputs->first()->setData(outData);
+    outputs->first()->setData(QVariant::fromValue (*outData));
 }
 
 void DspAmpSpecPlugin::resetSpectra()
 {
-    outData->clear();
-    outData->resize(4096,0);
+    outData->fill(0., 4096);
     nofLowClip = 0;
     lowClip->setText(tr("%1").arg(nofLowClip,1,10));
     nofHiClip = 0;

@@ -2,15 +2,16 @@
 #define EVENTBUFFER_H
 
 #include <stddef.h>
-#include <map>
-#include <vector>
+#include <QMap>
+#include <QSet>
+#include <QVariant>
 
 #include "pluginconnector.h"
-#include "threadbuffer.h"
 
 class EventSlot;
 class Event;
 class AbstractModule;
+template<typename T> class ThreadBuffer;
 
 class EventBuffer {
 public:
@@ -32,7 +33,7 @@ public:
     void setSize (size_t newsz);
 
     /*! Create a new event. The object has to be deleted when it is not used anymore. */
-    Event* createEvent () const;
+    Event* createEvent ();
 
     /*! Queues an event in the buffer. The buffer takes ownership of the event.
         This call is synchronous. It waits until there is enough room inside the buffer to queue the event.
@@ -40,7 +41,7 @@ public:
     bool queue (Event *ev);
 
     /*! Returns the first event in the buffer. The caller takes ownership of the event object.
-        This call is synchronous. The function will wait until a buffer becomes available.
+        This call is non-blocking. The function will return immediately if no data is available.
      */
     Event* dequeue ();
 
@@ -59,13 +60,14 @@ public:
     EventSlot *getEventSlot (const AbstractModule *owner, QString name) const;
 
     /*! Returns all slots registered by the given module. */
-    std::vector<const EventSlot *> getEventSlots (const AbstractModule *owner) const;
+    const QSet<EventSlot *>* getEventSlots (const AbstractModule *owner) const;
 
     /*! Deletes the given slot. */
-    void destroyEventSlot (EventSlot** slot);
+    void destroyEventSlot (EventSlot* slot);
 
 private:
-    typedef std::map< const AbstractModule*, std::vector<EventSlot*> > SlotMap;
+    typedef QSet<EventSlot*> SlotSet;
+    typedef QMap< const AbstractModule*, SlotSet* > SlotMap;
     SlotMap Slots_;
 
     ThreadBuffer<Event*>* Buffer_;
@@ -76,13 +78,15 @@ public:
     Event (EventBuffer *buffer);
     ~Event ();
 
-    void put (const EventSlot *, const void *data);
-    const void* get (const EventSlot *) const;
+    void put (const EventSlot *, QVariant data);
+    QVariant get (const EventSlot *) const;
+
+    QSet<const EventSlot *> getOccupiedSlots () const;
 
     EventBuffer *getBuffer () const;
 
 private:
-    typedef std::map<const EventSlot *, const void *> DataMap;
+    typedef QMap<const EventSlot *, QVariant > DataMap;
     DataMap Data_;
     EventBuffer* EvBuf_;
 };

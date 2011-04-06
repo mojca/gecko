@@ -4,7 +4,8 @@
 #include <stdint.h>
 
 #include <QMetaType>
-#include <vector>
+#include <QVariant>
+#include <QVector>
 
 class AbstractPlugin;
 
@@ -52,13 +53,13 @@ public:
     /*! Push data into the connector. The data becomes visible on the input connector connected to this connector.
      *  \note This function may only be called for output connectors
      */
-    virtual void setData(const void*) = 0;
+    virtual void setData(QVariant) = 0;
 
     /*! Get data data from the connector.
      *  \note This function may only be called for input connectors
      */
-    virtual const void* getData() = 0;
-    virtual const void* getDataDummy() = 0;
+    virtual QVariant getData() = 0;
+    virtual QVariant getDataDummy() = 0;
 
     /*! Tell the connector that the data retrieved by getData has been used and may now be discarded.
      *  \note This function may only be called for input connectors
@@ -84,6 +85,8 @@ private:
 };
 
 Q_DECLARE_METATYPE (PluginConnector*);
+Q_DECLARE_METATYPE (QVector<uint32_t>);
+Q_DECLARE_METATYPE (QVector<double>);
 
 /*! Traits class to convert type names to members of the PluginConnector::DataType enum. */
 template<typename T>
@@ -100,12 +103,12 @@ public:
     static const PluginConnector::DataType data_type = PluginConnector::Double;
 };
 template<>
-class TypeToDataType< std::vector<uint32_t> > {
+class TypeToDataType< QVector<uint32_t> > {
 public:
     static const PluginConnector::DataType data_type = PluginConnector::VectorUint32;
 };
 template<>
-class TypeToDataType< std::vector<double> > {
+class TypeToDataType< QVector<double> > {
 public:
     static const PluginConnector::DataType data_type = PluginConnector::VectorDouble;
 };

@@ -6,14 +6,12 @@ static ModuleRegistrar registrar ("sis3350", Sis3350Module::create);
 
 Sis3350Module::Sis3350Module(int _id, QString _name)
         : BaseModule(_id, _name)
+        , demux (evslots)
 {
-    getConfigFromCode();
-
     setDefaultConfig();
     setUI (new Sis3350UI(this));
 
     setChannels();
-    createBuffer();
     createOutputPlugin();
 
     std::cout << "Instantiated Sis3350 Module" << std::endl;
@@ -21,7 +19,6 @@ Sis3350Module::Sis3350Module(int _id, QString _name)
 
 Sis3350Module::~Sis3350Module()
 {
-    delete buffer;
 }
 
 void Sis3350Module::setDefaultConfig()
@@ -60,41 +57,16 @@ void Sis3350Module::setDefaultConfig()
     }
 }
 
-void Sis3350Module::createBuffer()
-{
-    //buffer = ModuleManager::ptr()->createBuffer(100*10000, 10000, getId ());
-}
-
-void Sis3350Module::createOutputPlugin()
-{
-//    output = PluginManager::ref().create ("demuxsis3350", "Dmx sis3350");
-    output = new DemuxSis3350Plugin (-1, getName () + " Dmx");
-}
-
 void Sis3350Module::setChannels()
 {
+    EventBuffer *evb = RunManager::ref ().getEventBuffer ();
     // Setup channels
-    getChannels ()->push_back(new ScopeChannel(this,"Sis3350 Raw 0",ScopeCommon::trace,1000,4));
-    getChannels ()->push_back(new ScopeChannel(this,"Sis3350 Raw 1",ScopeCommon::trace,1000,4));
-    getChannels ()->push_back(new ScopeChannel(this,"Sis3350 Raw 2",ScopeCommon::trace,1000,4));
-    getChannels ()->push_back(new ScopeChannel(this,"Sis3350 Raw 3",ScopeCommon::trace,1000,4));
-    getChannels ()->push_back(new ScopeChannel(this,"Sis3350 Meta info",ScopeCommon::trace,1000,4));
-    getChannels ()->push_back(new ScopeChannel(this,"Sis3350 Poll Trigger",ScopeCommon::trigger,4,4));
-}
-
-// This is the default configuration for the module
-// This functions reads the configuration from a *.conf file
-// DEPRECATED since use of .ini files
-int Sis3350Module::getConfigFromFile()
-{
-    return 0;
-}
-
-// This is the default configuration for the module
-// DEPRECATED since use of .ini files
-int Sis3350Module::getConfigFromCode()
-{
-    return 0;
+    evslots.resize (5);
+    evslots [0] = evb->registerSlot (this, "Raw 0", PluginConnector::VectorUint32);
+    evslots [1] = evb->registerSlot (this, "Raw 1", PluginConnector::VectorUint32);
+    evslots [2] = evb->registerSlot (this, "Raw 2", PluginConnector::VectorUint32);
+    evslots [3] = evb->registerSlot (this, "Raw 3", PluginConnector::VectorUint32);
+    evslots [4] = evb->registerSlot (this, "Meta",  PluginConnector::VectorUint32);
 }
 
 int Sis3350Module::configure()
@@ -570,25 +542,21 @@ int Sis3350Module::singleShot()
     return -1;
 }
 
-int Sis3350Module::acquire()
+int Sis3350Module::acquire(Event *ev)
 {
     int ret = 0;
     ret = acquisitionStart();
-    if(ret == 0) writeToBuffer();
+    if(ret == 0) writeToBuffer(ev);
     //sleep(1);
     arm();
     return ret;
 }
 
-int Sis3350Module::writeToBuffer()
+int Sis3350Module::writeToBuffer(Event* ev)
 {
-    DemuxSis3350Plugin* o = dynamic_cast<DemuxSis3350Plugin*>(output);
-
     for(unsigned int i = 0; i < 4; i++)
     {
-        if(!o->getOutputs()->at(i)->hasOtherSide()) continue;
-        o->setData(rblt_data[i],read_data_block_length[i]);
-        o->process();
+        demux.process (ev, rblt_data[i], read_data_block_length[i]);
     }
     return 0;
 }
@@ -755,8 +723,6 @@ int Sis3350Module::acquireRingBufferSync()
     // Read all four channels
     for(j=0;j<4;j++)
     {
-        if(!output->getOutputs()->at(j)->hasOtherSide()) continue;
-
         ret = 0;
 
         // Read stop sample counter

@@ -28,8 +28,6 @@ class PackSis3350Plugin : public BasePlugin
 protected:
     virtual void createSettings(QGridLayout*);
 
-    std::vector<uint32_t> outData;
-
 public:
     PackSis3350Plugin(int _id, QString _name);
 

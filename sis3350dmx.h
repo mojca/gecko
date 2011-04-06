@@ -5,10 +5,10 @@
 #include <vector>
 #include <cstdio>
 #include <stdint.h>
-#include "baseplugin.h"
-#include "pluginconnectorthreadbuffered.h"
+#include <QVector>
 
-class BasePlugin;
+class EventSlot;
+class Event;
 
 struct Sis3350Event
 {
@@ -22,11 +22,9 @@ struct Sis3350Event
     std::vector<uint32_t> data;
 };
 
-class DemuxSis3350Plugin : public virtual BasePlugin
+class Sis3350Demux
 {
-    Q_OBJECT
-
-protected:
+private:
     bool inHeader, inTrace;
     int cnt;
 
@@ -38,7 +36,9 @@ protected:
     uint32_t* data;
     uint32_t len;
 
-    virtual void createSettings(QGridLayout*);
+    const QVector<EventSlot*> &evslots;
+    Event *ev;
+
     void startNewHeader();
     void startNewTrace();
     void continueHeader();
@@ -46,14 +46,9 @@ protected:
     void printHeader();
 
 public:
-    DemuxSis3350Plugin(int _id, QString _name);
+    Sis3350Demux (const QVector<EventSlot*> &_evslots);
 
-    virtual void process();
-    virtual void userProcess(){;}
-    virtual void setData(uint32_t* _data, uint32_t _len);
-
-    virtual void applySettings(QSettings*) {}
-    virtual void saveSettings(QSettings*) {}
+    void process(Event *_ev, uint32_t *_data, uint32_t _len);
 };
 
 #endif // DEMUXSIS3350PLUGIN_H
