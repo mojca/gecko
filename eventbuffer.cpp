@@ -38,7 +38,7 @@ bool EventBuffer::queue (Event *ev) {
 }
 
 Event* EventBuffer::dequeue () {
-    std::vector<Event*> rd;
+    std::vector<Event*> rd (1, NULL);
     if (Buffer_->read(rd, 1) < 1)
         return NULL;
 

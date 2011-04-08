@@ -66,7 +66,9 @@ public:
     QList<const EventSlot*> getSlots () const {
         const QSet<EventSlot*>* s = RunManager::ref ().getEventBuffer ()->getEventSlots(this);
         QList<const EventSlot*> out;
+#if QT_VERSION >= 0x040700
         out.reserve (s->size ());
+#endif
         for (QSet<EventSlot*>::const_iterator i = s->begin (); i != s->end (); ++i)
             out.append (*i);
 

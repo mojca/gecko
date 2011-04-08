@@ -50,7 +50,7 @@ void PluginThread::addChildrenToProcessList()
         {
             if(i.value() == level-1)
             {
-                maxDepth = level-1;
+                maxDepth = level;
                 foreach(PluginConnector* out, (*i.key()->getOutputs()))
                 {
                     AbstractPlugin* p = out->getConnectedPlugin();

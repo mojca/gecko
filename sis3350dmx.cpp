@@ -9,6 +9,9 @@ Sis3350Demux::Sis3350Demux (const QVector<EventSlot *> &_evslots)
     inHeader = false;
     inTrace = false;
     cnt = 0;
+
+    for (int i = 0; i < 4; ++i)
+        curEvent [i] = new Sis3350Event;
     //std::cout << "Instantiated Sis3350Demux" << std::endl;
 }
 
