@@ -45,7 +45,8 @@ int Sis3150Module::open()
     //! Open the device
     if(found >= 1)
     {
-        status = Sis3150usb_OpenDriver((PCHAR)info[0].cDName, &m_device);
+        //status = Sis3150usb_OpenDriver((PCHAR)info[0].cDName, &m_device);
+        status = Sis3150usb_OpenDriver_And_Download_FX2_Setup((PCHAR)info[0].cDName, &m_device);
         if(status != 0)
         {
             ui->outputText("ERROR: "

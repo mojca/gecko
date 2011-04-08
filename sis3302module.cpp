@@ -43,6 +43,7 @@ void Sis3302Module::setChannels()
 
 int Sis3302Module::configure()
 {
+    printf("sis3302::configure\n");
     int ret = 0x0;
 
     // Set Control Status register
@@ -131,7 +132,7 @@ int Sis3302Module::configure()
     for (int i=0; i<8; i++)
     {
         addr = conf.base_addr + SIS3302_TRIGGER_SETUP_ADC1;
-        if(i%2 == 1) addr += 8;
+        addr += 8*(i%2);
         addr += (i/2) * SIS3302_NEXT_ADC_OFFSET;
 
         data = 0;
@@ -143,11 +144,11 @@ int Sis3302Module::configure()
         if(ret != 0) printf("Error %d at SIS3302_TRIGGER_SETUP_ADC%d",ret,i);
 
         addr = conf.base_addr + SIS3302_TRIGGER_THRESHOLD_ADC1;
-        if(i%2 == 1) addr += 8;
+        addr += 8*(i%2);
         addr += (i/2) * SIS3302_NEXT_ADC_OFFSET;
 
         data = 0;
-        data |= conf.trigger_threshold[i] & 0xffff;
+        data |= (conf.trigger_threshold[i] & 0xffff);
         if(conf.trgMode[i] == conf.ledFalling)      data |= (1<<24) | (1<<26);
         else if(conf.trgMode[i] == conf.ledRising)  data |= (1<<25) | (1<<26);
         else if(conf.trgMode[i] == conf.firFalling) data |= (1<<24);
@@ -182,12 +183,40 @@ int Sis3302Module::getEventCounter(uint32_t* _evCnt)
     return ret;
 }
 
+int Sis3302Module::getTimeStampDir()
+{
+    int ret = 0x0;
+    uint32_t* ptr = timestampDir[0].data;
+    for(int i=0; i<512*2; i++)
+    {
+        addr = conf.base_addr + SIS3302_TIMESTAMP_DIRECTORY + 4*i;
+        data = 0;
+        ret = iface->readA32D32(addr,&data);
+        if(ret != 0) { printf("Error %d at VME READ EVENT COUNTER\n",ret);}
+        else
+        {
+            (*ptr) = data;
+            ptr++;
+        }
+    }
+    for(int i=0; i<512; i++)
+    {
+        if(timestampDir[i].low != 0)
+            printf("TimestampDir %d: high: 0x%x, low: 0x%x\n",i,timestampDir[i].high,timestampDir[i].low);
+    }
+    return ret;
+}
+
 int Sis3302Module::getNextSampleAddr(int adc, uint32_t* _addr)
 {
     int ret = 0x0;
-    addr = conf.base_addr + SIS3302_ADC1_OFFSET + (adc * SIS3302_NEXT_ADC_OFFSET);
+    addr = conf.base_addr
+           + SIS3302_ACTUAL_SAMPLE_ADDRESS_ADC1
+           + (adc/2 * SIS3302_NEXT_ADC_OFFSET)
+           + (adc%2)*4;
     data = 0;
     ret = iface->readA32D32(addr,&data);
+    //printf("sis3302: ch %d, nextsampleaddr: 0x%x from addr 0x%x\n",adc,data,addr);
     if(ret != 0) { printf("Error %d at VME READ SIS3302_ADCx_OFFSET\n",ret); (*_addr) = 0;}
     else (*_addr) = data;
     return ret;
@@ -195,6 +224,7 @@ int Sis3302Module::getNextSampleAddr(int adc, uint32_t* _addr)
 
 int Sis3302Module::reset()
 {
+    printf("sis3302::reset\n");
     int ret = 0x0;
     addr = conf.base_addr + SIS3302_KEY_RESET; data = 0;
     ret = iface->writeA32D32(addr,data);
@@ -286,14 +316,15 @@ int Sis3302Module::waitForSamplingComplete()
     int test = 0;
     addr = conf.base_addr + SIS3302_ACQUISITION_CONTROL;
     data = 0;
-    int cnt = 0;
+    unsigned int cnt = 0;
     do
     {
         test = iface->readA32D32(addr,&data);
         if(test != 0) { printf("Error %d at VME READ SIS3302_ACQUISITION_CONTROL\n",ret);}
         else ret = ((data & 0x30000) == 0x10000);
         cnt++;
-    } while(((data & 0x20000) == 0x20000) && (cnt < conf.poll_count));
+    } while(((data & 0x10000) == 0x10000) && (cnt < conf.poll_count));
+    //printf("Waited for %d poll loops.\n",cnt);
     ret = (cnt < conf.poll_count);
     return ret;
 }
@@ -301,10 +332,23 @@ int Sis3302Module::waitForSamplingComplete()
 int Sis3302Module::acquire()
 {
     int ret = 0;
+    ret = acquisitionStart();
+    if(ret == 0) writeToBuffer();
+    return ret;
+}
+
+int Sis3302Module::acquisitionStart()
+{
+    int ret = 0;
     uint32_t evCnt = 0;
     uint32_t curEvent = 0;
     uint32_t nextSampleAddrExp = 0; // Expected next sample address after sampling
     uint32_t startAddr = 0;         // Sampling start address
+
+    for(int i=0; i<8; i++)
+    {
+        readLength[i] = 0;
+    }
 
     ret = this->arm();
 
@@ -315,11 +359,12 @@ int Sis3302Module::acquire()
 
     for(curEvent = 0; curEvent < conf.nof_events; curEvent++)
     {
-        ret = this->start_sampling();
+        if(conf.autostart_acq == false && conf.multiEvent == true) ret = this->start_sampling();
         ret = waitForSamplingComplete();
         if(ret == false) printf("sis3302 timeout while waiting for sampling to complete\n");
+
         ret = this->getEventCounter(&evCnt);
-        if(evCnt != curEvent) printf("sis3302 event counter mismatch %u %u",evCnt,curEvent);
+        if(evCnt != curEvent+1) printf("sis3302 event counter mismatch evCnt: %u expected: %u\n",evCnt,curEvent+1);
 
         if(evCnt == conf.nof_events && isArmedNotBusy()) printf("sis3302 still armed at last event.\n");
         else if(evCnt < conf.nof_events && isNotArmedNotBusy()) printf("sis3302 not armed before last event.\n");
@@ -330,17 +375,30 @@ int Sis3302Module::acquire()
 
     for(int i=0; i<8; i++)
     {
-        uint32_t nextSampleAddrActual = 0x0;
-        this->getNextSampleAddr(i,&nextSampleAddrActual);
-        if(nextSampleAddrExp != nextSampleAddrActual)
-            printf("sis3302 adc %d: next sample addr mismatch (%x,%x)",i,nextSampleAddrExp,nextSampleAddrActual);
+        if(conf.ch_enabled[i])
+        {
+            uint32_t nextSampleAddrActual = 0x0;
+            this->getNextSampleAddr(i,&nextSampleAddrActual);
+            if(nextSampleAddrExp != nextSampleAddrActual)
+                printf("sis3302 adc %d: next sample addr mismatch (expected: 0x%x, got: 0x%x)\n",i,nextSampleAddrExp,nextSampleAddrActual);
+        }
     }
+
+    getTimeStampDir();
 
     for(int i=0; i<8; i++)
     {
         readAdcChannel(i);
+        /*if(conf.ch_enabled[i])
+        {
+            for(uint32_t s = 0; s < readLength[i]; s++)
+            {
+                printf("Data: %d: 0x%x\n",s,readBuffer[i][s]);
+            }
+        }*/
+        // Store channel information in highest 3 bits of readLength[i];
+        readLength[i] |= (i << 29);
     }
-
 
     return ret;
 }
@@ -351,40 +409,46 @@ int Sis3302Module::writeToBuffer()
 
     for(unsigned int i = 0; i < 8; i++)
     {
-        if(!o->getOutputs()->at(i)->hasOtherSide() && conf.ch_enabled[i] == true) continue;
+        if(!o->getOutputs()->at(i)->hasOtherSide() || conf.ch_enabled[i] == false) continue;
         o->setData(readBuffer[i],readLength[i]);
         o->process();
     }
     return 0;
 }
 
+bool Sis3302Module::dataReady()
+{
+    bool dready = isNotArmedNotBusy();
+    return dready;
+}
+
 int Sis3302Module::readAdcChannel(int ch)
 {
-    const int vmeMode = 0;
+    const int vmeMode = 1;
 
-    const unsigned int pageLength = 0x400000;
-    unsigned int pageLengthMask = pageLength - 1;
+    const uint32_t pageLength = 0x400000;
+    uint32_t pageLengthMask = pageLength - 1;
 
-    unsigned int nextEventSampleStartAddr = (conf.event_sample_start_addr & 0x01fffffc)  ; // max 32 MSample
-    unsigned int restEventSampleLength = (conf.nof_events & 0x03fffffc); // max 32 MSample
+    uint32_t nextEventSampleStartAddr = (conf.event_sample_start_addr & 0x01fffffc)  ; // max 32 MSample
+    uint32_t restEventSampleLength = (conf.event_length & 0x03fffffc); // max 32 MSample
     if (restEventSampleLength  >= 0x2000000) {restEventSampleLength =  0x2000000 ;}
 
     int ret = 0 ;
 
     do {
-        unsigned int subEventSampleAddr = 0;
-        unsigned int subMaxPageSampleLength = 0;
-        unsigned int subEventSampleLength = 0;
-        unsigned int subPageAddrOffset = 0;
+        uint32_t subEventSampleAddr = 0;
+        uint32_t subMaxPageSampleLength = 0;
+        uint32_t subEventSampleLength = 0;
+        uint32_t subPageAddrOffset = 0;
 
-        unsigned int dmaRequestNofLwords = 0;
-        unsigned int dmaAdcAddrOffsetBytes = 0;
-        unsigned int reqNofLwords = 0;
-        unsigned int gotNofLwords = 0;
+        uint32_t dmaRequestNofLwords = 0;
+        uint32_t dmaAdcAddrOffsetBytes = 0;
+        uint32_t reqNofLwords = 0;
+        uint32_t gotNofLwords = 0;
 
         uintptr_t readBufferPtr = 0;
 
-        int startPos = 0x0;
+        uint32_t startPos = 0x0;
 
         subEventSampleAddr      =  (nextEventSampleStartAddr & pageLengthMask) ;
         subMaxPageSampleLength  =  pageLength - subEventSampleAddr ;
@@ -406,6 +470,7 @@ int Sis3302Module::readAdcChannel(int ch)
         data = subPageAddrOffset ;
         ret = iface->writeA32D32(addr,data);
         if (ret != 0) printf("sis3302 return_code = 0x%08x at addr = 0x%08x\n",ret,addr);
+        // printf("sis3302: requested subPageAddr %d from 0x%x\n",data,addr);
 
         // read
         addr =	  conf.base_addr
@@ -415,17 +480,23 @@ int Sis3302Module::readAdcChannel(int ch)
 
         reqNofLwords = dmaRequestNofLwords;
 
-        readBufferPtr = (uintptr_t) readBuffer[ch];
+        //printf("sis3302: Starting read from adc %d from addr: 0x%x\n",ch,addr);
+
+        readBufferPtr = (uintptr_t) &(readBuffer[ch][0]);
         if (vmeMode == 0) { // Single Cycles
-            for (int i=0; i<reqNofLwords; i++) {
-                ret = iface->readA32D32(addr,(uint32_t*)(readBufferPtr+startPos+i));
+            for (uint32_t i=0; i<reqNofLwords; i++) {
+                uint32_t* ptr = (uint32_t*)(readBufferPtr+startPos+4*i);
+                ret = iface->readA32D32(addr,ptr);
                 if (ret != 0) printf("sis3302 return_code = 0x%08x at addr = 0x%08x\n",ret,addr);
+                //printf("sis3302: read from addr 0x%x value: 0x%x to buffer 0x%x\n",addr,(*ptr),ptr);
                 addr = addr + 4 ;
             }
             startPos = startPos + reqNofLwords;
+            readLength[ch] = reqNofLwords;
         }
         else { // DMA
             ret = iface->readA32MBLT64(addr,(uint32_t*)(readBufferPtr),reqNofLwords,&gotNofLwords);
+            //ret = iface->readA32MBLT64(addr,&(readBuffer[ch][0]),reqNofLwords,&gotNofLwords);
             readLength[ch] = gotNofLwords;
             if(ret != 0) {
                 printf("sis3302 return_code = 0x%08x at addr = 0x%08x\n", ret, addr );
@@ -439,10 +510,18 @@ int Sis3302Module::readAdcChannel(int ch)
             startPos = startPos + gotNofLwords ;
         }
 
+        /*
+        printf("\nDump data ch %d\n",ch);
+        for(uint32_t i=0; i<gotNofLwords; i++)
+        {
+            printf(" %d:0x%x  ",i,readBuffer[ch][i]);
+        }*/
+
         nextEventSampleStartAddr =  nextEventSampleStartAddr + subEventSampleLength     ;
         restEventSampleLength     =  restEventSampleLength - subEventSampleLength     ;
 
     } while ((ret == 0) && (restEventSampleLength > 0)) ;
+    return ret;
 }
 
 
@@ -454,9 +533,9 @@ int Sis3302Module::readAdcChannel(int ch)
 -------------------------------------------------------------------------- */
 int Sis3302Module::sis3302_write_dac_offset(unsigned int *offset_value_array)
 {
-        unsigned int i, error;
-        unsigned int data, addr;
-        unsigned int max_timeout, timeout_cnt;
+        uint32_t i, error;
+        uint32_t data, addr;
+        uint32_t max_timeout, timeout_cnt;
         int ret = 0;
 
         for (i=0;i<8;i++) {
@@ -620,3 +699,14 @@ void Sis3302Module::saveSettings (QSettings *s) {
     s->endGroup ();
     std::cout << "done" << std::endl;
 }
+
+/*!
+\page sis3302mod SIS 3302 Flash ADC
+<b>Module name:</b> \c sis3302
+
+\section desc Module Description
+The SIS 3302 is a fast multi-channel ADC.
+
+\section Configuration Panel
+DO DOCUMENTATION
+*/

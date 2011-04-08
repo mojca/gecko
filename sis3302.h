@@ -50,7 +50,7 @@
 #define SIS3302_KEY_RESET_DDR2_LOGIC                0x428	  /* write only; D32 */
 #define SIS3302_KEY_TIMESTAMP_CLEAR                 0x42C	  /* write only; D32 */
 
-
+#define SIS3302_TIMESTAMP_DIRECTORY                 0x00010000
 
 #define SIS3302_EVENT_CONFIG_ALL_ADC                0x01000000
 #define SIS3302_SAMPLE_LENGTH_ALL_ADC               0x01000004

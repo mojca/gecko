@@ -79,6 +79,7 @@ public slots:
     void clicked_disarm_button();
     void clicked_reset_button();
     void clicked_clear_button();
+    void clicked_configure_button();
 };
 
 #endif // SIS3302UI_H

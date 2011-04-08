@@ -46,6 +46,9 @@ void Sis3302UI::createUI()
     addUnnamedGroupToGroup(tn[nt],gn[ng],"b2_");
     addButtonToGroup(tn[nt],gn[ng]+"b2_","Reset","reset_button");
     addButtonToGroup(tn[nt],gn[ng]+"b2_","Clear Timestamp","clear_button");
+    addUnnamedGroupToGroup(tn[nt],gn[ng],"b3_");
+    addButtonToGroup(tn[nt],gn[ng]+"b3_","Configure","configure_button");
+    addButtonToGroup(tn[nt],gn[ng]+"b3_","Single Shot","singleshot_button");
 
     // TAB TRIGGER
     tn.append("Ch 0-3"); nt++; addTab(tn[nt]);
@@ -253,6 +256,7 @@ void Sis3302UI::uiInput(QString _name)
         if(_name == "disarm_button") clicked_disarm_button();
         if(_name == "reset_button") clicked_reset_button();
         if(_name == "clear_button") clicked_clear_button();
+        if(_name == "configure_button") clicked_configure_button();
     }
 }
 
@@ -285,6 +289,12 @@ void Sis3302UI::clicked_clear_button()
 {
     module->timestamp_clear();
 }
+
+void Sis3302UI::clicked_configure_button()
+{
+    module->configure();
+}
+
 
 
 // Settings handling
@@ -394,7 +404,7 @@ void Sis3302UI::addGroupToTab(QString _tname, QString _name, QString _cname)
 {
     if (tabsMap.contains(_tname)) {
         QWidget* c = tabsMap.value(_tname);
-        QGroupBox* b = new QGroupBox(_name,b);
+        QGroupBox* b = new QGroupBox(_name,c);
         QString identifier = _tname+_name;
         QGridLayout* l = new QGridLayout;
         l->setMargin(0);

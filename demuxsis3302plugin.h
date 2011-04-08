@@ -18,14 +18,20 @@ class DemuxSis3302Plugin : public virtual BasePlugin
 public:
     DemuxSis3302Plugin(int _id, QString _name);
 
-    virtual void createSettings(QGridLayout*) {;}
+    virtual void createSettings(QGridLayout*);
 
-    virtual void process() {;}
+    virtual void process();
     virtual void userProcess(){;}
-    virtual void setData(uint32_t* _data, uint32_t _len) {;}
+    virtual void setData(uint32_t* _data, uint32_t _len);
 
     virtual void applySettings(QSettings*) {}
     virtual void saveSettings(QSettings*) {}
+
+protected:
+    uint32_t* data;
+    uint32_t len;
+
+    uint32_t* curEvent[8];
 };
 
 #endif // DEMUXSIS3302PLUGIN_H
