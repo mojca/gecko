@@ -49,6 +49,7 @@ void Sis3302UI::createUI()
     addUnnamedGroupToGroup(tn[nt],gn[ng],"b3_");
     addButtonToGroup(tn[nt],gn[ng]+"b3_","Configure","configure_button");
     addButtonToGroup(tn[nt],gn[ng]+"b3_","Single Shot","singleshot_button");
+    widgets.find("singleshot_button").value()->setEnabled(false);
 
     // TAB TRIGGER
     tn.append("Ch 0-3"); nt++; addTab(tn[nt]);
@@ -95,9 +96,9 @@ void Sis3302UI::createUI()
     gn.append("Delay and Length"); ng++; addGroupToTab(tn[nt],gn[ng]);
     addSpinnerToGroup(tn[nt],gn[ng],"Start Delay","start_delay",0,0xffffff); // 24 bits
     addSpinnerToGroup(tn[nt],gn[ng],"Stop Delay","stop_delay",0,0xffffff); // 24 bits
-    addSpinnerToGroup(tn[nt],gn[ng],"Number of Events","nof_events",0,0x0fffff); // 24 bits
+    addSpinnerToGroup(tn[nt],gn[ng],"Number of Events","nof_events",0,0x0fffff); // 20 bits
     addCheckBoxToGroup(tn[nt],gn[ng],"Event Length Stop Mode","event_length_as_stop");
-    addSpinnerToGroup(tn[nt],gn[ng],"Event Length","event_length",0,0x0fffff); // 24 bits
+    addSpinnerToGroup(tn[nt],gn[ng],"Event Length","event_length",0,0x1ffffff); // 25 bits
 
     gn.append("Advanced"); ng++; addGroupToTab(tn[nt],gn[ng]);
     addCheckBoxToGroup(tn[nt],gn[ng],"Page Wrap","enable_page_wrap");
