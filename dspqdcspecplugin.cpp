@@ -15,6 +15,12 @@ DspQdcSpecPlugin::DspQdcSpecPlugin(int _id, QString _name)
 {
     srand(time(NULL));
 
+    conf.width = 20;
+    conf.pointsForBaseline = 10;
+    conf.min = 0;
+    conf.max = 100;
+    conf.nofBins = 4096;
+
     nofLowClip = 0;
     nofHiClip = 0;
     estimateForBaseline = 0;
@@ -209,25 +215,22 @@ void    DspQdcSpecPlugin::userProcess()
     //std::cout << "DspQdcSpecPlugin Processing" << std::endl;
     QVector<uint32_t> idata = inputs->first()->getData().value< QVector<uint32_t> > ();
 
-    // Convert to double
-    vector<double> data(idata.begin(),idata.end());
-
     // Estimate baseline
     tmp = 0.;
-    for(int i = 0; i<conf.pointsForBaseline && i<(int)(data.size()); i++)
+    for(int i = 0; i<conf.pointsForBaseline && i < idata.size(); i++)
     {
-        tmp += data[i];
+        tmp += idata[i];
         //std::cout << i << "  " << data[i] << std::endl;
     }
     baselineArea = (tmp * conf.width) / conf.pointsForBaseline;
 
     // Integrate
     tmp = 0.;
-    for(int i = conf.pointsForBaseline; i<conf.width+conf.pointsForBaseline && i<(int)(data.size()); i++)
+    for(int i = conf.pointsForBaseline; i<conf.width+conf.pointsForBaseline && i< idata.size(); i++)
     {
-        tmp += data[i];
-        if(data[i] == 0) loCnt++;
-        if(data[i] == 4095) hiCnt++;
+        tmp += idata[i];
+        if(idata[i] == 0) loCnt++;
+        if(idata[i] == 4095) hiCnt++;
     }
 
     // Check for clipping

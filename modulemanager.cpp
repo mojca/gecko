@@ -38,6 +38,9 @@ void ModuleManager::clear()
 {
     while (!items->empty ())
         remove (items->first ());
+
+    triggers.clear ();
+    mandatoryslots.clear ();
 }
 
 void ModuleManager::identify()

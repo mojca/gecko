@@ -88,6 +88,8 @@ void RunManager::start (QString info) {
 
     startTime = QDateTime::currentDateTime ();
     evcnt = 0;
+    lastevcnt = 0;
+    evpersec = 0;
     writeRunStartFile (info);
 
     pluginthread = new PluginThread(PluginManager::ptr (), ModuleManager::ptr ());
@@ -139,14 +141,15 @@ void RunManager::stop () {
 }
 
 float RunManager::getEventRate () const {
-    return (1000.0 * (evcnt - lastevcnt)) / updateTimer->interval () / 2;
+    return (1000.0 * (evcnt - lastevcnt)) / updateTimer->interval ();
 }
 
 void RunManager::sendUpdate () {
     unsigned newev = runthread->getNofEvents ();
     //float evpersec = (1000.0 * (newev - evcnt)) / updateTimer->interval ();
     //float evpersec = ((evcnt) / (double)(getRunSeconds()) ) ; // New algo
-    float evpersec = (1000.0 * (newev - lastevcnt)) / updateTimer->interval () / 2;
+    // exponentially decaying average
+    evpersec = 0.9 * evpersec + 0.1 * (1000.0 * (newev - evcnt)) / updateTimer->interval ();
     lastevcnt = evcnt;
     evcnt = newev;
 

@@ -36,8 +36,8 @@ public:
 
     virtual ~BaseModule() {
         EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
-        const QSet<EventSlot*>* s = evbuf->getEventSlots(this);
-        for (QSet<EventSlot*>::const_iterator i = s->begin (); i != s->end (); ++i)
+        QSet<EventSlot*> s (*evbuf->getEventSlots(this));
+        for (QSet<EventSlot*>::const_iterator i = s.begin (); i != s.end (); ++i)
             evbuf->destroyEventSlot (*i);
 
         if (output)

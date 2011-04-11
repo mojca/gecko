@@ -39,6 +39,12 @@ void RunThread::run()
     mandatories = ModuleManager::ref ().getMandatorySlots ().toList ();
     createConnections();
 
+    foreach (AbstractModule *m, modules) {
+        m->reset ();
+        if (m->configure ())
+            std::cout << "Run Thread: " << m->getName ().toStdString () <<": Configure failed!" << std::endl;
+    }
+
     std::cout << "Run thread started." << std::endl;
 
     if(interruptBased)

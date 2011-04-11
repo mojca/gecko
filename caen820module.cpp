@@ -105,7 +105,7 @@ int Caen820Module::dataClear () {
 int Caen820Module::acquire (Event *ev) {
     int err = 0;
     unsigned evlen = getNofActiveChannels ();
-    uint32_t buffer [33];
+    uint32_t buffer [33] = {0};
     AbstractInterface *iface = getInterface ();
 
     if (!iface)

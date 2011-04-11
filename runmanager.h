@@ -44,6 +44,7 @@ class RunManager : public QObject
     QDateTime stopTime;
     unsigned evcnt;
     unsigned lastevcnt;
+    float evpersec;
     unsigned evprocessedcnt;
 
     ScopeMainWindow *mainwnd;
