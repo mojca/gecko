@@ -42,6 +42,8 @@ void Sis3350Module::setDefaultConfig()
     conf.pre_delay = 100;
     conf.sample_length = 1000;
 
+    conf.trigger_enable_lemo_out = false;
+
     for(int i = 0; i < 4; i++)
     {
         conf.adc_offset[i] = 32000;
@@ -384,6 +386,15 @@ unsigned int Sis3350Module::configureTriggers()
             return ret;
         }
 
+    }
+
+    addr = conf.base_addr + SIS3350_LEMO_OUTPUT_SELECT_REGISTER;
+    data = conf.trigger_enable_lemo_out ? 0xF0 : 0x00;
+    ret = getInterface ()->writeA32D32(addr, data);
+    if(ret != 0)
+    {
+        printf("Error %d at LEMO out %d\n",ret,i);
+        return ret;
     }
 
     return ret;
@@ -1032,6 +1043,8 @@ void Sis3350Module::saveSettings(QSettings* settings)
         settings->setValue("ext_clock_trigger_daq_data",conf.ext_clock_trigger_daq_data);
         settings->setValue("pollcount",conf.pollcount);
 
+        settings->setValue("trigger_enable_lemo_out", conf.trigger_enable_lemo_out);
+
         for(unsigned int i = 0; i < 4; i++)
         {
             settings->setValue(tr("trigger_enable_%1").arg(i,1,10,QChar()),conf.trigger_enable[i]);
@@ -1083,6 +1096,8 @@ void Sis3350Module::applySettings(QSettings* settings)
     set = "ext_clock_trigger_dac_control";    if(settings->contains(set)) conf.ext_clock_trigger_dac_control = settings->value(set).toInt(&ok);
     set = "ext_clock_trigger_daq_data";    if(settings->contains(set)) conf.ext_clock_trigger_daq_data = settings->value(set).toInt(&ok);
     set = "pollcount";    if(settings->contains(set)) conf.pollcount = settings->value(set).toInt(&ok);
+
+    set = "trigger_enable_lemo_out"; if(settings->contains(set)) conf.trigger_enable_lemo_out = settings->value(set).toBool();
 
     for(unsigned int i = 0; i < 4; i++)
     {

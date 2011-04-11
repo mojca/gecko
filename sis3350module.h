@@ -49,6 +49,7 @@ public:
     bool acq_multi_event;
     bool ctrl_lemo_invert;
 
+    bool trigger_enable_lemo_out;
     int trigger_pulse_length[4];
     int trigger_gap_length[4];
     int trigger_peak_length[4];

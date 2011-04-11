@@ -61,6 +61,7 @@ public slots:
     void modeChanged(int);
     void timerTimeout();
     void armTimer();
+    void trgOutClicked (bool);
 
 protected:
     bool timerArmed;
@@ -99,6 +100,7 @@ protected:
     QComboBox *clockSourceBox;
     QComboBox *interruptSourceBox;
 
+    QCheckBox* trgOutCheckbox;
     QCheckBox* autoUpdateCheckbox;
     QPushButton* singleShot;
     QPushButton* freeRunningButton;
