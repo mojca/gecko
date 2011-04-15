@@ -80,8 +80,10 @@ SOURCES += main.cpp \
     geckoremote.cpp \
     remotecontrolpanel.cpp \
     outputplugin.cpp \
-    eventbuffer.cpp
-
+    eventbuffer.cpp \
+    sis3302module.cpp \
+    sis3302ui.cpp \
+    demuxsis3302plugin.cpp
 HEADERS += sis3350.h \
     plot2d.h \
     sis3350ui.h \
@@ -161,5 +163,12 @@ HEADERS += sis3350.h \
     eventbuffer.h \
     outputplugin.h \
     pluginconnectorplain.h \
-    samqvector.h
+    samqvector.h \
+    sis3302module.h \
+    sis3302.h \
+    sis3302ui.h \
+    hexspinbox.h \
+    demuxsis3302plugin.h
+
+OTHER_FILES +=
 

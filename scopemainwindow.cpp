@@ -752,6 +752,8 @@ void ScopeMainWindow::loadChannelList()
     triggerList->clear();
     channelList->clear();
 
+    QSettings *s = settings;
+
     QList<QTreeWidgetItem *> trgItems;
     QList<QTreeWidgetItem *> slItems;
     const QList<AbstractModule*>* mlist = mmgr->list();
@@ -767,6 +769,7 @@ void ScopeMainWindow::loadChannelList()
             slIt->setData (0, Qt::UserRole + 1, QVariant::fromValue (sl));
             slIt->setCheckState(0, ModuleManager::ref ().isMandatory (sl) ? Qt::Checked : Qt::Unchecked);
             slItems.append (slIt);
+    
         }
     }
 
@@ -1097,6 +1100,27 @@ void ScopeMainWindow::saveConfig (QSettings *s) {
         }
     }
     s->endArray ();
+
+    // Save config from triggers and channels
+    i = 0;
+    s->beginWriteArray("TriggerConfig");
+    QTreeWidgetItemIterator it(triggerList);
+    while (*it) {
+        s->setArrayIndex(i++);
+        s->setValue("checked",(*it)->checkState (0) == Qt::Checked);
+        it++;
+    }
+    s->endArray ();
+    i = 0;
+    s->beginWriteArray("ChannelConfig");
+    it = QTreeWidgetItemIterator(channelList);
+    while (*it) {
+        s->setArrayIndex(i++);
+        s->setValue("checked",(*it)->checkState (0) == Qt::Checked);
+        it++;
+    }
+    s->endArray ();
+
     s->endGroup ();
 }
 
