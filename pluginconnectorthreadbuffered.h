@@ -11,19 +11,18 @@ public:
     PluginConnectorThreadBuffered(AbstractPlugin* _plugin, QString _name,
                                   int chunkSize, int bufferSize, int id);
 
-    virtual void setData(std::vector<uint32_t>*);
-    virtual void setData(const void *);
-    virtual const void* getData();
-    virtual const void* getDataDummy();
-    virtual const ThreadBuffer<std::vector<uint32_t>*>* getBuffer() { return &buffer; }
+    virtual void setData(QVariant);
+    virtual QVariant getData();
+    virtual QVariant getDataDummy();
+    virtual const ThreadBuffer< QVariant >* getBuffer() { return &buffer; }
     virtual int dataAvailable();
     virtual int elementsFree () const { return buffer.free (); }
     virtual bool useData();
     virtual void reset();
 
 private:
-    ThreadBuffer<std::vector<uint32_t>*> buffer;
-    std::vector<uint32_t>* data;
+    ThreadBuffer< QVariant > buffer;
+    QVariant data;
     bool valid;
 };
 

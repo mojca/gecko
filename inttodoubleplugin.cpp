@@ -26,8 +26,6 @@ IntToDoublePlugin::IntToDoublePlugin(int id, QString name, const Attributes &att
         addConnector (new PluginConnectorQVUint (this, ScopeCommon::in, QString ("in %1").arg (i)));
         addConnector (new PluginConnectorQVDouble (this, ScopeCommon::out, QString ("out %1").arg (i)));
     }
-
-    outData_.resize (nofChannels_);
 }
 
 void IntToDoublePlugin::createSettings (QGridLayout *l) {
@@ -52,9 +50,13 @@ AbstractPlugin::Attributes IntToDoublePlugin::getAttributes () const {
 void IntToDoublePlugin::process () {
     for (int i = 0; i < nofChannels_; ++i) {
         if (inputs->at (i)->dataAvailable ()) {
-            const std::vector<uint32_t> *pdata = reinterpret_cast<const std::vector<uint32_t>*> (inputs->at (i)->getData ());
-            outData_ [i].assign (pdata->begin (), pdata->end ());
-            outputs->at (i)->setData (&outData_ [i]);
+            QVector<uint32_t> idata = inputs->at (i)->getData ().value< QVector<uint32_t> > ();
+            QVector<double> odata;
+
+            odata.reserve (idata.size ());
+            for (int j = 0; j < idata.size (); ++j)
+                odata << idata.at (j);
+            outputs->at (i)->setData (QVariant::fromValue (odata));
             inputs->at (i)->useData ();
         }
     }

@@ -2,6 +2,7 @@
 #define CAEN820SCALER_H
 
 #include "basemodule.h"
+#include "caen820dmx.h"
 
 struct Caen820Config {
     uint32_t baddr;
@@ -35,21 +36,16 @@ class Caen820Module : public BaseModule {
 public:
     static AbstractModule *create (int id, const QString& name);
 
-    ThreadBuffer<uint32_t>* getBuffer () { return NULL; }
     void setChannels ();
-    int acquire ();
+    int acquire (Event *ev);
     bool dataReady ();
     int reset ();
     int configure ();
-    void createOutputPlugin ();
     void setBaseAddress (uint32_t baddr);
     uint32_t getBaseAddress () const;
 
     void applySettings (QSettings *);
     void saveSettings (QSettings *);
-
-public slots:
-    void prepareForNextAcquisition () {};
 
 private:
     Caen820Module (int id, const QString &name);
@@ -59,7 +55,9 @@ private:
 
 private:
     Caen820Config conf_;
-    DemuxCaen820Plugin *out_;
+    Caen820Demux dmx_;
+
+    QVector<EventSlot*> evslots_;
 
     friend class Caen820UI;
 };

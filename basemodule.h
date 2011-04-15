@@ -2,11 +2,14 @@
 #define BASEMODULE_H
 
 #include <QString>
-#include <QList>
+#include <QVector>
 
 #include "abstractmodule.h"
 #include "abstractinterface.h"
-#include "abstractplugin.h"
+#include "pluginconnector.h"
+#include "runmanager.h"
+#include "eventbuffer.h"
+#include "outputplugin.h"
 
 class BaseUI;
 class ScopeChannel;
@@ -22,15 +25,25 @@ class BaseModule : public AbstractModule
     Q_OBJECT
 
 public:
-    BaseModule(int _id, QString _name = "Base Module")
+    BaseModule(int _id, QString _name)
     : iface (NULL)
+    , output (NULL)
     , id (_id)
     , name (_name)
     , ui (NULL)
     {
     }
 
-    virtual ~BaseModule() {}
+    virtual ~BaseModule() {
+        EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
+        QSet<EventSlot*> s (*evbuf->getEventSlots(this));
+        for (QSet<EventSlot*>::const_iterator i = s.begin (); i != s.end (); ++i)
+            evbuf->destroyEventSlot (*i);
+
+        if (output)
+            delete output;
+        output = NULL;
+    }
 
     int getId () const { return id; }
     const QString& getName() const { return name; }
@@ -49,35 +62,57 @@ public:
         connect (iface, SIGNAL (destroyed()), SLOT (interfaceRemoved ()));
     }
 
-    QList<ScopeChannel*>* getChannels () { return &channels_; }
+    /*! Returns a list of all slots belonging to this module. */
+    QList<const EventSlot*> getSlots () const {
+        const QSet<EventSlot*>* s = RunManager::ref ().getEventBuffer ()->getEventSlots(this);
+        QList<const EventSlot*> out;
+#if QT_VERSION >= 0x040700
+        out.reserve (s->size ());
+#endif
+        for (QSet<EventSlot*>::const_iterator i = s->begin (); i != s->end (); ++i)
+            out.append (*i);
 
-    ThreadBuffer<uint32_t>* getBuffer () { return NULL; }
+        return out;
+    }
 
-    AbstractPlugin* getOutputPlugin () const { return output; }
-    PluginConnector *getRootConnector () const {return output->getOutputs ()->first (); }
+
+    OutputPlugin* getOutputPlugin () const { return output; }
 
 public slots:
-    void prepareForNextAcquisition () {}
+    virtual void prepareForNextAcquisition () {}
 
 private slots:
     void interfaceRemoved () { iface = NULL; }
 
 protected:
+    /*! Adds an event buffer slot to the module. */
+    const EventSlot* addSlot (QString name, PluginConnector::DataType dtype) {
+        return RunManager::ref ().getEventBuffer()->registerSlot (this, name, dtype);
+    }
+
+    /*! Create the output plugin for this module. The output plugin forms the
+        conduit between the module and the plugin part of the program. It makes the slots exported by the module
+        available to other plugins. It also handles the transition between the run thread and the plugin thread.
+
+        \remarks only call this function after registering all the slots the module will export as the number
+        and names of connectors are derived from them. The plugin will be deleted when the module is destroyed.
+     */
+    void createOutputPlugin () {
+        output = new OutputPlugin (this);
+    }
+
     void setUI (BaseUI *_ui) { ui = _ui; }
     void setName (QString newName) { name = newName; }
     void setTypeName (QString newTypeName) { typename_ = newTypeName; }
 
-protected:
-    // TODO: DO this The Right Way (tm)
-    AbstractPlugin *output;
-
 private:
     AbstractInterface *iface;
+    OutputPlugin *output;
+
     int id;
     QString name;
     QString typename_;
     BaseUI *ui;
-    QList<ScopeChannel*> channels_;
 };
 
 #endif // BASEMODULE_H

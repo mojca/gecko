@@ -18,12 +18,12 @@ EventBuilderPlugin::EventBuilderPlugin(int _id, QString _name, const Attributes 
         std::cout << _name.toStdString () << ": nofInputs invalid. Setting to 1" << std::endl;
     }
 
-    addConnector(new PluginConnectorQueued< std::vector<uint32_t> >(this,ScopeCommon::out,"out"));
+    addConnector(new PluginConnectorQVUint (this,ScopeCommon::out,"out"));
     //outData.push_back(NULL);
 
     for(int n = 0; n < _nofInputs; n++)
     {
-        addConnector(new PluginConnectorQueued< std::vector<uint32_t> >(this,ScopeCommon::in,QString("in %1").arg(n)));
+        addConnector(new PluginConnectorQVUint(this,ScopeCommon::in,QString("in %1").arg(n)));
     }
 
     std::cout << "Instantiated EventBuilderPlugin" << std::endl;
@@ -86,5 +86,5 @@ void EventBuilderPlugin::userProcess()
 {
     //std::cout << "EventBuilderPlugin Processing" << std::endl;
 
-    outputs->first()->setData(&outData);
+    outputs->first()->setData(QVariant::fromValue (outData));
 }

@@ -32,12 +32,6 @@ protected:
     QSpinBox* rightSpinner;
     QCheckBox* invertBox;
 
-    vector<double> signalWithPileup;
-    vector<double> signalWithoutPileup;
-    vector<double> triggerWithPileup;
-    vector<double> triggerWithoutPileup;
-    vector<double> baseline_out;
-
 public:
     DspPileupSeparatorPlugin(int _id, QString _name);
     static AbstractPlugin *create (int id, const QString &name, const Attributes &attrs) {

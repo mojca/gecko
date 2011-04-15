@@ -14,6 +14,7 @@ class QTimer;
 class QBitArray;
 class ScopeMainWindow;
 class SystemInfo;
+class EventBuffer;
 
 /*! Manages data acquisition runs.
  *  Each time the user starts a run a start file is written to the run directory,
@@ -43,6 +44,7 @@ class RunManager : public QObject
     QDateTime stopTime;
     unsigned evcnt;
     unsigned lastevcnt;
+    float evpersec;
     unsigned evprocessedcnt;
 
     ScopeMainWindow *mainwnd;
@@ -51,6 +53,8 @@ class RunManager : public QObject
     PluginThread *pluginthread;
     QTimer *updateTimer;
     SystemInfo *sysinfo;
+
+    EventBuffer *evbuf;
 
 public:
 
@@ -87,6 +91,8 @@ public:
     bool isSingleEventMode () const { return singleeventmode; }
     /*! Returns a pointer to a SystemInfo object for reading the current cpu/net load. */
     const SystemInfo *getSystemInfo () const {return sysinfo;}
+    /*! Returns a pointer to the global event buffer. */
+    EventBuffer *getEventBuffer () { return evbuf; }
 
     // set
     /*! sets a pointer to the main window for saving the active settings to the run directory.

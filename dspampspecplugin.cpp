@@ -1,6 +1,7 @@
 #include "dspampspecplugin.h"
 #include "pluginmanager.h"
 #include "pluginconnectorqueued.h"
+#include "samqvector.h"
 
 #include <QGridLayout>
 #include <QLabel>
@@ -15,7 +16,7 @@ DspAmpSpecPlugin::DspAmpSpecPlugin(int _id, QString _name)
     nofHiClip = 0;
 
     estimateForBaseline = 0;
-    outData = new vector<double>(4096,0.);
+    outData = new QVector<double>(4096,0.);
 
     createSettings(settingsLayout);
 
@@ -128,24 +129,25 @@ void DspAmpSpecPlugin::userProcess()
     double pol = -1.;
 
     //std::cout << "DspAmpSpecPlugin Processing" << std::endl;
-    const vector<uint32_t>* pdata = reinterpret_cast<const std::vector<uint32_t>*>(inputs->first()->getData());
+    QVector<uint32_t> idata = inputs->first()->getData().value< QVector<uint32_t> > ();
     SamDSP dsp;
 
     // Convert to double
-    vector<double> data((*pdata).begin(),(*pdata).end());
+    QVector<double> data (idata.size ());
+    std::copy (idata.begin (), idata.end (), data.begin ());
 
     // Correct baseline
     tmp = 0.;
     for(int i = 0; i<conf.pointsForBaseline && i<(int)(data.size()); i++)
     {
-        tmp += data[i];
+        tmp += data [i];
     }
     estimateForBaseline = tmp / conf.pointsForBaseline;
 
     // Find extends
-    vector<double> min = dsp.min(data);
-    vector<double> max = dsp.max(data);
-    vector<double> peak = min;
+    QVector<double> min = dsp.min(data);
+    QVector<double> max = dsp.max(data);
+    QVector<double> peak = min;
 
 
     // Find polarity
@@ -201,16 +203,15 @@ void DspAmpSpecPlugin::userProcess()
     if(estimateForAmplitude > 1 && estimateForAmplitude < 4095)
     {
         //std::cout << "amp: "  << estimateForAmplitude << std::endl;
-        outData->at((int)(estimateForAmplitude))++;
+        (*outData) [(int)(estimateForAmplitude)]++;
     }
 
-    outputs->first()->setData(outData);
+    outputs->first()->setData(QVariant::fromValue (*outData));
 }
 
 void DspAmpSpecPlugin::resetSpectra()
 {
-    outData->clear();
-    outData->resize(4096,0);
+    outData->fill(0., 4096);
     nofLowClip = 0;
     lowClip->setText(tr("%1").arg(nofLowClip,1,10));
     nofHiClip = 0;

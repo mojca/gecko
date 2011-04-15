@@ -100,15 +100,15 @@ void DspTimeFilterPlugin::saveSettings(QSettings* settings)
 void DspTimeFilterPlugin::userProcess()
 {
     //std::cout << "DspTimeFilterPlugin Processing" << std::endl;
-    const vector<uint32_t>* pdata = reinterpret_cast<const std::vector<uint32_t>*>(inputs->first()->getData());
+    QVector<uint32_t> data = inputs->first()->getData().value< QVector<uint32_t> > ();
     SamDSP dsp;
 
     // Convert to double
-    outData.assign((*pdata).begin(),(*pdata).end());
+    outData.assign(data.begin(), data.end());
 
     //std::cout << conf.width << "  " << conf.spacing << std::endl;
     dsp.fast_pad(outData,conf.width+conf.spacing,0,outData[0]);
     dsp.fast_differentiator(outData,conf.width,conf.spacing);
-    outData.resize(pdata->size());
-    outputs->first()->setData(&outData);
+    outData.resize(data.size());
+    outputs->first()->setData(QVariant::fromValue (QVector<double>::fromStdVector (outData)));
 }

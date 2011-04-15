@@ -120,11 +120,12 @@ void DspCalFilterPlugin::saveSettings(QSettings* settings)
 void DspCalFilterPlugin::userProcess()
 {
     //std::cout << "DspCalFilterPlugin Processing" << std::endl;
-    const vector<uint32_t>* pdata = reinterpret_cast<const std::vector<uint32_t>*>(inputs->first()->getData());
+    QVector<uint32_t> idata = inputs->first()->getData().value< QVector<uint32_t> > ();
     SamDSP dsp;
 
     // Convert to double
-    outData.assign((*pdata).begin(),(*pdata).end());
+    QVector<double> outData (idata.size ());
+    std::copy (idata.begin(), idata.end(), outData.begin ());
 
     //dsp.vectorToFile(outData,"/tmp/cal.dat");
 
@@ -132,10 +133,10 @@ void DspCalFilterPlugin::userProcess()
     {
         dsp.fast_pad(outData,conf.width,0,outData[0]);
         dsp.fast_boxfilter(outData,conf.width);
-        outData.resize(pdata->size());
+        outData.resize(idata.size());
     }
     if(conf.shift != 0) dsp.fast_shift(outData,conf.shift);
     if(conf.attenuation != 1.0) dsp.fast_scale(outData,conf.attenuation);
 
-    outputs->first()->setData(&outData);
+    outputs->first()->setData(QVariant::fromValue (outData));
 }

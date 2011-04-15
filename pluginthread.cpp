@@ -3,50 +3,20 @@
 
 #include "pluginthread.h"
 #include "abstractmodule.h"
+#include "outputplugin.h"
 #include "scopechannel.h"
+#include "runmanager.h"
+#include "eventbuffer.h"
 
 PluginThread::PluginThread(PluginManager* _pmgr, ModuleManager* _mmgr)
-        : pmgr(_pmgr), mmgr(_mmgr), nofAcqsWaiting (0)
+        : pmgr(_pmgr), mmgr(_mmgr), nofAcqsWaiting (0), maxDepth (0)
 {
     abort = false;
     moveToThread(this);
 
-    addBuffers();
-
     createProcessList();
 
     std::cout << "PluginThread initialized." << std::endl;
-}
-
-void PluginThread::addBuffers()
-{
-    std::cout << "PluginThread adding buffers." << std::endl;
-    foreach(AbstractModule* module, (*mmgr->list ()))
-    {
-        //pmgr->addBuffer(module->getBuffer());
-
-        AbstractPlugin* p = module->getOutputPlugin();
-        if(p != NULL)
-        {
-            int i = 0;
-            foreach(PluginConnector* pc, (*p->getOutputs()))
-            {
-                PluginConnectorThreadBuffered* bpc = dynamic_cast<PluginConnectorThreadBuffered*>(pc);
-                if(module->getChannels()->at(i)->isEnabled())
-                {
-                    bufferList.append(bpc);
-                    std::cout << "Appending channel " << module->getChannels()->at(i)->getName().toStdString()
-                          << " of module " << module->getName().toStdString()
-                          << " (bpc = " << pc->getName().toStdString()
-                          << ")"
-                          << std::endl;
-                }
-                i++;
-            }
-        }
-    }
-
-    std::cout << "PluginThread done adding buffers." << std::endl << std::endl;
 }
 
 void PluginThread::createProcessList()
@@ -107,12 +77,7 @@ PluginThread::~PluginThread()
 {
     if(currentThread() != this)
     {
-        foreach(ThreadBuffer<uint32_t>* buf, (*pmgr->inBuffers))
-        {
-            buf->disconnect();
-        }
-        pmgr->inBuffers->clear();
-
+        stop ();
         bool finished = wait(5000);
         if(!finished) terminate();
     }
@@ -121,26 +86,14 @@ PluginThread::~PluginThread()
 
 void PluginThread::run()
 {
-//    QList<PluginConnector*>* roots = pmgr->getRootConnectors();
-//    unsigned int nofInputs = roots->size();
+    std::cout << "PluginThread started." << std::endl;
+    if(maxDepth == 0)
+        std::cout << "No plugins connected." << std::endl;
 
-    unsigned int nofInputs = bufferList.size();
-
-    if(nofInputs > 0)
+    for(;;)
     {
-        std::cout << "PluginThread started." << std::endl;
-
-        for(;;)
-        {
-            process();
-            if(abort) break;
-        }
-        //exec();
-    }
-    else
-    {
-        std::cout << "No plugin connected." << std::endl;
-        sleep(1000);
+        process();
+        if(abort) break;
     }
 }
 
@@ -172,36 +125,14 @@ void PluginThread::process()
         --nofAcqsWaiting;
         mutex.unlock();
 
-        int cnt = 0;
+        Event *ev = RunManager::ref ().getEventBuffer ()->dequeue ();
 
-        foreach(PluginConnectorThreadBuffered* bpc, bufferList)
-        {
-            if(bpc->dataAvailable() > 0)
-            {
-                cnt++;
-            }
-            else
-            {
-                //std::cout << "PluginThread: " << bpc->getPlugin()->getName().toStdString() << ":" << bpc->getName().toStdString() << " not ready.\n";
-            }
-        }
-        if(cnt >= bufferList.size())
-        {
-            execProcessList();
-        }
-        else
-        {
-            // throw away excess data. FIXME: Is this always the right thing to do? (multi-event mode?)
-            foreach (AbstractModule *m, (*mmgr->list ())) {
-                foreach (PluginConnector *pc, (*m->getOutputPlugin()->getOutputs())) {
-                    PluginConnectorThreadBuffered *bpc = dynamic_cast<PluginConnectorThreadBuffered*> (pc);
-                    while (bpc->dataAvailable()) {
-                        bpc->getDataDummy ();
-                        bpc->useData ();
-                    }
-                }
-            }
-        }
+        // pass data to the output plugins
+        QList<AbstractModule *> mods (*ModuleManager::ref ().list ());
+        foreach (AbstractModule *m, mods)
+            m->getOutputPlugin()->latchData (ev);
+
+        execProcessList();
     }
     else
     {

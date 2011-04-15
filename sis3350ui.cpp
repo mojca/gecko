@@ -118,6 +118,10 @@ QWidget* Sis3350UI::createTriggerTab()
     l->addWidget(createTriggerGateControls(),5,0,1,1);
     l->addWidget(createTriggerSourceControls(),6,0,1,1);
 
+    trgOutCheckbox = new QCheckBox (tr ("Enable TRG OUT LEMO connector"), box);
+    connect (trgOutCheckbox, SIGNAL(toggled(bool)), SLOT(trgOutClicked(bool)));
+    l->addWidget(trgOutCheckbox, 7, 0, 1, 1);
+
     box->setLayout(l);
     return box;
 }
@@ -635,6 +639,8 @@ void Sis3350UI::applySettings()
     clockSourceBox->setCurrentIndex(module->conf.clockSource);
     interruptSourceBox->setCurrentIndex(module->conf.irqSource);
 
+    trgOutCheckbox->setChecked (module->conf.trigger_enable_lemo_out);
+
     for(int ch=0; ch<4; ch++)
     {
         module->conf.trigger_fir[ch]    ? triggerFir->at(ch)->setChecked(true)    : triggerFir->at(ch)->setChecked(false);
@@ -965,4 +971,8 @@ void Sis3350UI::sampleLengthChanged()
     module->conf.direct_mem_sample_length = newValue;
     viewport->changeSampleLength(newValue);
     this->singleShotClicked();
+}
+
+void Sis3350UI::trgOutClicked (bool enabled) {
+    module->conf.trigger_enable_lemo_out = enabled;
 }

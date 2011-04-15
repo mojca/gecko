@@ -32,8 +32,8 @@ protected:
     QSpinBox* offsetSpinner;
     QCheckBox* invertBox;
 
-    vector<double> signal;
-    vector<double> baseline_out;
+    QVector<double> signal;
+    QVector<double> baseline_out;
 
 public:
     DspExtractSignalPlugin(int _id, QString _name);

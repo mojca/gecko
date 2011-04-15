@@ -15,16 +15,23 @@ DspQdcSpecPlugin::DspQdcSpecPlugin(int _id, QString _name)
 {
     srand(time(NULL));
 
+    conf.width = 20;
+    conf.pointsForBaseline = 10;
+    conf.min = 0;
+    conf.max = 100;
+    conf.nofBins = 4096;
+
     nofLowClip = 0;
     nofHiClip = 0;
     estimateForBaseline = 0;
 
-    outData.resize(4096,0.);
+    outData.fill (0., 4096);
 
     createSettings(settingsLayout);
 
     addConnector(new PluginConnectorQVUint(this,ScopeCommon::in,"in"));
     addConnector(new PluginConnectorQVDouble(this,ScopeCommon::out,"spectrum"));
+    addConnector(new PluginConnectorQVDouble(this,ScopeCommon::out,"value"));
 
     halfSecondTimer = new QTimer();
     halfSecondTimer->start(500);
@@ -161,8 +168,7 @@ void DspQdcSpecPlugin::applySettings(QSettings* settings)
         set = "nofBins";   if(settings->contains(set)) conf.nofBins = settings->value(set).toInt();
     settings->endGroup();
 
-    outData.clear();
-    outData.resize(conf.nofBins,0);
+    outData.fill (0., conf.nofBins);
     widthSpinner->setValue(conf.width);
     baselineSpinner->setValue(conf.pointsForBaseline);
     minValueSpinner->setValue(conf.min);
@@ -201,35 +207,31 @@ void    DspQdcSpecPlugin::userProcess()
 
     if(scheduleResize)
     {
-        outData.clear();
-        outData.resize(conf.nofBins,0);
+        outData.fill (0, conf.nofBins);
         scheduleResize = false;
         nofHiClip = 0;
         nofLowClip = 0;
     }
 
     //std::cout << "DspQdcSpecPlugin Processing" << std::endl;
-    const vector<uint32_t>* pdata = reinterpret_cast<const std::vector<uint32_t>*>(inputs->first()->getData());
-
-    // Convert to double
-    vector<double> data((*pdata).begin(),(*pdata).end());
+    QVector<uint32_t> idata = inputs->first()->getData().value< QVector<uint32_t> > ();
 
     // Estimate baseline
     tmp = 0.;
-    for(int i = 0; i<conf.pointsForBaseline && i<(int)(data.size()); i++)
+    for(int i = 0; i<conf.pointsForBaseline && i < idata.size(); i++)
     {
-        tmp += data[i];
+        tmp += idata[i];
         //std::cout << i << "  " << data[i] << std::endl;
     }
     baselineArea = (tmp * conf.width) / conf.pointsForBaseline;
 
     // Integrate
     tmp = 0.;
-    for(int i = conf.pointsForBaseline; i<conf.width+conf.pointsForBaseline && i<(int)(data.size()); i++)
+    for(int i = conf.pointsForBaseline; i<conf.width+conf.pointsForBaseline && i< idata.size(); i++)
     {
-        tmp += data[i];
-        if(data[i] == 0) loCnt++;
-        if(data[i] == 4095) hiCnt++;
+        tmp += idata[i];
+        if(idata[i] == 0) loCnt++;
+        if(idata[i] == 4095) hiCnt++;
     }
 
     // Check for clipping
@@ -254,6 +256,8 @@ void    DspQdcSpecPlugin::userProcess()
             tmp *= -1;
         }
 
+        outputs->at(1)->setData (QVariant::fromValue<double> (tmp));
+
         // Determine bin
         tmp -= conf.min;
         bin = floor(((conf.nofBins * tmp) / conf.max) + (rand()/(RAND_MAX+1.0))-0.5);
@@ -262,7 +266,7 @@ void    DspQdcSpecPlugin::userProcess()
         if(bin > 0 && bin < conf.nofBins)
         {
             //std::cout << "qdc: "  << tmp << std::endl;
-            outData.at(bin)++;
+            outData [bin]++;
         }
         else
         {
@@ -270,7 +274,7 @@ void    DspQdcSpecPlugin::userProcess()
         }
     }
 
-    outputs->first()->setData(&outData);
+    outputs->first()->setData(QVariant::fromValue (outData));
 }
 
 void DspQdcSpecPlugin::resetSpectra()

@@ -11,6 +11,7 @@
 class ScopeChannel;
 class QSettings;
 class AbstractModule;
+class EventSlot;
 
 class RunThread : public QThread
 {
@@ -20,7 +21,6 @@ public:
     RunThread();
     ~RunThread();
 
-    void createLists();
     void createConnections();
 
     void applySettings(QSettings*);
@@ -29,7 +29,7 @@ public:
     uint getNofEvents() {return nofSuccessfulEvents;}
 
 public slots:
-    void acquire(ScopeChannel*);
+    bool acquire(AbstractModule*);
     void stop();
 
 signals:
@@ -51,9 +51,10 @@ private:
     uint nofSuccessfulEvents;
     uint nofPolls;
 
-    QList<ScopeChannel*>* triggerList;
-    QList<ScopeChannel*>* channelList;
-    QList<AbstractModule*>* moduleList;
+    QList<AbstractModule*> modules;
+    QList<AbstractModule*> triggers;
+    QList<const EventSlot *> mandatories;
+
 
     QMutex mutex;
 };

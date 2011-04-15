@@ -26,7 +26,6 @@ class FanOutPlugin : public virtual BasePlugin
 protected:
 
     virtual void createSettings(QGridLayout*);
-    std::vector<T> outData;
     Attributes attribs_;
 
 public:
@@ -62,12 +61,11 @@ FanOutPlugin<T>::FanOutPlugin(int _id, QString _name, const Attributes &_attrs)
 
     //std::cout << _name.toStdString () << ": adding " << _nofOutputs << " outputs." << std::endl;
 
-    addConnector(new PluginConnectorQueued< std::vector<T> >(this,ScopeCommon::in,"in"));
+    addConnector(new PluginConnectorQueued< QVector<T> >(this,ScopeCommon::in,"in"));
 
     for(int n = 0; n < _nofOutputs; n++)
     {
-        addConnector(new PluginConnectorQueued< std::vector<T> >(this,ScopeCommon::out,QString("out %1").arg(n)));
-        outData.push_back(NULL);
+        addConnector(new PluginConnectorQueued< QVector<T> >(this,ScopeCommon::out,QString("out %1").arg(n)));
     }
 
     createSettings(settingsLayout);
@@ -78,7 +76,6 @@ FanOutPlugin<T>::FanOutPlugin(int _id, QString _name, const Attributes &_attrs)
 template<class T>
 FanOutPlugin<T>::~FanOutPlugin()
 {
-    outData.clear();
 }
 
 template<class T>
@@ -125,13 +122,11 @@ void FanOutPlugin<T>::createSettings(QGridLayout * l)
 template<class T>
 void FanOutPlugin<T>::userProcess()
 {
-    const std::vector<T>* pdata = reinterpret_cast<const std::vector<T>*>(inputs->first()->getData());
-
-    outData.assign((*pdata).begin(),(*pdata).end());
+    QVariant d = inputs->first()->getData();
 
     foreach(PluginConnector* out, (*outputs))
     {
-        out->setData(&outData);
+        out->setData(d);
     }
 }
 

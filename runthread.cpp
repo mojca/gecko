@@ -3,11 +3,11 @@
 #include "abstractmodule.h"
 #include "modulemanager.h"
 #include "interfacemanager.h"
+#include "runmanager.h"
 #include "abstractinterface.h"
-#include "scopechannel.h"
+#include "eventbuffer.h"
 
 RunThread::RunThread () {
-    qRegisterMetaType<ScopeChannel*>("ScopeChannel*");
 
     triggered = false;
     running = false;
@@ -34,8 +34,16 @@ RunThread::~RunThread()
 
 void RunThread::run()
 {
-    createLists();
+    modules = *ModuleManager::ref ().list ();
+    triggers = ModuleManager::ref ().getTriggers ().toList ();
+    mandatories = ModuleManager::ref ().getMandatorySlots ().toList ();
     createConnections();
+
+    foreach (AbstractModule *m, modules) {
+        m->reset ();
+        if (m->configure ())
+            std::cout << "Run Thread: " << m->getName ().toStdString () <<": Configure failed!" << std::endl;
+    }
 
     std::cout << "Run thread started." << std::endl;
 
@@ -51,89 +59,41 @@ void RunThread::run()
     exit(0);
 }
 
-void RunThread::createLists()
-{
-    triggerList = new QList<ScopeChannel*>;
-    channelList = new QList<ScopeChannel*>;
-    moduleList  = new QList<AbstractModule*>;
-
-    const QList<AbstractModule*>* mlist = ModuleManager::ptr ()->list ();
-    QList<ScopeChannel*>* trgCh;
-    QList<AbstractModule*>::const_iterator it(mlist->begin());
-
-
-    for(;it != mlist->end(); ++it)
-    {
-        AbstractModule* curModule = *it;
-        if (!curModule) continue;
-        trgCh = curModule->getChannels();
-        QList<ScopeChannel*>::iterator ch(trgCh->begin());
-
-        curModule->reset();
-        curModule->configure();
-
-        while(ch != trgCh->end())
-        {
-            ScopeChannel* curCh = (*ch);
-
-            if(curCh->isEnabled())
-            {
-                if(curCh->getType() != ScopeCommon::trigger)
-                {
-                    if(!moduleList->contains(curModule)) moduleList->append(curModule);
-                    channelList->append(curCh);
-                }
-                else
-                {
-                    if(curCh->getType() == ScopeCommon::trigger)
-                    {
-                        pollBased = true;
-                    }
-                    if(curCh->getType() == ScopeCommon::interrupt)
-                    {
-                        interruptBased = true;
-                    }
-                    triggerList->append(curCh);
-                }
-            }
-            ch++;
-        }
-    }
-
-    if(interruptBased && pollBased)
-    {
-        interruptBased = false;
-        QMessageBox::warning(0,tr("Scope"),tr("Defaulting to pollbased readout."),QMessageBox::Ok,QMessageBox::Ok);
-    }
-}
-
 void RunThread::createConnections()
 {
-    QList<ScopeChannel*>::iterator ch(triggerList->begin());
+    QList<AbstractModule*>::iterator ch(triggers.begin());
 
-    while(ch != triggerList->end())
+    while(ch != triggers.end())
     {
-        ScopeChannel* curCh = (*ch);
-        connect(curCh->getModule(),SIGNAL(triggered(ScopeChannel*)),this,SLOT(acquire(ScopeChannel*)));
+        connect(*ch, SIGNAL(triggered(AbstractModule*)),this,SLOT(acquire(AbstractModule*)));
         ch++;
     }
 }
 
-void RunThread::acquire(ScopeChannel* _ch)
+bool RunThread::acquire(AbstractModule* _trg)
 {
-    Q_UNUSED(_ch)
+    Q_UNUSED(_trg)
 
     //std::cout << currentThreadId() << ": Run thread acquiring." << std::endl;
 
-    QList<AbstractModule*>::iterator m(moduleList->begin());
+    QList<AbstractModule*>::iterator m(modules.begin());
 
-    while(m != moduleList->end())
+    Event *ev = RunManager::ref ().getEventBuffer ()->createEvent ();
+    while(m != modules.end())
     {
         AbstractModule* curM = (*m);
-        curM->acquire();
+        curM->acquire(ev);
         m++;
     }
-    emit acquisitionDone();
+
+    if (QSet<const EventSlot*>::fromList (mandatories).subtract(ev->getOccupiedSlots ()).empty()) {
+        RunManager::ref ().getEventBuffer ()->queue (ev);
+        emit acquisitionDone();
+        return true;
+    } else {
+        delete ev;
+        return false;
+    }
 }
 
 void RunThread::stop()
@@ -152,14 +112,14 @@ void RunThread::pollLoop()
     while(!abort)
     {
         nofPolls++;
-        foreach(ScopeChannel* trg, (*triggerList))
+        foreach(AbstractModule* trg, triggers)
         {
-            if(trg->getModule()->dataReady())
+            if(trg->dataReady())
             {
                 imgr->getMainInterface()->setOutput1(true);
-                acquire(trg);
+                if (acquire(trg))
+                    nofSuccessfulEvents++;
                 imgr->getMainInterface()->setOutput1(false);
-                nofSuccessfulEvents++;
             }
         }
     }

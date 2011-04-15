@@ -119,38 +119,35 @@ void DspExtractSignalPlugin::saveSettings(QSettings* settings)
 void DspExtractSignalPlugin::userProcess()
 {
     //std::cout << "DspExtractSignalPlugin Processing" << std::endl;
-    const vector<double>* ptrigger = reinterpret_cast<const std::vector<double>*>(inputs->at(0)->getData());
-    const vector<double>* pdata = reinterpret_cast<const std::vector<double>*>(inputs->at(1)->getData());
+    QVector<double> itrigger = inputs->at(0)->getData().value< QVector<double> > ();
+    QVector<double> idata = inputs->at(1)->getData().value< QVector<double> > ();
 
     SamDSP dsp;
 
-    // Convert to double
-    vector<double> data((*pdata).begin(),(*pdata).end());
-    //vector<double> trigger((*ptrigger).begin(),(*ptrigger).end());
-    vector<double> baseline_mask(ptrigger->size(),1);
-    vector<double> allowedTrigger(ptrigger->size(),0);
+    QVector<double> baseline_mask(itrigger.size(),1);
+    QVector<double> allowedTrigger(itrigger.size(),0);
 
-    baseline_out.resize(2,0);
-    signal.resize(conf.width,0);
+    baseline_out.fill(0, 2);
+    signal.fill(0, conf.width);
 
     // Fill baseline_mask and allowedTrigger
-    for(int i = 0; i < (int)ptrigger->size(); i++)
+    for(int i = 0; i < itrigger.size(); i++)
     {
-        if(ptrigger->at(i) == 1)
+        if(itrigger.at(i) == 1)
         {
-            allowedTrigger.at(i) = 1;
+            allowedTrigger [i] = 1;
             for(int j = -conf.offset; j < conf.width-conf.offset; j++)
             {
                 if(i+j > 0 && i+j < (int)baseline_mask.size())
                 {
-                    baseline_mask.at(i+j) = 0;
+                    baseline_mask [i+j] = 0;
                 }
             }
             for(int j = -conf.width; j < conf.width; j++)
             {
                 if(i+j > 0 && i+j < (int)baseline_mask.size())
                 {
-                    if(j != 0) allowedTrigger.at(i+j) = 0;
+                    if(j != 0) allowedTrigger [i+j] = 0;
                 }
             }
         }
@@ -160,11 +157,11 @@ void DspExtractSignalPlugin::userProcess()
     // Calculate baseline value
     int cnt = 0;
     double baseline = 0;
-    for(int i = 0; i < (int)data.size(); i++)
+    for(int i = 0; i < (int)idata.size(); i++)
     {
         if(baseline_mask.at(i) == 1)
         {
-            baseline += data.at(i);
+            baseline += idata.at(i);
             cnt++;
         }
     }
@@ -173,20 +170,20 @@ void DspExtractSignalPlugin::userProcess()
 //    std::cout << "Calculated baseline: " << baseline << " from " << cnt << " points." << std::endl; std::flush(std::cout);
 
     // Extract signal
-    dsp.fast_addC(data,-baseline);
-
-    signal = dsp.average(data,allowedTrigger,(unsigned int)conf.offset,(unsigned int)(conf.width-conf.offset));
+    dsp.fast_addC(idata,-baseline);
 
     // Invert
     if(conf.invert)
     {
-        dsp.fast_scale(signal,-1.0);
+        dsp.fast_scale(idata,-1.0);
         baseline *= -1.0;
     }
+
+    signal = dsp.average(idata,allowedTrigger,(unsigned int)conf.offset,(unsigned int)(conf.width-conf.offset));
 
     baseline_out[0] = baseline;
     baseline_out[1] = cnt;
 
-    outputs->first()->setData(&signal);
-    outputs->at(1)->setData(&baseline_out);
+    outputs->at(0)->setData(QVariant::fromValue (signal));
+    outputs->at(1)->setData(QVariant::fromValue (baseline_out));
 }

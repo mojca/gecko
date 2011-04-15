@@ -2,9 +2,7 @@
 #include "caen_v1290.h"
 #include "modulemanager.h"
 #include "runmanager.h"
-#include "demuxcaen1290plugin.h"
 
-#include "scopechannel.h"
 #include "caen1290ui.h"
 #include "confmap.h"
 
@@ -25,6 +23,7 @@ const Caen1290Module::ModuleType Caen1290Module::ModuleType::V1190B (V1190B_v, 0
 Caen1290Module::Caen1290Module(int id, QString name, ModuleType type)
 : BaseModule (id, name)
 , conf_ (new Caen1290Config)
+, dmx_ (evslots_, type_.channels (), type_.hires ())
 , type_ (type)
 {
     setChannels ();
@@ -37,18 +36,9 @@ Caen1290Module::~Caen1290Module () {
 }
 
 void Caen1290Module::setChannels () {
+    EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
     for (int i = 0; i < type_.channels (); ++i)
-        getChannels ()->append (new ScopeChannel (this, QString ("out %1").arg (i), ScopeCommon::eventBuffer, 1, 1));
-    getChannels ()->append (new ScopeChannel (this, "Poll Trigger", ScopeCommon::trigger, 1, 1));
-}
-
-void Caen1290Module::createOutputPlugin () {
-    out_ = new DemuxCaen1290Plugin (-getId (), getName () + " output", type_.channels (), type_.hires ());
-    output = out_;
-}
-
-ThreadBuffer<uint32_t> *Caen1290Module::getBuffer () {
-    return NULL;
+        evslots_ << evbuf->registerSlot (this, QString ("out %1").arg (i), PluginConnector::VectorUint32);
 }
 
 void Caen1290Module::setBaseAddress (uint32_t baddr) {
@@ -57,9 +47,6 @@ void Caen1290Module::setBaseAddress (uint32_t baddr) {
 
 uint32_t Caen1290Module::getBaseAddress () const {
     return conf_->base_addr;
-}
-
-void Caen1290Module::prepareForNextAcquisition () {
 }
 
 int Caen1290Module::reset () {
@@ -97,7 +84,7 @@ bool Caen1290Module::dataReady () {
     return (status & (1 << CAEN1290_STA_DREADY)) != 0;
 }
 
-int Caen1290Module::acquire () {
+int Caen1290Module::acquire (Event *ev) {
     AbstractInterface *iface = getInterface ();
     std::vector<uint32_t> data;
     const uint32_t len = 0xFFC;
@@ -123,7 +110,7 @@ int Caen1290Module::acquire () {
         data.assign (buf, buf + got);
 
         // check whether we are in single event mode and the demux plugin just completed an event
-        bool go_on = out_->processData (data, RunManager::ref().isSingleEventMode());
+        bool go_on = dmx_.processData (ev, data, RunManager::ref().isSingleEventMode());
         if (!go_on) {
             softClear (); // discard the rest of the events
             return 0;

@@ -17,16 +17,14 @@ Plot2DPlugin::Plot2DPlugin(int _id, QString _name)
 
     std::cout << "Instantiated Plot2DPlugin" << std::endl;
 
-    plot->addChannel(0,tr("ch0"),std::vector<double>(1,0),
+    plot->addChannel(0,tr("ch0"),QVector<double>(1,0),
                      QColor(Qt::red),Channel::line,1);
-    plot->addChannel(1,tr("ch1"),std::vector<double>(1,0),
+    plot->addChannel(1,tr("ch1"),QVector<double>(1,0),
                      QColor(Qt::green),Channel::line,1);
-    plot->addChannel(2,tr("ch2"),std::vector<double>(1,0),
+    plot->addChannel(2,tr("ch2"),QVector<double>(1,0),
                      QColor(Qt::blue),Channel::line,1);
-    plot->addChannel(3,tr("ch3"),std::vector<double>(1,0),
+    plot->addChannel(3,tr("ch3"),QVector<double>(1,0),
                      QColor(Qt::magenta),Channel::line,1);
-
-    outData.resize(4);
 
     connect(plot,SIGNAL(histogramCleared(uint,uint)),this,SLOT(resetData(uint,uint)));
 
@@ -132,12 +130,11 @@ void Plot2DPlugin::userProcess()
     int i = 0;
     foreach(PluginConnector* input, (*inputs))
     {
-        const std::vector<double>* pdata = reinterpret_cast<const std::vector<double>*>(input->getData());
-        if(pdata != NULL)
+        if(input->getData().canConvert< QVector<double> > ())
         {
-            outData.at(i).assign((*pdata).begin(),(*pdata).end());
+            QVector<double> data = input->getData().value< QVector<double> > ();
 
-            if(outData.at(i).size() != 0) plot->getChannelById(i)->setData(outData.at(i));
+            if(!data.empty ()) plot->getChannelById(i)->setData(data);
         }
         i++;
     }

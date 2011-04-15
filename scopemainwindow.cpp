@@ -4,6 +4,8 @@
 #include "baseui.h"
 #include "systeminfo.h"
 #include "remotecontrolpanel.h"
+#include "outputplugin.h"
+#include "eventbuffer.h"
 
 #include <QThreadPool>
 #include <QUdpSocket>
@@ -14,6 +16,9 @@
 #include <QCloseEvent>
 
 #include <stdexcept>
+
+Q_DECLARE_METATYPE (const EventSlot*)
+Q_DECLARE_METATYPE (AbstractModule *)
 
 ScopeMainWindow::ScopeMainWindow(QWidget *parent) :
     QMainWindow(parent),defaultIni("gecko.ini")
@@ -718,8 +723,8 @@ void ScopeMainWindow::triggerListChanged(QTreeWidgetItem* item,int col)
     if (!item || col != 0)
         return;
 
-    ScopeChannel* ch = item->data(0,Qt::UserRole + 1).value<ScopeChannel*>();
-    ch->setEnabled(item->checkState (0) == Qt::Checked);
+    AbstractModule* mod = item->data(0,Qt::UserRole + 1).value<AbstractModule*> ();
+    ModuleManager::ref ().setTrigger (mod, item->checkState (0) == Qt::Checked);
 }
 
 void ScopeMainWindow::channelListChanged(QTreeWidgetItem* item, int col)
@@ -727,9 +732,9 @@ void ScopeMainWindow::channelListChanged(QTreeWidgetItem* item, int col)
     if (!item || col != 0)
         return;
 
-    ScopeChannel* ch = item->data(0,Qt::UserRole + 1).value<ScopeChannel*>();
-    if (ch)
-        ch->setEnabled(item->checkState (0) == Qt::Checked);
+    const EventSlot* sl = item->data(0,Qt::UserRole + 1).value<const EventSlot*>();
+    if (sl)
+        ModuleManager::ref ().setMandatory (sl, item->checkState (0) == Qt::Checked);
 }
 
 void ScopeMainWindow::setStatusText(QString newString)
@@ -748,59 +753,25 @@ void ScopeMainWindow::loadChannelList()
     channelList->clear();
 
     QList<QTreeWidgetItem *> trgItems;
-    QList<QTreeWidgetItem *> chItems;
+    QList<QTreeWidgetItem *> slItems;
     const QList<AbstractModule*>* mlist = mmgr->list();
-    QList<ScopeChannel*>* trgCh;
-    QList<AbstractModule*>::const_iterator it(mlist->begin());
 
-    for(;it != mlist->end(); ++it)
-    {
-        AbstractModule* curModule = *it;
-        if (!curModule) continue;
+    foreach (AbstractModule *mod, *mlist) {
+        QTreeWidgetItem *trgIt = new QTreeWidgetItem (QStringList () << mod->getName ());
+        trgIt->setData(0, Qt::UserRole + 1, QVariant::fromValue (mod));
+        trgIt->setCheckState(0, ModuleManager::ref ().isTrigger (mod) ? Qt::Checked : Qt::Unchecked);
+        trgItems.append (trgIt);
 
-        trgCh = curModule->getChannels();
-        QList<ScopeChannel*>::iterator ch(trgCh->begin());
-
-        for(;ch != trgCh->end();++ch)
-        {
-            ScopeChannel* curCh = (*ch);
-
-            QStringList vals;
-            vals.append(curModule->getName());
-            vals.append(curCh->getName());
-
-            QList<QTreeWidgetItem*>* l = &chItems;
-            QTreeWidget *tw = channelList;
-
-            switch (curCh->getType()) {
-            case ScopeCommon::trigger:
-                l = &trgItems;
-                tw = triggerList;
-                break;
-            case ScopeCommon::eventBuffer:
-                vals.append (tr ("Event Buffer"));
-                break;
-            case ScopeCommon::logic:
-                vals.append (tr ("Logic"));
-                break;
-            case ScopeCommon::trace:
-                vals.append (tr ("Trace"));
-                break;
-            default:
-                vals.append (tr ("Unknown"));
-                break;
-            }
-
-            QTreeWidgetItem *item = new QTreeWidgetItem(vals);
-            l->append (item);
-            item->setData(0,Qt::UserRole + 1,QVariant::fromValue(curCh));
-            item->setCheckState(0, curCh->isEnabled() ? Qt::Checked : Qt::Unchecked);
-            tw->addTopLevelItem (item);
+        foreach (const EventSlot *sl, mod->getSlots ()) {
+            QTreeWidgetItem *slIt = new QTreeWidgetItem (QStringList () << mod->getName () << sl->getName ());
+            slIt->setData (0, Qt::UserRole + 1, QVariant::fromValue (sl));
+            slIt->setCheckState(0, ModuleManager::ref ().isMandatory (sl) ? Qt::Checked : Qt::Unchecked);
+            slItems.append (slIt);
         }
     }
 
     triggerList->addTopLevelItems(trgItems);
-    channelList->addTopLevelItems(chItems);
+    channelList->addTopLevelItems(slItems);
     singleEventModeBox->setChecked (RunManager::ref ().isSingleEventMode ());
 }
 
@@ -1083,14 +1054,16 @@ void ScopeMainWindow::saveConfig (QSettings *s) {
         if (daq->getInterface())
             s->setValue ("iface", daq->getInterface()->getName ());
         s->setValue ("baddr", daq->getBaseAddress ());
+        s->setValue ("trigger", ModuleManager::ref ().isTrigger (daq));
 
         if (daq->getOutputPlugin())
             roots.insert (daq->getOutputPlugin(), daq->getName ());
 
-        s->beginWriteArray ("ScopeChannels");
-        for (int j = 0; j < daq->getChannels ()->size (); ++j) {
+        s->beginWriteArray ("Slots");
+        QList<const EventSlot*> slts (daq->getSlots ());
+        for (int j = 0; j < slts.size (); ++j) {
             s->setArrayIndex (j);
-            s->setValue("enabled", daq->getChannels ()->at (j)->isEnabled ());
+            s->setValue("mandatory", ModuleManager::ref ().isMandatory (slts.at (j)));
         }
         s->endArray ();
     }
@@ -1168,14 +1141,16 @@ void ScopeMainWindow::loadConfig (QSettings *s) {
             }
         }
         daq->setBaseAddress (s->value ("baddr").toUInt ());
+        ModuleManager::ref ().setTrigger (daq, s->value ("trigger").toBool ());
 
         if (daq->getOutputPlugin ())
             roots.insert (daq->getName (), daq->getOutputPlugin ());
 
-        int chans = s->beginReadArray ("ScopeChannels");
+        int chans = s->beginReadArray ("Slots");
+        QList<const EventSlot*> slts (daq->getSlots ());
         for (int j = 0; j < chans; ++j) {
             s->setArrayIndex (j);
-            daq->getChannels ()->at (j)->setEnabled (s->value("enabled").toBool ());
+            ModuleManager::ref ().setMandatory(slts.at (j), s->value("mandatory").toBool ());
         }
         s->endArray ();
     }

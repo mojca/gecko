@@ -45,7 +45,7 @@ protected:
 
     QTimer* halfSecondTimer;
 
-    vector<double> outData;
+    QVector<double> outData;
 
     double estimateForBaseline;
     double estimateForAmplitude;

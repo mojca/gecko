@@ -32,8 +32,7 @@ protected:
     QSpinBox* holdoffSpinner;
     QCheckBox* polarityBox;
 
-    vector<double> trigger;
-    vector<double> veto;
+    QVector<double> trigger;
 
 public:
     DspTriggerLMAXPlugin(int _id, QString _name);

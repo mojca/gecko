@@ -103,13 +103,13 @@ void DspClippingDetectorPlugin::saveSettings(QSettings* settings)
 void DspClippingDetectorPlugin::userProcess()
 {
     //std::cout << "DspClippingDetectorPlugin Processing" << std::endl;
-    const vector<uint32_t>* pdata = reinterpret_cast<const std::vector<uint32_t>*>(inputs->first()->getData());
+    QVector<uint32_t> idata = inputs->first()->getData().value< QVector<uint32_t> > ();
 
-    clip.resize((*pdata).size(),0);
+    clip.fill(0., idata.size());
 
     // Check for clipping
-    vector<double>::iterator it(clip.begin());
-    foreach(int sample, (*pdata))
+    QVector<double>::iterator it(clip.begin());
+    foreach(int sample, idata)
     {
         if(sample >= conf.high)
         {
@@ -127,5 +127,5 @@ void DspClippingDetectorPlugin::userProcess()
         it++;
     }
 
-    outputs->first()->setData(&clip);
+    outputs->first()->setData(QVariant::fromValue (clip));
 }

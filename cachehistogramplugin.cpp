@@ -4,6 +4,7 @@
 #include "cachehistogramplugin.h"
 #include "pluginmanager.h"
 #include "runmanager.h"
+#include "samqvector.h"
 
 #include <QGridLayout>
 #include <QLabel>
@@ -19,7 +20,7 @@ CacheHistogramPlugin::CacheHistogramPlugin(int _id, QString _name)
 {
     createSettings(settingsLayout);
 
-    plot->addChannel(0,tr("histogram"),std::vector<double>(1,0),
+    plot->addChannel(0,tr("histogram"),QVector<double>(1,0),
                      QColor(Qt::red),Channel::steps,1);
 
     halfSecondTimer = new QTimer();
@@ -276,14 +277,14 @@ void CacheHistogramPlugin::scheduleResetHistogram()
 void CacheHistogramPlugin::userProcess()
 {
     //std::cout << "CacheHistogramPlugin userProcess" << std::endl;
-    const vector<double>* pdata = reinterpret_cast<const std::vector<double>*>(inputs->first()->getData());
+    QVector<double> idata = inputs->first()->getData().value< QVector<double> > ();
 
     SamDSP dsp;
 
     if(scheduleReset)
     {
         cache.clear();
-        cache.resize(conf.nofBins,0);
+        cache.fill(0, conf.nofBins);
         recalculateBinWidth();
         scheduleReset = false;
         plot->resetBoundaries(0);
@@ -297,10 +298,10 @@ void CacheHistogramPlugin::userProcess()
         writeToFile = false;
     }
 
-    if((int)(cache.size()) != conf.nofBins) cache.resize(conf.nofBins,0);
+    if((int)(cache.size()) != conf.nofBins) cache.resize(conf.nofBins);
 
     // Add data to histogram
-    foreach(double datum, (*pdata))
+    foreach(double datum, idata)
     {
         //std::cout << "CacheHistogramPlugin: adding " << std::dec << datum << endl;
         if(datum < conf.xmax && datum >= conf.xmin)
@@ -308,15 +309,15 @@ void CacheHistogramPlugin::userProcess()
             int bin = (int)((datum - conf.xmin) / binWidth);
             if(bin > 0 && bin < conf.nofBins)
             {
-                cache.at(bin) += conf.inputWeight;
+                cache [bin] += conf.inputWeight;
             }
         }
     }
 
     if(conf.normalize) dsp.fast_scale(cache,1.0/(dsp.max(cache)[AMP]));
 
-    if(cache.size() != 0) plot->getChannelById(0)->setData(cache);
+    if(!cache.empty()) plot->getChannelById(0)->setData(cache);
 
-    outputs->at(0)->setData(&cache);
-    outputs->at(1)->setData(&cache);
+    outputs->at(0)->setData(QVariant::fromValue (cache));
+    outputs->at(1)->setData(QVariant::fromValue (cache));
 }

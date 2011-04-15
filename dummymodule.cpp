@@ -17,7 +17,7 @@ DummyModule::DummyModule(int _id, QString _name)
     // Create user interface
     setUI (new DummyUI(this));
 
-    output = new DummyPlugin (-1, _name + " output");
+    createOutputPlugin ();
 
     std::cout << "Instantiated Dummy Module" << std::endl;
 }
@@ -25,8 +25,7 @@ DummyModule::DummyModule(int _id, QString _name)
 void DummyModule::setChannels()
 {
     // Setup channels
-    getChannels()->push_back(new ScopeChannel(this,"Dummy Channel",ScopeCommon::logic,10,1));
-    getChannels()->push_back(new ScopeChannel(this,"Dummy Trigger",ScopeCommon::trigger,1,1));
+    addSlot ("Dummy Channel", PluginConnector::VectorUint32);
 }
 
 void DummyModule::setPollTriggerFlag()
@@ -49,7 +48,7 @@ void DummyModule::createBuffer()
     buffer = ModuleManager::ptr()->createBuffer(4*100, 100, getId());
 }
 
-int DummyModule::acquire()
+int DummyModule::acquire(Event *)
 {
     std::cout << thread()->currentThreadId() << ": data = " << QString((*data)).toStdString() << std::endl;
     uint32_t out[251];

@@ -31,7 +31,7 @@ class CacheHistogramPlugin : public virtual BaseCachePlugin
     Q_OBJECT
 
 protected:
-    std::vector<double> cache;
+    QVector<double> cache;
 
     double binWidth;
 

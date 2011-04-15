@@ -1,39 +1,54 @@
 #include "plot2d.h"
+#include "samqvector.h"
 
 #include <QTimer>
 #include <QPixmap>
 
+using namespace std;
 
 Annotation::Annotation(QPoint _p, annoType _type, QString _text)
-        : p(_p),type(_type)
+: p(_p)
+, text (_text)
+, type(_type)
+
 {
-    this->text = _text;
 }
 
-Channel::Channel(vector<double> const& _data)
+Annotation::~Annotation()
 {
-    data = _data;
-    this->enabled = true;
-    this->color = QColor(Qt::black);
-    this->id = 0;
-    this->name = QString("unset");
-    annotations = new QList<Annotation*>;
-    xmin = 0;
-    xmax = 0;
-    ymin = 0;
-    ymax = 0;
+}
+
+Channel::Channel(QVector<double> _data)
+: xmin (0)
+, xmax (0)
+, ymin (0)
+, ymax (0)
+, ylog (false)
+, xlog (false)
+, color (Qt::black)
+, name ("unset")
+, type (line)
+, id (0)
+, enabled (true)
+, stepSize (1)
+, data (_data)
+{
 }
 
 Channel::~Channel()
 {
     clearAnnotations();
-    delete this->annotations;
-    name.clear();
 }
 
-void Channel::clearAnnotations(){ this->annotations->clear();}
+void Channel::clearAnnotations(){
+    QList<Annotation *> annos (annotations);
+
+    annotations.clear ();
+    foreach (Annotation *a, annos)
+        delete a;
+}
 void Channel::setColor(QColor color){ this->color = color;}
-void Channel::setData(vector<double> const& _data)
+void Channel::setData(QVector<double> _data)
 {
     this->data = _data;
     emit changed ();
@@ -48,7 +63,7 @@ void Channel::setStepSize(double stepSize){ this->stepSize = stepSize;}
 void Channel::addAnnotation(QPoint p, Annotation::annoType type, QString text)
 {
     Annotation* a = new Annotation(p,type,text);
-    this->annotations->push_back(a);
+    this->annotations.push_back(a);
 }
 
 
@@ -98,7 +113,7 @@ void plot2d::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
 }
 
-void plot2d::addChannel(unsigned int id, QString name, vector<double> const& data,
+void plot2d::addChannel(unsigned int id, QString name, QVector<double> data,
                         QColor color, Channel::plotType type = Channel::line, double stepSize = 1)
 {
     Channel *newChannel = new Channel(data);
@@ -282,7 +297,7 @@ void plot2d::setBoundaries()
             int newymin;
             int newymax;
 
-            vector<double> data = ch->getData();
+            QVector<double> data = ch->getData();
             if(data.size() > 0)
             {
                 ch->xmax = data.size();
@@ -325,7 +340,7 @@ void plot2d::drawChannels(QPainter &painter)
 void plot2d::drawChannel(QPainter &painter, unsigned int id)
 {
     Channel *curChan = channels->at(id);
-    const vector<double> &data = curChan->getData();
+    QVector<double> data = curChan->getData();
     Channel::plotType curType = curChan->getType();
     double nofPoints = data.size();
 
@@ -561,6 +576,6 @@ void plot2d::saveChannel()
     QString fileName = QFileDialog::getSaveFileName(this,"Save channel as...","","Data files (*.dat)");
     if (fileName.isEmpty())
         return;
-    vector<double> data = channels->first()->getData();
+    QVector<double> data = channels->first()->getData();
     dsp->vectorToFile(data,fileName.toStdString());
 }

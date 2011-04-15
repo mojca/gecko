@@ -28,7 +28,7 @@ class EventBuilderPlugin : public BasePlugin
 protected:
     virtual void createSettings(QGridLayout*);
 
-    std::vector<uint32_t> outData;
+    QVector<uint32_t> outData;
     Attributes attribs_;
 
 public:

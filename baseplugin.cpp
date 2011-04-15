@@ -1,6 +1,7 @@
 #include "baseplugin.h"
 #include "pluginmanager.h"
 #include "abstractmodule.h"
+#include "outputplugin.h"
 
 #include <stdint.h>
 #include <vector>
@@ -172,6 +173,7 @@ void BasePlugin::itemDblClicked(QListWidgetItem *item) {
     PluginConnector *pc = item->data (Qt::UserRole).value<PluginConnector*> ();
     if (pc && pc->hasOtherSide ()) {
         // check whether the connector belongs to a daq module, demux plugins have no inputs
+        // XXX: Do this The Right Way (tm), other plugins may also have no inputs
         if (pc->getConnectedPlugin ()->getInputs ()->size () == 0)
             return;
 
@@ -205,8 +207,10 @@ void BasePlugin::displayInputConnectionPopup (const QPoint &p) {
     if (act) {
         PluginConnector *newOtherSide = act->data ().value<PluginConnector*> ();
         thisSide->disconnect ();
-        if (newOtherSide)
+        if (newOtherSide) {
+            newOtherSide->disconnect ();
             thisSide->connectTo (newOtherSide);
+        }
         updateDisplayedConnections ();
     }
 }
@@ -232,8 +236,10 @@ void BasePlugin::displayOutputConnectionPopup (const QPoint &p) {
     if (act) {
         PluginConnector *newOtherSide = act->data ().value<PluginConnector*> ();
         thisSide->disconnect ();
-        if (newOtherSide)
+        if (newOtherSide) {
+            newOtherSide->disconnect ();
             thisSide->connectTo (newOtherSide);
+        }
         updateDisplayedConnections ();
     }
 }

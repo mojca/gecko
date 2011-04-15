@@ -12,7 +12,7 @@ FileOutputPlugin::FileOutputPlugin(int _id, QString _name)
 
     prefix = tr("raw");
 
-    addConnector(new PluginConnectorQueued< std::vector<uint32_t> >(this,ScopeCommon::in, "in"));
+    addConnector(new PluginConnectorQVUint (this,ScopeCommon::in, "in"));
 
     std::cout << "Instantiated FileOutputPlugin" << std::endl;
 }
@@ -67,11 +67,11 @@ void FileOutputPlugin::userProcess()
     {
         QDataStream out(&file);
 
-        const std::vector<uint32_t>* d = reinterpret_cast<const std::vector<uint32_t>*>(inputs->first()->getData());
-        if(d->size() == 0) std::cout << "No data." << std::endl;
-        for(uint32_t i=0; i<d->size(); i++)
+        QVector<uint32_t> d = inputs->first()->getData().value< QVector<uint32_t> > ();
+        if(d.size() == 0) std::cout << "No data." << std::endl;
+        for(int i=0; i<d.size(); i++)
         {
-            out << (quint32) (d->at(i));
+            out << (uint32_t) (d.at(i));
             //std::cout << std::hex << d->at(i) << std::endl;
         }
     }

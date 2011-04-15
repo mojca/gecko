@@ -25,7 +25,7 @@ public:
     }
 
     void setChannels();
-    int acquire();
+    int acquire(Event *);
     void createSettings();
 
     virtual bool dataReady();
@@ -37,8 +37,7 @@ public:
 
     virtual void saveSettings(QSettings*);
     virtual void applySettings(QSettings*);
-    virtual void prepareForNextAcquisition() {};
-    virtual void createOutputPlugin() { output = PluginManager::ref().create ("dummy", "dummy output"); }
+    virtual void prepareForNextAcquisition() {}
 
     ThreadBuffer<uint32_t> *getBuffer () { return buffer; }
 

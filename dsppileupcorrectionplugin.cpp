@@ -136,25 +136,23 @@ void DspPileUpCorrectionPlugin::saveSettings(QSettings* settings)
 void DspPileUpCorrectionPlugin::userProcess()
 {
     //std::cout << "DspPileUpCorrectionPlugin Processing" << std::endl;
-    const vector<double>* ptrigger = reinterpret_cast<const std::vector<double>*>(inputs->at(0)->getData());
-    const vector<double>* pcalorimetry = reinterpret_cast<const std::vector<double>*>(inputs->at(1)->getData());
-    const vector<double>* pshape = reinterpret_cast<const std::vector<double>*>(inputs->at(2)->getData());
-    const vector<double>* pbase = reinterpret_cast<const std::vector<double>*>(inputs->at(3)->getData());
+    std::vector<double> itrigger = inputs->at(0)->getData().value< QVector<double> > ().toStdVector ();
+    std::vector<double> icalorimetry = inputs->at(1)->getData().value< QVector<double> > ().toStdVector ();
+    std::vector<double> ishape = inputs->at(2)->getData().value< QVector<double> > ().toStdVector ();
+    std::vector<double> ibase = inputs->at(3)->getData().value< QVector<double> > ().toStdVector ();
 
     double baseline = 0;
     double pointsForBaseline = 0;
 
-    std::vector<double> shape;
-    if(!pshape)
+    if(ishape.empty ()) // no shape input present
     {
-        shape  = std::vector<double>(100,1.0);
-        pshape = &shape;
+        ishape = std::vector<double>(100,1.0);
     }
 
-    if(pbase && pbase->size() > 0)
+    if(!ibase.empty ())
     {
-        baseline = pbase->at(0);
-        pointsForBaseline = pbase->at(1);
+        baseline = ibase.at(0);
+        pointsForBaseline = ibase.at(1);
 //        std::cout << "Using baseline value: " << baseline << " from " << pointsForBaseline << " points" << std::endl;
     }
 //    else
@@ -165,15 +163,14 @@ void DspPileUpCorrectionPlugin::userProcess()
     SamDSP dsp;
 
     // Compact input data
-    vector<vector<double> > amplitudes = dsp.select(*(pcalorimetry),(*ptrigger));
+    std::vector<std::vector<double> > amplitudes = dsp.select(icalorimetry,itrigger);
     dsp.fast_addC(amplitudes[AMP],-baseline);
-    outData.resize(amplitudes[0].size(),0);
 
     // Find maximum in pshape
-    int tz = dsp.max((*pshape))[TIME];
+    int tz = dsp.max(ishape)[TIME];
 
     // Create dimension vector
-    vector<int> dim(4,0);
+    std::vector<int> dim(4,0);
     dim[0] = conf.signalsLeft;
     dim[1] = conf.signalsRight;
     dim[2] = conf.samplesLeft;
@@ -185,7 +182,7 @@ void DspPileUpCorrectionPlugin::userProcess()
 //    }
 
     // Unpile signals
-    outData = dsp.unpile(amplitudes[TIME],amplitudes[AMP],dim,(*pshape),tz);
+    QVector<double> outData = QVector<double>::fromStdVector (dsp.unpile(amplitudes[TIME],amplitudes[AMP],dim,ishape,tz));
 
-    outputs->first()->setData(&outData);
+    outputs->first()->setData(QVariant::fromValue (outData));
 }

@@ -1,6 +1,6 @@
 #include "caen820module.h"
 #include "caen820ui.h"
-#include "demuxcaen820plugin.h"
+#include "caen820dmx.h"
 #include "caen_v820.h"
 #include "confmap.h"
 #include "modulemanager.h"
@@ -17,6 +17,7 @@ AbstractModule *Caen820Module::create (int id, const QString &name) {
 
 Caen820Module::Caen820Module (int id, const QString &name)
 : BaseModule (id, name)
+, dmx_ (evslots_)
 {
     setUI (new Caen820UI (this));
     setChannels ();
@@ -24,14 +25,9 @@ Caen820Module::Caen820Module (int id, const QString &name)
 }
 
 void Caen820Module::setChannels () {
+    EventBuffer *evbuf = RunManager::ref().getEventBuffer();
     for (int i = 0; i < 32; ++i)
-        getChannels ()->append (new ScopeChannel (this, QString ("out %1").arg (i), ScopeCommon::eventBuffer, 1, 1));
-    getChannels ()->append (new ScopeChannel (this, "Poll Trigger", ScopeCommon::trigger, 1, 1));
-}
-
-void Caen820Module::createOutputPlugin () {
-    out_ = new DemuxCaen820Plugin (-getId (), getName () + " dmx");
-    output = out_;
+        evslots_ << evbuf->registerSlot (this, QString ("out %1").arg (i), PluginConnector::VectorUint32);
 }
 
 int Caen820Module::configure () {
@@ -58,9 +54,9 @@ int Caen820Module::configure () {
     if ((err = iface->writeA32D32 (baddr + CAEN820_DWELL, conf_.dwell_time)))
         std::cout << "Error " << err << " at CAEN820_CH_EN" << std::endl;
 
-    out_->setChannelBitmap (conf_.channel_enable);
-    out_->setHeaderEnabled (conf_.hdr_enable);
-    out_->setShortDataFmt (conf_.short_data_format);
+    dmx_.setChannelBitmap (conf_.channel_enable);
+    dmx_.setHeaderEnabled (conf_.hdr_enable);
+    dmx_.setShortDataFmt (conf_.short_data_format);
 
     return err;
 }
@@ -106,10 +102,10 @@ int Caen820Module::dataClear () {
     return err;
 }
 
-int Caen820Module::acquire () {
+int Caen820Module::acquire (Event *ev) {
     int err = 0;
     unsigned evlen = getNofActiveChannels ();
-    uint32_t buffer [33];
+    uint32_t buffer [33] = {0};
     AbstractInterface *iface = getInterface ();
 
     if (!iface)
@@ -128,7 +124,7 @@ int Caen820Module::acquire () {
         }
 
         bool sem = RunManager::ref ().isSingleEventMode ();
-        bool go_on = out_->processData (buffer, got);
+        bool go_on = dmx_.processData (ev, buffer, got);
         if (sem || ! go_on) {
             dataClear ();
             break;

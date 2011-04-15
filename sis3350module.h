@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QMap>
+#include <QVector>
 #include <QTime>
 #include <cstdio>
 #include <ctime>
@@ -17,7 +18,7 @@
 #include "sis3350ui.h"
 #include "sis3350.h"
 #include "baseplugin.h"
-#include "demuxsis3350plugin.h"
+#include "sis3350dmx.h"
 #include "pluginmanager.h"
 
 //#define MAXNUMDEV 10
@@ -48,6 +49,7 @@ public:
     bool acq_multi_event;
     bool ctrl_lemo_invert;
 
+    bool trigger_enable_lemo_out;
     int trigger_pulse_length[4];
     int trigger_gap_length[4];
     int trigger_peak_length[4];
@@ -102,11 +104,6 @@ public:
     int ledOff();
 
     void setChannels();
-    ThreadBuffer<uint32_t> *getBuffer () { return buffer; }
-
-    // Configuration
-    int getConfigFromCode();
-    int getConfigFromFile();
 
     // Internal functions
     unsigned int configureControlStatus();
@@ -141,7 +138,7 @@ public:
     uint32_t rblt_data[4][MAX_NOF_LWORDS]; // 1 GB total
     uint32_t read_data_block_length[4];
 
-    virtual int acquire();
+    virtual int acquire(Event *);
     virtual bool dataReady();
     virtual int configure();
     virtual int reset();
@@ -150,7 +147,7 @@ public:
     virtual void setBaseAddress (uint32_t baddr);
 
     int singleShot();
-    int writeToBuffer();
+    int writeToBuffer(Event* ev);
     int acquisitionStart();
     int acquireRingBufferSync();
     int acquireRingBufferASync();
@@ -160,9 +157,8 @@ public slots:
     virtual void prepareForNextAcquisition();
 
 private:
-    ThreadBuffer<uint32_t> *buffer;
-    virtual void createBuffer();
-    virtual void createOutputPlugin();
+    QVector<EventSlot*> evslots;
+    Sis3350Demux demux;
 };
 
 

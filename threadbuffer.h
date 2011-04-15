@@ -38,7 +38,7 @@ public:
      *
      *  \todo Is moduleId needed anymore ?
      */
-    ThreadBuffer(uint32_t size, uint32_t chunkSize, int moduleId);
+    ThreadBuffer(uint32_t size, uint32_t chunkSize, int moduleId, T defaultValue = NULL);
     ~ThreadBuffer();
 
     /*! Write data to the buffer.
@@ -88,18 +88,19 @@ private:
     uint32_t size;
     uint32_t chunkSize;
     int moduleId;
+    T defval;
 };
 
 
 template<class T>
-ThreadBuffer<T>::ThreadBuffer(uint32_t _size, uint32_t _chunkSize, int _moduleId)
-        : size(_size), chunkSize(_chunkSize), moduleId(_moduleId)
+ThreadBuffer<T>::ThreadBuffer(uint32_t _size, uint32_t _chunkSize, int _moduleId, T defaultValue)
+        : size(_size), chunkSize(_chunkSize), moduleId(_moduleId), defval (defaultValue)
 {
     buffer = new T[size];
 
     for(unsigned int i=0; i<size; i++)
     {
-        buffer[i] = NULL;
+        buffer[i] = defval;
     }
 
     wpos = 0;
@@ -111,7 +112,7 @@ ThreadBuffer<T>::ThreadBuffer(uint32_t _size, uint32_t _chunkSize, int _moduleId
 template<class T>
 ThreadBuffer<T>::~ThreadBuffer()
 {
-    delete buffer;
+    delete [] buffer;
     buffer = NULL;
     delete freeBytes;
     freeBytes = NULL;
@@ -126,7 +127,7 @@ void ThreadBuffer<T>::reset()
 
     for(unsigned int i=0; i<size; i++)
     {
-        buffer[i] = NULL;
+        buffer[i] = defval;
     }
     wpos = 0;
     rpos = 0;

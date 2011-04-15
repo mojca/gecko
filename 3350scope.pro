@@ -11,13 +11,11 @@ QMAKE_CXXFLAGS_RELEASE += -march=native \
 LIBS += -g \
     -L../sis3150_calls \
     -L../sis3100_calls \
-    -L../../samdsp \
     -l_sis3150 \
     -l_sis3100 \
     -lgsl \
     -lgslcblas \
-    -lusb \
-    -lsamdsp
+    -lusb
 INCLUDEPATH += ../sis3150_calls \
     ../sis3100_calls
 SOURCES += main.cpp \
@@ -41,14 +39,14 @@ SOURCES += main.cpp \
     threadbuffer.cpp \
     sis3100module.cpp \
     sis3100ui.cpp \
-    demuxsis3350plugin.cpp \
+    sis3350dmx.cpp \
     dsptimefilterplugin.cpp \
     caen785module.cpp \
     pluginconnectorthreadbuffered.cpp \
     vectoroutputplugin.cpp \
     plot2dplugin.cpp \
     caen785ui.cpp \
-    demuxcaenadcplugin.cpp \
+    caenadcdmx.cpp \
     dspampspecplugin.cpp \
     caen792module.cpp \
     caen792ui.cpp \
@@ -70,17 +68,20 @@ SOURCES += main.cpp \
     caen1290ui.cpp \
     rawwritesis3350plugin.cpp \
     rawwritesis3350pluginV2.cpp \
-    demuxcaen1290plugin.cpp \
+    caen1290dmx.cpp \
     inttodoubleplugin.cpp \
     viewport.cpp \
     caen820module.cpp \
     caen820ui.cpp \
-    demuxcaen820plugin.cpp \
+    caen820dmx.cpp \
     eventbuilderplugin.cpp \
     packsis3350plugin.cpp \
     interfacemanager.cpp \
     geckoremote.cpp \
-    remotecontrolpanel.cpp
+    remotecontrolpanel.cpp \
+    outputplugin.cpp \
+    eventbuffer.cpp
+
 HEADERS += sis3350.h \
     plot2d.h \
     sis3350ui.h \
@@ -107,7 +108,7 @@ HEADERS += sis3350.h \
     threadbuffer.h \
     sis3100module.h \
     sis3100ui.h \
-    demuxsis3350plugin.h \
+    sis3350dmx.h \
     dsptimefilterplugin.h \
     caen785module.h \
     caen_v785.h \
@@ -115,7 +116,7 @@ HEADERS += sis3350.h \
     vectoroutputplugin.h \
     plot2dplugin.h \
     caen785ui.h \
-    demuxcaenadcplugin.h \
+    caenadcdmx.h \
     dspampspecplugin.h \
     caen_v792.h \
     caen792module.h \
@@ -140,7 +141,7 @@ HEADERS += sis3350.h \
     caen1290ui.h \
     rawwritesis3350plugin.h \
     rawwritesis3350pluginV2.h \
-    demuxcaen1290plugin.h \
+    caen1290dmx.h \
     inttodoubleplugin.h \
     pluginconnectorqueued.h \
     confmap.h \
@@ -148,7 +149,7 @@ HEADERS += sis3350.h \
     caen820module.h \
     caen_v820.h \
     caen820ui.h \
-    demuxcaen820plugin.h \
+    caen820dmx.h \
     eventbuilderplugin.h \
     packsis3350plugin.h \
     abstractinterface.h \
@@ -156,4 +157,9 @@ HEADERS += sis3350.h \
     baseinterface.h \
     systeminfo.h \
     geckoremote.h \
-    remotecontrolpanel.h
+    remotecontrolpanel.h \
+    eventbuffer.h \
+    outputplugin.h \
+    pluginconnectorplain.h \
+    samqvector.h
+

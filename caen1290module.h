@@ -2,10 +2,10 @@
 #define CAEN1290MODULE_H
 
 #include "basemodule.h"
+#include "caen1290dmx.h"
 
 struct Caen1290Config;
 class Caen1290UI;
-class DemuxCaen1290Plugin;
 
 class Caen1290Module : public BaseModule {
     Q_OBJECT
@@ -52,21 +52,16 @@ public:
         return new Caen1290Module (id, name, ModuleType::V1190B);
     }
 
-    virtual ThreadBuffer<uint32_t>* getBuffer();
     virtual void setChannels();
-    virtual int acquire();
+    virtual int acquire(Event *ev);
     virtual bool dataReady();
     virtual int reset();
     virtual int configure();
-    virtual void createOutputPlugin();
     virtual void setBaseAddress (uint32_t baddr);
     virtual uint32_t getBaseAddress () const;
 
     virtual void saveSettings (QSettings *);
     virtual void applySettings (QSettings *);
-
-public slots:
-    virtual void prepareForNextAcquisition();
 
 private:
     int writeToMC (uint16_t data);
@@ -75,9 +70,10 @@ private:
 
 private:
     Caen1290Config *conf_;
-    DemuxCaen1290Plugin *out_;
+    Caen1290Demux dmx_;
 
     ModuleType type_;
+    QVector<EventSlot*> evslots_;
 
     friend class Caen1290UI;
 };

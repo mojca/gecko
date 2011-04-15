@@ -163,13 +163,13 @@ void RawWriteSis3350PluginV2::userProcess()
 {
     //std::cout << "RawWriteSis3350PluginV2 Processing" << std::endl;
 
-    const std::vector<uint32_t>* data[4];
+    QVector<uint32_t> data[4];
     for(int i = 0; i < 4; i++)
     {
-        data[i] = reinterpret_cast<const std::vector<uint32_t>*>(inputs->at(i)->getData());
+        data[i] = inputs->at(i)->getData().value< QVector<uint32_t> > ();
     }
 
-    const std::vector<uint32_t>* meta = reinterpret_cast<const std::vector<uint32_t>*>(inputs->at(4)->getData());
+    QVector<uint32_t> meta = inputs->at(4)->getData().value< QVector<uint32_t> > ();
 
     QString fileNameWithNumber(tr("%1%2").arg(fileName).arg(fileNo,6,10,QChar('0')));
 
@@ -184,18 +184,18 @@ void RawWriteSis3350PluginV2::userProcess()
         QDataStream out(&file);
         out.setByteOrder(QDataStream::LittleEndian); //!
 
-        for(unsigned int i = 0; i < meta->size(); i++)
+        for(int i = 0; i < meta.size(); i++)
         {
             // Update total length information
-            if(i==1) out << (uint32_t) (8 + (meta->at(4) * nofEnabledChannels));
+            if(i==1) out << (uint32_t) (8 + (meta.at(4) * nofEnabledChannels));
             // Update channel mask information
             else if(i==5) out << (uint32_t)(chMask);
-            else out << meta->at(i);
+            else out << meta.at(i);
         }
 
         for(unsigned int ch = 0; ch < 4; ch++)
         {
-            if(data[ch]->size() == 0)
+            if(data[ch].empty())
             {
                 std::cout << "No data in ch " << std::dec << ch << std::endl;
                 continue;
@@ -203,11 +203,11 @@ void RawWriteSis3350PluginV2::userProcess()
 
             if(saveEnabled[ch] == true)
             {
-                for(unsigned int i = 0; i < data[ch]->size(); i++)
+                for(int i = 0; i < data[ch].size(); i++)
                 {
-                    out << (uint16_t)(data[ch]->at(i) & 0xFFFF);               
+                    out << (uint16_t)(data[ch].at(i) & 0xFFFF);
                 }
-                bytesWritten += data[ch]->size()*2;
+                bytesWritten += data[ch].size()*2;
             }
         }
     }

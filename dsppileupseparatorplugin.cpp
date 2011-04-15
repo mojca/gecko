@@ -121,23 +121,23 @@ void DspPileupSeparatorPlugin::saveSettings(QSettings* settings)
 void DspPileupSeparatorPlugin::userProcess()
 {
     //std::cout << "DspExtractSignalPlugin Processing" << std::endl;
-    const vector<double>* pdata = reinterpret_cast<const std::vector<double>*>(inputs->at(0)->getData());
-    const vector<double>* ptrigger = reinterpret_cast<const std::vector<double>*>(inputs->at(1)->getData());
+    QVector<double> idata = inputs->at(0)->getData().value< QVector<double> > ();
+    QVector<double> itrigger = inputs->at(1)->getData().value< QVector<double> > ();
 
 
-    signalWithPileup.clear();
-    signalWithoutPileup.clear();
-    triggerWithPileup.clear();
-    triggerWithoutPileup.clear();
-    vector<double> pileup_mask(ptrigger->size(),0);
+    QVector<double> signalWithPileup;
+    QVector<double> signalWithoutPileup;
+    QVector<double> triggerWithPileup;
+    QVector<double> triggerWithoutPileup;
+    std::vector<double> pileup_mask(itrigger.size(),0);
 
 
     int t0 = -1;
     int t1 = -1;
     int dist = conf.left + conf.right;
-    for(int i = 0; i < (int)ptrigger->size()-1; i++)
+    for(int i = 0; i < itrigger.size()-1; i++)
     {
-        if(ptrigger->at(i) == 1)
+        if(itrigger.at(i) == 1)
         {
             // Find first trigger timestamp
             if(t1 == -1)
@@ -170,18 +170,18 @@ void DspPileupSeparatorPlugin::userProcess()
     {
         if(pileup_mask.at(i) == 1)
         {
-            signalWithPileup.push_back(pdata->at(i));
-            triggerWithPileup.push_back(ptrigger->at(i));
+            signalWithPileup.push_back(idata.at(i));
+            triggerWithPileup.push_back(itrigger.at(i));
         }
         else
         {
-            signalWithoutPileup.push_back(pdata->at(i));
-            triggerWithoutPileup.push_back(ptrigger->at(i));
+            signalWithoutPileup.push_back(idata.at(i));
+            triggerWithoutPileup.push_back(itrigger.at(i));
         }
     }
 
-    outputs->at(0)->setData(&signalWithPileup);
-    outputs->at(1)->setData(&triggerWithPileup);
-    outputs->at(2)->setData(&signalWithoutPileup);
-    outputs->at(3)->setData(&triggerWithoutPileup);
+    outputs->at(0)->setData(QVariant::fromValue (signalWithPileup));
+    outputs->at(1)->setData(QVariant::fromValue (triggerWithPileup));
+    outputs->at(2)->setData(QVariant::fromValue (signalWithoutPileup));
+    outputs->at(3)->setData(QVariant::fromValue (triggerWithoutPileup));
 }
