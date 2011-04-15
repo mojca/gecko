@@ -36,7 +36,6 @@ protected:
     QLineEdit* lowClip;
     QLineEdit* hiClip;
 
-    vector<double>* curData;
     QVector<double>* outData;
 
     double estimateForBaseline;

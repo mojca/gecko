@@ -129,7 +129,7 @@ void DspPileupSeparatorPlugin::userProcess()
     QVector<double> signalWithoutPileup;
     QVector<double> triggerWithPileup;
     QVector<double> triggerWithoutPileup;
-    vector<double> pileup_mask(itrigger.size(),0);
+    std::vector<double> pileup_mask(itrigger.size(),0);
 
 
     int t0 = -1;

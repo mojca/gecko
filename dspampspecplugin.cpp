@@ -1,6 +1,7 @@
 #include "dspampspecplugin.h"
 #include "pluginmanager.h"
 #include "pluginconnectorqueued.h"
+#include "samqvector.h"
 
 #include <QGridLayout>
 #include <QLabel>
@@ -132,20 +133,21 @@ void DspAmpSpecPlugin::userProcess()
     SamDSP dsp;
 
     // Convert to double
-    vector<double> data(idata.begin(), idata.end());
+    QVector<double> data (idata.size ());
+    std::copy (idata.begin (), idata.end (), data.begin ());
 
     // Correct baseline
     tmp = 0.;
     for(int i = 0; i<conf.pointsForBaseline && i<(int)(data.size()); i++)
     {
-        tmp += data[i];
+        tmp += data [i];
     }
     estimateForBaseline = tmp / conf.pointsForBaseline;
 
     // Find extends
-    vector<double> min = dsp.min(data);
-    vector<double> max = dsp.max(data);
-    vector<double> peak = min;
+    QVector<double> min = dsp.min(data);
+    QVector<double> max = dsp.max(data);
+    QVector<double> peak = min;
 
 
     // Find polarity

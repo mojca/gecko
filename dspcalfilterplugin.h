@@ -31,8 +31,6 @@ protected:
     QSpinBox* shiftSpinner;
     QDoubleSpinBox* attenuationSpinner;
 
-    vector<double> outData;
-
 public:
     DspCalFilterPlugin(int _id, QString _name);
     static AbstractPlugin *create (int _id, const QString &_name, const Attributes &_attrs) {

@@ -124,9 +124,8 @@ void DspExtractSignalPlugin::userProcess()
 
     SamDSP dsp;
 
-    vector<double> data = idata.toStdVector ();
-    vector<double> baseline_mask(itrigger.size(),1);
-    vector<double> allowedTrigger(itrigger.size(),0);
+    QVector<double> baseline_mask(itrigger.size(),1);
+    QVector<double> allowedTrigger(itrigger.size(),0);
 
     baseline_out.fill(0, 2);
     signal.fill(0, conf.width);
@@ -136,19 +135,19 @@ void DspExtractSignalPlugin::userProcess()
     {
         if(itrigger.at(i) == 1)
         {
-            allowedTrigger.at(i) = 1;
+            allowedTrigger [i] = 1;
             for(int j = -conf.offset; j < conf.width-conf.offset; j++)
             {
                 if(i+j > 0 && i+j < (int)baseline_mask.size())
                 {
-                    baseline_mask.at(i+j) = 0;
+                    baseline_mask [i+j] = 0;
                 }
             }
             for(int j = -conf.width; j < conf.width; j++)
             {
                 if(i+j > 0 && i+j < (int)baseline_mask.size())
                 {
-                    if(j != 0) allowedTrigger.at(i+j) = 0;
+                    if(j != 0) allowedTrigger [i+j] = 0;
                 }
             }
         }
@@ -158,11 +157,11 @@ void DspExtractSignalPlugin::userProcess()
     // Calculate baseline value
     int cnt = 0;
     double baseline = 0;
-    for(int i = 0; i < (int)data.size(); i++)
+    for(int i = 0; i < (int)idata.size(); i++)
     {
         if(baseline_mask.at(i) == 1)
         {
-            baseline += data.at(i);
+            baseline += idata.at(i);
             cnt++;
         }
     }
@@ -171,16 +170,16 @@ void DspExtractSignalPlugin::userProcess()
 //    std::cout << "Calculated baseline: " << baseline << " from " << cnt << " points." << std::endl; std::flush(std::cout);
 
     // Extract signal
-    dsp.fast_addC(data,-baseline);
+    dsp.fast_addC(idata,-baseline);
 
     // Invert
     if(conf.invert)
     {
-        dsp.fast_scale(data,-1.0);
+        dsp.fast_scale(idata,-1.0);
         baseline *= -1.0;
     }
 
-    signal = QVector<double>::fromStdVector (dsp.average(data,allowedTrigger,(unsigned int)conf.offset,(unsigned int)(conf.width-conf.offset)));
+    signal = dsp.average(idata,allowedTrigger,(unsigned int)conf.offset,(unsigned int)(conf.width-conf.offset));
 
     baseline_out[0] = baseline;
     baseline_out[1] = cnt;

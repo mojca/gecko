@@ -32,7 +32,7 @@ protected:
     QDoubleSpinBox* errISpinner;
     QDoubleSpinBox* deltaSpinner;
 
-    vector<double> outData;
+    QVector<double> outData;
 
 public:
     DspKalmanBaselinePlugin(int _id, QString _name);

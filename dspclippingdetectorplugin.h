@@ -29,9 +29,6 @@ protected:
     QSpinBox* lowSpinner;
     QSpinBox* highSpinner;
 
-    vector<double>* curData;
-    vector<double>* outData;
-
     QVector<double> clip;
 
 public:

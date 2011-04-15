@@ -1,6 +1,7 @@
 #include "dspadcplugin.h"
 #include "pluginmanager.h"
 #include "pluginconnectorqueued.h"
+#include "samqvector.h"
 
 #include <QGridLayout>
 #include <QLabel>
@@ -71,8 +72,8 @@ void DspAdcPlugin::saveSettings(QSettings* settings)
 void DspAdcPlugin::userProcess()
 {
     //std::cout << "DspPileUpCorrectionPlugin Processing" << std::endl;
-    std::vector<double> itrigger = inputs->at(0)->getData().value< QVector<double> > ().toStdVector ();
-    std::vector<double> icalorimetry = inputs->at(1)->getData().value< QVector<double> > ().toStdVector ();
+    QVector<double> itrigger = inputs->at(0)->getData().value< QVector<double> > ();
+    QVector<double> icalorimetry = inputs->at(1)->getData().value< QVector<double> > ();
     QVector<double> ibase = inputs->at(2)->getData().value< QVector<double> > ();
 	
     double baseline = 0;
@@ -93,9 +94,7 @@ void DspAdcPlugin::userProcess()
 
 
     // Compact input data
-    vector<double> calorimetry = dsp.addC(icalorimetry,-baseline);
-    vector<vector<double> > amplitudes = dsp.select(calorimetry,itrigger);
-
-    QVector<double> outData = QVector<double>::fromStdVector (amplitudes[AMP]);
-    outputs->first()->setData(QVariant::fromValue (outData));
+    dsp.fast_addC(icalorimetry,-baseline);
+    QVector< QVector<double> > amplitudes = dsp.select(icalorimetry, itrigger);
+    outputs->first()->setData(QVariant::fromValue (amplitudes [AMP]));
 }

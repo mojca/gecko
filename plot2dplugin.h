@@ -43,8 +43,6 @@ protected:
     QTimer* halfSecondTimer;
     int msecsToTimeout;
 
-    std::vector<std::vector<double> > outData;
-
 public:
     Plot2DPlugin(int _id, QString _name);
     static AbstractPlugin *create (int _id, const QString &_name, const Attributes &_attrs) {

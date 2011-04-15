@@ -43,7 +43,7 @@ class Channel : public QObject
 {
     Q_OBJECT
 public:
-    Channel(vector<double> const& data);
+    Channel(QVector<double> data);
     ~Channel();
 
     enum plotType{line,steps};
@@ -51,7 +51,7 @@ public:
     void setColor(QColor color);
     void setName(QString name);
     void setId(unsigned int id);
-    void setData(vector<double> const& data);
+    void setData(QVector<double> data);
     void setType(plotType type);
     void setEnabled(bool enabled);
     void setStepSize(double stepSize);
@@ -64,8 +64,8 @@ public:
     bool isEnabled() {return this->enabled; }
     double getStepSize() {return this->stepSize; }
     plotType getType() {return this->type; }
-    vector<double> const& getData() {return this->data; }
-    QList<Annotation*> *getAnnotations() {return this->annotations; }
+    QVector<double> getData() {return this->data; }
+    QList<Annotation*> *getAnnotations() {return &annotations; }
 
     double xmin, xmax, ymin, ymax;
     bool ylog, xlog;
@@ -81,8 +81,8 @@ private:
     bool enabled;
     double stepSize;
 
-    vector<double> data;
-    QList<Annotation *> *annotations;
+    QVector<double> data;
+    QList<Annotation *> annotations;
 };
 
 /*! A widget for showing two-dimensional plots.
@@ -99,7 +99,7 @@ public:
     plot2d(QWidget *parent, QSize size, unsigned int id);
     ~plot2d();
 
-    void addChannel(unsigned int id, QString name, vector<double> const& data,
+    void addChannel(unsigned int id, QString name, QVector<double> data,
                     QColor color, Channel::plotType type, double stepSize);
     void removeChannel(unsigned int id);
     void redraw();

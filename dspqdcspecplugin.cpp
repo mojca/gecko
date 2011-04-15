@@ -31,6 +31,7 @@ DspQdcSpecPlugin::DspQdcSpecPlugin(int _id, QString _name)
 
     addConnector(new PluginConnectorQVUint(this,ScopeCommon::in,"in"));
     addConnector(new PluginConnectorQVDouble(this,ScopeCommon::out,"spectrum"));
+    addConnector(new PluginConnectorQVDouble(this,ScopeCommon::out,"value"));
 
     halfSecondTimer = new QTimer();
     halfSecondTimer->start(500);
@@ -254,6 +255,8 @@ void    DspQdcSpecPlugin::userProcess()
         {
             tmp *= -1;
         }
+
+        outputs->at(1)->setData (QVariant::fromValue<double> (tmp));
 
         // Determine bin
         tmp -= conf.min;

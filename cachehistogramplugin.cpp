@@ -4,6 +4,7 @@
 #include "cachehistogramplugin.h"
 #include "pluginmanager.h"
 #include "runmanager.h"
+#include "samqvector.h"
 
 #include <QGridLayout>
 #include <QLabel>
@@ -19,7 +20,7 @@ CacheHistogramPlugin::CacheHistogramPlugin(int _id, QString _name)
 {
     createSettings(settingsLayout);
 
-    plot->addChannel(0,tr("histogram"),std::vector<double>(1,0),
+    plot->addChannel(0,tr("histogram"),QVector<double>(1,0),
                      QColor(Qt::red),Channel::steps,1);
 
     halfSecondTimer = new QTimer();
@@ -283,7 +284,7 @@ void CacheHistogramPlugin::userProcess()
     if(scheduleReset)
     {
         cache.clear();
-        cache.resize(conf.nofBins,0);
+        cache.fill(0, conf.nofBins);
         recalculateBinWidth();
         scheduleReset = false;
         plot->resetBoundaries(0);
@@ -297,7 +298,7 @@ void CacheHistogramPlugin::userProcess()
         writeToFile = false;
     }
 
-    if((int)(cache.size()) != conf.nofBins) cache.resize(conf.nofBins,0);
+    if((int)(cache.size()) != conf.nofBins) cache.resize(conf.nofBins);
 
     // Add data to histogram
     foreach(double datum, idata)
@@ -308,16 +309,15 @@ void CacheHistogramPlugin::userProcess()
             int bin = (int)((datum - conf.xmin) / binWidth);
             if(bin > 0 && bin < conf.nofBins)
             {
-                cache.at(bin) += conf.inputWeight;
+                cache [bin] += conf.inputWeight;
             }
         }
     }
 
     if(conf.normalize) dsp.fast_scale(cache,1.0/(dsp.max(cache)[AMP]));
 
-    if(cache.size() != 0) plot->getChannelById(0)->setData(cache);
+    if(!cache.empty()) plot->getChannelById(0)->setData(cache);
 
-    QVector<double> out = QVector<double>::fromStdVector (cache);
-    outputs->at(0)->setData(QVariant::fromValue (out));
-    outputs->at(1)->setData(QVariant::fromValue (out));
+    outputs->at(0)->setData(QVariant::fromValue (cache));
+    outputs->at(1)->setData(QVariant::fromValue (cache));
 }

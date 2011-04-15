@@ -125,7 +125,7 @@ void DspKalmanBaselinePlugin::saveSettings(QSettings* settings)
 void DspKalmanBaselinePlugin::userProcess()
 {
     //std::cout << "DspKalmanBaselinePlugin Processing" << std::endl;
-    std::vector<double> signal = inputs->at(0)->getData().value< QVector<double> > ().toStdVector ();
+    QVector<double> signal = inputs->at(0)->getData().value< QVector<double> > ();
 
     SamDSP dsp;
 
@@ -142,5 +142,5 @@ void DspKalmanBaselinePlugin::userProcess()
     dsp.kalmanBaseline(signal,outData,r,ri,q,x0);
 
 
-    outputs->first()->setData (QVariant::fromValue (QVector<double>::fromStdVector (outData)));
+    outputs->first()->setData (QVariant::fromValue (outData));
 }

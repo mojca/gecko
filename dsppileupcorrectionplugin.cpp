@@ -163,14 +163,14 @@ void DspPileUpCorrectionPlugin::userProcess()
     SamDSP dsp;
 
     // Compact input data
-    vector<vector<double> > amplitudes = dsp.select(icalorimetry,itrigger);
+    std::vector<std::vector<double> > amplitudes = dsp.select(icalorimetry,itrigger);
     dsp.fast_addC(amplitudes[AMP],-baseline);
 
     // Find maximum in pshape
     int tz = dsp.max(ishape)[TIME];
 
     // Create dimension vector
-    vector<int> dim(4,0);
+    std::vector<int> dim(4,0);
     dim[0] = conf.signalsLeft;
     dim[1] = conf.signalsRight;
     dim[2] = conf.samplesLeft;

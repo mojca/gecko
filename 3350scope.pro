@@ -11,13 +11,11 @@ QMAKE_CXXFLAGS_RELEASE += -march=native \
 LIBS += -g \
     -L../sis3150_calls \
     -L../sis3100_calls \
-    -L../../samdsp \
     -l_sis3150 \
     -l_sis3100 \
     -lgsl \
     -lgslcblas \
-    -lusb \
-    -lsamdsp
+    -lusb
 INCLUDEPATH += ../sis3150_calls \
     ../sis3100_calls
 SOURCES += main.cpp \
@@ -157,4 +155,5 @@ HEADERS += sis3350.h \
     systeminfo.h \
     eventbuffer.h \
     outputplugin.h \
-    pluginconnectorplain.h
+    pluginconnectorplain.h \
+    samqvector.h

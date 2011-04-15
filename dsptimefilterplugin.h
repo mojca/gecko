@@ -29,8 +29,8 @@ protected:
     QSpinBox* widthSpinner;
     QSpinBox* spacingSpinner;
 
-    vector<double>* curData;
-    vector<double> outData;
+    std::vector<double>* curData;
+    std::vector<double> outData;
 
 public:
     DspTimeFilterPlugin(int _id, QString _name);
