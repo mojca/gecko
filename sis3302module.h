@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QMap>
+#include <QList>
 #include <QTime>
 #include <cstdio>
 #include <ctime>
@@ -12,13 +13,11 @@
 #include <vector>
 #include <inttypes.h>
 
-#include "basedaqmodule.h"
+#include "basemodule.h"
 #include "confmap.h"
 #include "sis3302ui.h"
 #include "sis3302.h"
-#include "baseplugin.h"
-#include "demuxsis3302plugin.h"
-#include "pluginmanager.h"
+#include "sis3302dmx.h"
 
 using namespace std;
 
@@ -105,7 +104,7 @@ public:
     }
 };
 
-class Sis3302Module : public virtual BaseDAqModule
+class Sis3302Module : public BaseModule
 {
     Q_OBJECT
 
@@ -130,7 +129,7 @@ public:
     Sis3302config conf;
 
     // Factory method
-    static BaseModule *create (int id, const QString &name) {
+    static AbstractModule *create (int id, const QString &name) {
         return new Sis3302Module (id, name);
     }
 
@@ -138,8 +137,7 @@ public:
     virtual void saveSettings(QSettings*);
     virtual void applySettings(QSettings*);
     void setChannels();
-    ThreadBuffer<uint32_t> *getBuffer () { return buffer; }
-    virtual int acquire();
+    virtual int acquire(Event *);
     virtual bool dataReady();
     virtual int configure();
     virtual int reset();
@@ -159,7 +157,7 @@ public:
     int timestamp_clear();
     int waitForSamplingComplete();
     int readAdcChannel(int ch);
-    int writeToBuffer();
+    int writeToBuffer(Event *);
     int acquisitionStart();
     bool isArmedNotBusy();
     bool isNotArmedNotBusy();
@@ -170,8 +168,6 @@ public slots:
     virtual void prepareForNextAcquisition() {}
 
 private:
-    ThreadBuffer<uint32_t> *buffer;
-    virtual void createOutputPlugin();
     unsigned int addr,data;
 
     uint32_t readBuffer[8][SIS3302_MAX_NOF_LWORDS]; // 512 MB total
@@ -179,6 +175,8 @@ private:
 
     EventDirEntry_t eventDir[512];
     TimestampDir_t timestampDir[512];
+    QList<EventSlot*> evslots;
+    Sis3302Demux dmx;
 };
 
 #endif // SIS3302MODULE_H

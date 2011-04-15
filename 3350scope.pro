@@ -83,7 +83,7 @@ SOURCES += main.cpp \
     eventbuffer.cpp \
     sis3302module.cpp \
     sis3302ui.cpp \
-    demuxsis3302plugin.cpp
+    sis3302dmx.cpp
 HEADERS += sis3350.h \
     plot2d.h \
     sis3350ui.h \
@@ -168,7 +168,7 @@ HEADERS += sis3350.h \
     sis3302.h \
     sis3302ui.h \
     hexspinbox.h \
-    demuxsis3302plugin.h
+    sis3302dmx.h
 
 OTHER_FILES +=
 

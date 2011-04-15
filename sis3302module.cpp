@@ -1,10 +1,12 @@
 #include "sis3302module.h"
 #include "modulemanager.h"
+#include "eventbuffer.h"
 
-static ModuleRegistrar registrar ("sis3302", Sis3302Module::create, AbstractModule::TypeDAq);
+static ModuleRegistrar registrar ("sis3302", Sis3302Module::create);
 
 Sis3302Module::Sis3302Module(int _id, QString _name)
-    : BaseDAqModule(_id, _name)
+    : BaseModule(_id, _name)
+    , dmx (evslots)
 {
     setUI (new Sis3302UI(this));
 
@@ -20,31 +22,23 @@ Sis3302Module::~Sis3302Module()
     //delete buffer;
 }
 
-void Sis3302Module::createOutputPlugin()
-{
-    output = new DemuxSis3302Plugin (-1, getName () + " Dmx");
-}
-
 void Sis3302Module::setChannels()
 {
+    EventBuffer *evb = RunManager::ref ().getEventBuffer ();
     // Setup channels
     for (int ch=0; ch<8; ch++)
     {
-        getChannels()->push_back(
-                new ScopeChannel(this,tr("Sis3302 Raw %1").arg(ch),
-                                 ScopeCommon::trace,1000,4));
+        evslots << evb->registerSlot (this, tr("Raw %1").arg(ch), PluginConnector::VectorUint32);
     }
 
-    getChannels ()->push_back(new ScopeChannel(this,"Sis3302 Meta info",
-                                               ScopeCommon::trace,1000,4));
-    getChannels ()->push_back(new ScopeChannel(this,"Sis3302 Poll Trigger"
-                                               ,ScopeCommon::trigger,4,4));
+    evslots << evb->registerSlot (this, tr("Meta"), PluginConnector::VectorUint32);
 }
 
 int Sis3302Module::configure()
 {
     printf("sis3302::configure\n");
     int ret = 0x0;
+    AbstractInterface *iface = getInterface ();
 
     // Set Control Status register
     addr = conf.base_addr + SIS3302_CONTROL_STATUS;
@@ -166,7 +160,7 @@ int Sis3302Module::getModuleId(uint32_t* _modId)
     int ret = 0x0;
     addr = conf.base_addr + SIS3302_MODID;
     data = 0;
-    ret = iface->readA32D32(addr,&data);
+    ret = getInterface()->readA32D32(addr,&data);
     if(ret != 0) { printf("Error %d at VME READ ID\n",ret); (*_modId) = 0;}
     else (*_modId) = data;
     return ret;
@@ -177,7 +171,7 @@ int Sis3302Module::getEventCounter(uint32_t* _evCnt)
     int ret = 0x0;
     addr = conf.base_addr + SIS3302_ACTUAL_EVENT_COUNTER;
     data = 0;
-    ret = iface->readA32D32(addr,&data);
+    ret = getInterface()->readA32D32(addr,&data);
     if(ret != 0) { printf("Error %d at VME READ EVENT COUNTER\n",ret); (*_evCnt) = -1;}
     else (*_evCnt) = data;
     return ret;
@@ -191,7 +185,7 @@ int Sis3302Module::getTimeStampDir()
     {
         addr = conf.base_addr + SIS3302_TIMESTAMP_DIRECTORY + 4*i;
         data = 0;
-        ret = iface->readA32D32(addr,&data);
+        ret = getInterface()->readA32D32(addr,&data);
         if(ret != 0) { printf("Error %d at VME READ EVENT COUNTER\n",ret);}
         else
         {
@@ -215,7 +209,7 @@ int Sis3302Module::getNextSampleAddr(int adc, uint32_t* _addr)
            + (adc/2 * SIS3302_NEXT_ADC_OFFSET)
            + (adc%2)*4;
     data = 0;
-    ret = iface->readA32D32(addr,&data);
+    ret = getInterface ()->readA32D32(addr,&data);
     //printf("sis3302: ch %d, nextsampleaddr: 0x%x from addr 0x%x\n",adc,data,addr);
     if(ret != 0) { printf("Error %d at VME READ SIS3302_ADCx_OFFSET\n",ret); (*_addr) = 0;}
     else (*_addr) = data;
@@ -227,7 +221,7 @@ int Sis3302Module::reset()
     printf("sis3302::reset\n");
     int ret = 0x0;
     addr = conf.base_addr + SIS3302_KEY_RESET; data = 0;
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SIS3302_KEY_RESET",ret);
     return ret;
 }
@@ -236,7 +230,7 @@ int Sis3302Module::arm()
 {
     int ret = 0x0;
     addr = conf.base_addr + SIS3302_KEY_ARM; data = 0;
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SIS3302_KEY_ARM",ret);
     return ret;
 }
@@ -245,7 +239,7 @@ int Sis3302Module::disarm()
 {
     int ret = 0x0;
     addr = conf.base_addr + SIS3302_KEY_DISARM; data = 0;
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SIS3302_KEY_DISARM",ret);
     return ret;
 }
@@ -254,7 +248,7 @@ int Sis3302Module::start_sampling()
 {
     int ret = 0x0;
     addr = conf.base_addr + SIS3302_KEY_START; data = 0;
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SIS3302_KEY_START",ret);
     return ret;
 }
@@ -263,7 +257,7 @@ int Sis3302Module::stop_sampling()
 {
     int ret = 0x0;
     addr = conf.base_addr + SIS3302_KEY_STOP; data = 0;
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SIS3302_KEY_STOP",ret);
     return ret;
 }
@@ -272,7 +266,7 @@ int Sis3302Module::reset_DDR2_logic()
 {
     int ret = 0x0;
     addr = conf.base_addr + SIS3302_KEY_RESET_DDR2_LOGIC; data = 0;
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SIS3302_KEY_RESET_DDR2_LOGIC",ret);
     return ret;
 }
@@ -281,7 +275,7 @@ int Sis3302Module::timestamp_clear()
 {
     int ret = 0x0;
     addr = conf.base_addr + SIS3302_KEY_TIMESTAMP_CLEAR; data = 0;
-    ret = iface->writeA32D32(addr,data);
+    ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SIS3302_KEY_TIMESTAMP_CLEAR",ret);
     return ret;
 }
@@ -292,7 +286,7 @@ bool Sis3302Module::isArmedNotBusy()
     int test = 0;
     addr = conf.base_addr + SIS3302_ACQUISITION_CONTROL;
     data = 0;
-    test = iface->readA32D32(addr,&data);
+    test = getInterface()->readA32D32(addr,&data);
     if(test != 0) { printf("Error %d at VME READ ARM AND BUSY STATE\n",ret);}
     else ret = ((data & 0x30000) == 0x10000);
     return ret;
@@ -304,7 +298,7 @@ bool Sis3302Module::isNotArmedNotBusy()
     int test = 0;
     addr = conf.base_addr + SIS3302_ACQUISITION_CONTROL;
     data = 0;
-    test = iface->readA32D32(addr,&data);
+    test = getInterface()->readA32D32(addr,&data);
     if(test != 0) { printf("Error %d at VME READ ARM AND BUSY STATE\n",ret);}
     else ret = ((data & 0x30000) == 0x00000);
     return ret;
@@ -314,6 +308,7 @@ int Sis3302Module::waitForSamplingComplete()
 {
     bool ret = false;
     int test = 0;
+    AbstractInterface *iface = getInterface ();
     addr = conf.base_addr + SIS3302_ACQUISITION_CONTROL;
     data = 0;
     unsigned int cnt = 0;
@@ -329,11 +324,11 @@ int Sis3302Module::waitForSamplingComplete()
     return ret;
 }
 
-int Sis3302Module::acquire()
+int Sis3302Module::acquire(Event *ev)
 {
     int ret = 0;
     ret = acquisitionStart();
-    if(ret == 0) writeToBuffer();
+    if(ret == 0) writeToBuffer(ev);
     return ret;
 }
 
@@ -403,15 +398,12 @@ int Sis3302Module::acquisitionStart()
     return ret;
 }
 
-int Sis3302Module::writeToBuffer()
+int Sis3302Module::writeToBuffer(Event *ev)
 {
-    DemuxSis3302Plugin* o = dynamic_cast<DemuxSis3302Plugin*>(output);
-
     for(unsigned int i = 0; i < 8; i++)
     {
-        if(!o->getOutputs()->at(i)->hasOtherSide() || conf.ch_enabled[i] == false) continue;
-        o->setData(readBuffer[i],readLength[i]);
-        o->process();
+        if(conf.ch_enabled[i] == false) continue;
+        dmx.process (ev, readBuffer[i], readLength[i]);
     }
     return 0;
 }
@@ -425,6 +417,7 @@ bool Sis3302Module::dataReady()
 int Sis3302Module::readAdcChannel(int ch)
 {
     const int vmeMode = 1;
+    AbstractInterface *iface = getInterface ();
 
     const uint32_t pageLength = 0x400000;
     uint32_t pageLengthMask = pageLength - 1;
@@ -537,6 +530,7 @@ int Sis3302Module::sis3302_write_dac_offset(unsigned int *offset_value_array)
         uint32_t data, addr;
         uint32_t max_timeout, timeout_cnt;
         int ret = 0;
+        AbstractInterface *iface = getInterface ();
 
         for (i=0;i<8;i++) {
 
@@ -611,7 +605,8 @@ static const confmap_t confmap [] = {
     confmap_t ("adc_value_big_endian", &Sis3302config::adc_value_big_endian),
     confmap_t ("enable_page_wrap", &Sis3302config::enable_page_wrap),
     confmap_t ("enable_irq", &Sis3302config::enable_irq),
-    confmap_t ("enable_external_trg", &Sis3302config::enable_external_trg)
+    confmap_t ("enable_external_trg", &Sis3302config::enable_external_trg),
+    confmap_t ("acMode", (uint32_t Sis3302config::*) &Sis3302config::acMode)
 };
 
 void Sis3302Module::applySettings (QSettings *s) {

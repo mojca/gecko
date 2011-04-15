@@ -752,8 +752,6 @@ void ScopeMainWindow::loadChannelList()
     triggerList->clear();
     channelList->clear();
 
-    QSettings *s = settings;
-
     QList<QTreeWidgetItem *> trgItems;
     QList<QTreeWidgetItem *> slItems;
     const QList<AbstractModule*>* mlist = mmgr->list();

@@ -1,7 +1,7 @@
 #include "sis3302ui.h"
+#include <iostream>
 
 Sis3302UI::Sis3302UI(Sis3302Module* _module)
-    : BaseUI(_module)
 {
     module = _module;
     applyingSettings = false;
