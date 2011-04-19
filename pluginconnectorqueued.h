@@ -3,6 +3,7 @@
 
 #include "pluginconnector.h"
 #include <QQueue>
+#include <iostream>
 
 #include <cassert>
 
@@ -90,7 +91,7 @@ public:
 
     void reset()
     {
-        std::cout << getName().toStdString() << "PluginConnector reset " << std::endl;
+        //std::cout << getName().toStdString() << "PluginConnector reset " << std::endl;
         q.clear();
     }
 

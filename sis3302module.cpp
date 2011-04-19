@@ -606,7 +606,12 @@ static const confmap_t confmap [] = {
     confmap_t ("enable_page_wrap", &Sis3302config::enable_page_wrap),
     confmap_t ("enable_irq", &Sis3302config::enable_irq),
     confmap_t ("enable_external_trg", &Sis3302config::enable_external_trg),
-    confmap_t ("acMode", (uint32_t Sis3302config::*) &Sis3302config::acMode)
+    confmap_t ("acMode", (uint32_t Sis3302config::*) &Sis3302config::acMode),
+    confmap_t ("wrapSize", (uint32_t Sis3302config::*) &Sis3302config::wrapSize),
+    confmap_t ("avgMode", (uint32_t Sis3302config::*) &Sis3302config::avgMode),
+    confmap_t ("clockSource", (uint32_t Sis3302config::*) &Sis3302config::clockSource),
+    confmap_t ("irqSource", (uint32_t Sis3302config::*) &Sis3302config::irqSource),
+    confmap_t ("irqMode", (uint32_t Sis3302config::*) &Sis3302config::irqMode),
 };
 
 void Sis3302Module::applySettings (QSettings *s) {
@@ -617,19 +622,6 @@ void Sis3302Module::applySettings (QSettings *s) {
     ConfMap::apply (s, &conf, confmap);
 
     QString key;
-    key = QString ("acMode");
-    if (s->contains (key)) conf.acMode = (Sis3302config::AcMode)s->value (key).toUInt ();
-    key = QString ("wrapSize");
-    if (s->contains (key)) conf.wrapSize = (Sis3302config::WrapSize)s->value (key).toUInt ();
-    key = QString ("avgMode");
-    if (s->contains (key)) conf.avgMode = (Sis3302config::AvgMode)s->value (key).toUInt ();
-    key = QString ("clockSource");
-    if (s->contains (key)) conf.clockSource = (Sis3302config::ClockSource)s->value (key).toUInt ();
-    key = QString ("irqSource");
-    if (s->contains (key)) conf.irqSource =(Sis3302config::IrqSource) s->value (key).toUInt ();
-    key = QString ("irqMode");
-    if (s->contains (key)) conf.irqMode = (Sis3302config::IrqMode)s->value (key).toUInt ();
-
     for (int i = 0; i < 8; ++i) {
         key = QString ("trgMode%1").arg (i);
         if (s->contains (key)) conf.trgMode [i] = (Sis3302config::TrgMode)s->value (key).toUInt ();
@@ -661,19 +653,6 @@ void Sis3302Module::saveSettings (QSettings *s) {
     ConfMap::save (s, &conf, confmap);
 
     QString key;
-    key = QString ("acMode");
-    s->setValue (key, static_cast<uint32_t> (conf.acMode));
-    key = QString ("wrapSize");
-    s->setValue (key, static_cast<uint32_t> (conf.wrapSize));
-    key = QString ("avgMode");
-    s->setValue (key, static_cast<uint32_t> (conf.avgMode));
-    key = QString ("clockSource");
-    s->setValue (key, static_cast<uint32_t> (conf.clockSource));
-    key = QString ("irqSource");
-    s->setValue (key, static_cast<uint32_t> (conf.irqSource));
-    key = QString ("irqMode");
-    s->setValue (key, static_cast<uint32_t> (conf.irqMode));
-
     for (int i = 0; i < 8; ++i) {
         key = QString ("trgMode%1").arg(i);
         s->setValue (key, static_cast<uint32_t> (conf.trgMode[i]));
