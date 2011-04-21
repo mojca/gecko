@@ -36,8 +36,8 @@ public:
 
     virtual ~BaseModule() {
         EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
-        QSet<EventSlot*> s (*evbuf->getEventSlots(this));
-        for (QSet<EventSlot*>::const_iterator i = s.begin (); i != s.end (); ++i)
+        QList<EventSlot*> s (*evbuf->getEventSlots(this));
+        for (QList<EventSlot*>::const_iterator i = s.begin (); i != s.end (); ++i)
             evbuf->destroyEventSlot (*i);
 
         if (output)
@@ -64,12 +64,12 @@ public:
 
     /*! Returns a list of all slots belonging to this module. */
     QList<const EventSlot*> getSlots () const {
-        const QSet<EventSlot*>* s = RunManager::ref ().getEventBuffer ()->getEventSlots(this);
+        const QList<EventSlot*>* s = RunManager::ref ().getEventBuffer ()->getEventSlots(this);
         QList<const EventSlot*> out;
 #if QT_VERSION >= 0x040700
         out.reserve (s->size ());
 #endif
-        for (QSet<EventSlot*>::const_iterator i = s->begin (); i != s->end (); ++i)
+        for (QList<EventSlot*>::const_iterator i = s->begin (); i != s->end (); ++i)
             out.append (*i);
 
         return out;

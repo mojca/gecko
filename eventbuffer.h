@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <QMap>
+#include <QList>
 #include <QSet>
 #include <QVariant>
 
@@ -60,13 +61,13 @@ public:
     EventSlot *getEventSlot (const AbstractModule *owner, QString name) const;
 
     /*! Returns all slots registered by the given module. */
-    const QSet<EventSlot *>* getEventSlots (const AbstractModule *owner) const;
+    const QList<EventSlot *>* getEventSlots (const AbstractModule *owner) const;
 
     /*! Deletes the given slot. */
     void destroyEventSlot (EventSlot* slot);
 
 private:
-    typedef QSet<EventSlot*> SlotSet;
+    typedef QList<EventSlot*> SlotSet;
     typedef QMap< const AbstractModule*, SlotSet* > SlotMap;
     SlotMap Slots_;
 

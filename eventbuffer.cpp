@@ -49,7 +49,7 @@ EventSlot *EventBuffer::registerSlot (const AbstractModule *owner, QString name,
     EventSlot *slot = new EventSlot (owner, name, type);
     if (Slots_.find (owner) == Slots_.end ()) // owning module not yet in registry
         Slots_.insert (owner, new SlotSet ());
-    Slots_.value (owner)->insert (slot);
+    Slots_.value (owner)->push_back (slot);
     return slot;
 }
 
@@ -65,7 +65,7 @@ EventSlot *EventBuffer::getEventSlot (const AbstractModule *owner, QString name)
     return NULL;
 }
 
-const QSet<EventSlot*>* EventBuffer::getEventSlots (const AbstractModule *owner) const {
+const EventBuffer::SlotSet* EventBuffer::getEventSlots (const AbstractModule *owner) const {
     SlotMap::const_iterator i = Slots_.find (owner);
     return i != Slots_.end () ? i.value () : NULL;
 }
@@ -74,7 +74,7 @@ void EventBuffer::destroyEventSlot (EventSlot *slot) {
     SlotMap::iterator i = Slots_.find (slot->getOwner ());
     if (i != Slots_.end ()) {
         SlotSet* s = i.value ();
-        s->remove (slot);
+        s->removeOne (slot);
         if (s->empty ()) { // remove the module entry from the registry
             Slots_.erase (i);
             delete s;
