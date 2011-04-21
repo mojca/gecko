@@ -12,8 +12,14 @@ class DspCfdPlugin : public BasePlugin
     Q_OBJECT
 public:
     explicit DspCfdPlugin(int _id, QString _name);
+    static AbstractPlugin *create (int _id, const QString &_name, const Attributes &) {
+        return new DspCfdPlugin (_id, _name);
+    }
 
     void createSettings (QGridLayout *);
+
+    void saveSettings (QSettings *);
+    void applySettings (QSettings *);
 
 protected slots:
     void userProcess();
@@ -23,6 +29,7 @@ public slots:
     void delayChanged (int);
     void thresholdChanged (int);
     void holdoffChanged (int);
+    void baselineChanged (int);
 
 private:
     DspCfdConfig *conf;
@@ -30,6 +37,7 @@ private:
     QSpinBox *delaySpinner_;
     QSpinBox *thresholdSpinner_;
     QSpinBox *holdoffSpinner_;
+    QSpinBox *baselineSpinner_;
 
 };
 
