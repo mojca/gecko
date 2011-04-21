@@ -35,11 +35,12 @@ namespace ConfMap {
 template <typename T>
 struct confmap_t {
     QString name; /*!< name of the configuration option. */
-    enum {uint8, uint16, uint32, boolean, integer} type; /*!< type of the configuration option. */
+    enum {uint8, uint16, uint32, boolean, integer, dble} type; /*!< type of the configuration option. */
     union {
         uint8_t T::* uint8_val;
         uint16_t T::* uint16_val;
         uint32_t T::* uint32_val;
+        double T::* double_val;
         bool T::* boolean_val;
         int T::* integer_val;
     };
@@ -59,6 +60,9 @@ struct confmap_t {
     /*! Creates a configuration mapping for an int member. */
     confmap_t (const QString &n, int T::* pm)
         : name (n), type (integer), integer_val (pm) {}
+    /*! Creates a configuration mapping for a double member. */
+    confmap_t (const QString &n, double T::* pm)
+        : name (n), type (dble), double_val (pm) {}
 };
 
 /*! Loads settings into the configuration structure.
@@ -86,6 +90,9 @@ void apply (QSettings *settings, T *conf_, const confmap_t<T> (&confmap) [confma
                 break;
             case confmap_t<T>::integer:
                 conf_->*(confmap [i].integer_val) = settings->value (confmap [i].name).toInt ();
+                break;
+            case confmap_t<T>::dble:
+                conf_->*(confmap [i].double_val) = settings->value (confmap [i].name).toDouble ();
                 break;
             }
         }
@@ -115,6 +122,9 @@ void save (QSettings *settings, T* conf_, const confmap_t<T> (&confmap) [confmap
             break;
         case confmap_t<T>::integer:
             settings->setValue (confmap [i].name, conf_->*(confmap [i].integer_val));
+            break;
+        case confmap_t<T>::dble:
+            settings->setValue (confmap [i].name, conf_->*(confmap [i].double_val));
             break;
         }
     }
