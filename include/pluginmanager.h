@@ -7,9 +7,7 @@
 
 #include "abstractmanager.h"
 #include "baseplugin.h"
-#include "dummyplugin.h"
 #include "pluginconnector.h"
-#include "threadbuffer.h"
 #include "modulemanager.h"
 
 class AbstractPlugin;

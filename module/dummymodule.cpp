@@ -1,6 +1,9 @@
 #include "dummymodule.h"
 #include "modulemanager.h"
 #include "scopechannel.h"
+#include "threadbuffer.h"
+
+#include <QThread>
 
 static ModuleRegistrar registrar ("dummy", DummyModule::create);
 
