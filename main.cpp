@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     a.installTranslator (&qtTr);
 
     QTranslator scopeTr;
-    scopeTr.load ("scope_" + QLocale::system ().name ());
+    scopeTr.load ("gecko_" + QLocale::system ().name ());
     a.installTranslator (&scopeTr);
 
     // Open windows
