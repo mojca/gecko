@@ -2,7 +2,50 @@
 #include "modulemanager.h"
 #include "eventbuffer.h"
 
-static ModuleRegistrar registrar ("sis3302", Sis3302Module::create);
+/******************************** Struck SIS3302 8 ch FADC *****************************
+ *
+ *
+ * Some notes about configuration:
+ *
+ * - Two modes are generally supported (and make sense):
+ *   - Short traces mode (multi-event)
+ *   - Long traces mode (single-event)
+ *
+ * - Short traces mode can be achieved with the following settings
+ *   - Multi Event: on
+ *   - Autostart Acquisition: on
+ *   - Internal trigger as stop: on
+ *   - Correct trigger settings! (Check the green led next to the channel input)
+ *   - Stop delay: >= 2
+ *   - Number of events: == Number of pages, but <= 512
+ *   - Page wrap mode: on
+ *   - Page size: 32M/number of events
+ *   -> Start with Autostart
+ *   -> Stop with internal trigger
+ *   -> Traces are stored in each page of memory
+ *   -> Trace length == page size, but it is possible to read out less
+ *
+ * - Long traces mode settings:
+ *   - Single Event Mode: on
+ *   - triggers off, do not stop on trigger
+ *   - Event Length Stop Mode: on
+ *   - all delays 0
+ *   - event length [4..2^25]
+ *   - Page Wrap: off
+ *   -> Start acq with KEY_START
+ *   -> Stop acq with Event length stop
+ *   -> Start each acq at addr 0
+ *   -> All of the memory is used in one chunk
+ *
+ * Note on the DAC settings:
+ *
+ * - The power on default setting of 0 is way too low
+ * - To have a 0 V signal about in the middle of the acceptance range set DAC to 37000
+ *
+ *
+ ***************************************************************************************/
+
+static ModuleRegistrar registrar ("sis3302_standard", Sis3302Module::create);
 
 Sis3302Module::Sis3302Module(int _id, QString _name)
     : BaseModule(_id, _name)
@@ -12,7 +55,7 @@ Sis3302Module::Sis3302Module(int _id, QString _name)
 
     setChannels();
     createOutputPlugin();
-
+    getUI()->applySettings();
 
     std::cout << "Instantiated Sis3302 Module" << std::endl;
 }
@@ -35,10 +78,12 @@ void Sis3302Module::setChannels()
 }
 
 int Sis3302Module::configure()
-{
+{   
     printf("sis3302::configure\n");
     int ret = 0x0;
     AbstractInterface *iface = getInterface ();
+
+    ret = checkConfig();
 
     // Set Control Status register
     addr = conf.base_addr + SIS3302_CONTROL_STATUS;
@@ -142,7 +187,7 @@ int Sis3302Module::configure()
         addr += (i/2) * SIS3302_NEXT_ADC_OFFSET;
 
         data = 0;
-        data |= (conf.trigger_threshold[i] & 0xffff);
+        data |= (conf.trigger_threshold[i] & 0x1ffff);
         if(conf.trgMode[i] == conf.ledFalling)      data |= (1<<24) | (1<<26);
         else if(conf.trgMode[i] == conf.ledRising)  data |= (1<<25) | (1<<26);
         else if(conf.trgMode[i] == conf.firFalling) data |= (1<<24);
@@ -153,6 +198,81 @@ int Sis3302Module::configure()
     }
 
     return ret;
+}
+
+//! Check, if configuration is sane
+int Sis3302Module::checkConfig()
+{
+    // Check, if DACs are greater than zero
+    for(int i=0; i<8; i++)
+    {
+        if(conf.dac_offset[i] == 0) printf("sis3302: Config warning: DAC %d is 0.\n",i);
+    }
+
+    // General checks
+    if(conf.nof_events > 512)
+        printf("sis3302: Config warning: Number of events is greater than 512. More events can not be stored.\n");
+    if(conf.clockSource != Sis3302config::creal100)
+        printf("sis3302: Config warning: Normally the 2nd internal clock should be used.\n");
+    if(conf.internal_trg_as_stop == false &&
+       conf.enable_external_trg == false &&
+       conf.event_length_as_stop == false)
+        printf("sis3302: Config warning: No stop condition set. Sampling will not stop automatically after KEY_START.\n");
+
+    // Check if single event mode is set up in a sane way
+    if(conf.acMode == Sis3302config::singleEvent)
+    {
+        if(conf.internal_trg_as_stop == true)
+            printf("sis3302: Config warning: Internal trigger as stop is used in single event mode.\n");
+        if(conf.start_delay > 0 || conf.stop_delay > 0)
+            printf("sis3302: Config warning: Delays are greater than 0 in single event mode.\n");
+        if(conf.nof_events > 1)
+            printf("sis3302: Config warning: Number of events > 1 in single event mode is inefficient.\n");
+        if(conf.event_length_as_stop == false)
+            printf("sis3302: Config warning: Event Length as Stop is not set in single event mode.\n");
+        if(conf.enable_page_wrap == true)
+            printf("sis3302: Config warning: Page Wrap is enabled in single event mode.\n");
+    }
+
+    // Check if multi event mode is set up in a sane way
+    if(conf.acMode == Sis3302config::multiEvent)
+    {
+        if(conf.autostart_acq == false)
+            printf("sis3302: Config warning: Autostart acquisition should be used in multi event mode.\n");
+        if(conf.internal_trg_as_stop == false)
+            printf("sis3302: Config warning: Internal trigger as stop should be used in multi event mode.\n");
+        if(conf.stop_delay < 2)
+            printf("sis3302: Config warning: Stop delay should be at least 2 in multi event mode to prevent data loss.\n");
+        if(conf.nof_events > 0x2000000 / getWrapSizeFromConfig(conf.wrapSize))
+            printf("sis3302: Config warning: Number of events is greater than the number of memory pages. Data loss will occur.\n");
+        if(conf.enable_page_wrap == false)
+            printf("sis3302: Config warning: Page wrap should be enabled in multi event mode.\n");
+    }
+
+    return 0;
+}
+
+// Return the number of samples per page (wrap mode)
+uint32_t Sis3302Module::getWrapSizeFromConfig(Sis3302config::WrapSize ws)
+{
+    switch(ws)
+    {
+    case Sis3302config::ws16M: return 16*1024*1024; break;
+    case Sis3302config::ws4M: return 4*1024*1024; break;
+    case Sis3302config::ws1M: return 1*1024*1024; break;
+    case Sis3302config::ws256k: return 256*1024; break;
+    case Sis3302config::ws64k: return 64*1024; break;
+    case Sis3302config::ws16k: return 16*1024; break;
+    case Sis3302config::ws4k: return 4*1024; break;
+    case Sis3302config::ws1k: return 1*1024; break;
+    case Sis3302config::ws512: return 512; break;
+    case Sis3302config::ws256: return 256; break;
+    case Sis3302config::ws128: return 128; break;
+    case Sis3302config::ws64: return 64; break;
+    default: return 1;
+    }
+
+    return 0;
 }
 
 int Sis3302Module::getModuleId(uint32_t* _modId)
@@ -180,23 +300,87 @@ int Sis3302Module::getEventCounter(uint32_t* _evCnt)
 int Sis3302Module::getTimeStampDir()
 {
     int ret = 0x0;
+    unsigned int vmeMode = 0;
     uint32_t* ptr = timestampDir[0].data;
-    for(int i=0; i<512*2; i++)
+    uint32_t reqNofLwords = 1024;
+    uint32_t gotNofLwords;
+    AbstractInterface *iface = getInterface ();
+
+    addr = conf.base_addr + SIS3302_TIMESTAMP_DIRECTORY;
+    data = 0;
+
+    if(vmeMode == 0)
     {
-        addr = conf.base_addr + SIS3302_TIMESTAMP_DIRECTORY + 4*i;
-        data = 0;
-        ret = getInterface()->readA32D32(addr,&data);
-        if(ret != 0) { printf("Error %d at VME READ EVENT COUNTER\n",ret);}
-        else
+        for(unsigned int i=0; i<reqNofLwords; i++)
         {
-            (*ptr) = data;
-            ptr++;
+            ret = iface->readA32D32(addr,&data);
+            if(ret != 0) { printf("Error %d at VME READ SIS3302_TIMESTAMP_DIRECTORY\n",ret);}
+            else
+            {
+                (*ptr) = data;
+                ptr++;
+            }
+            addr += 4;
         }
     }
-    for(int i=0; i<512; i++)
+    else
+    {
+        ret = iface->readA32BLT32(addr,ptr,reqNofLwords,&gotNofLwords);
+        if(reqNofLwords != gotNofLwords) { printf("Error %d at VME DMA READ SIS3302_TIMESTAMP_DIRECTORY\n",ret);}
+    }
+
+    for(unsigned int i=0; i<reqNofLwords/2; i++)
     {
         if(timestampDir[i].low != 0)
             printf("TimestampDir %d: high: 0x%x, low: 0x%x\n",i,timestampDir[i].high,timestampDir[i].low);
+    }
+    return ret;
+}
+
+int Sis3302Module::getEventDir(int ch)
+{
+    int ret = 0x0;
+    int vmeMode = 0;
+    uint32_t* ptr = &(eventDir[ch][0].data);
+    uint32_t reqNofLwords = 512;
+    uint32_t gotNofLwords;
+    AbstractInterface *iface = getInterface ();
+
+    uint32_t chOff = SIS3302_EVENT_DIRECTORY_ADC1
+                     + SIS3302_NEXT_ADC_OFFSET * (ch/2)
+                     + 0x8000 * (ch%2);
+
+    addr = conf.base_addr + chOff;
+    data = 0;
+
+    if(vmeMode == 0)
+    {
+        for(unsigned int i=0; i<reqNofLwords; i++)
+        {
+            ret = iface->readA32D32(addr,&data);
+            if(ret != 0) { printf("Error %d at VME READ SIS3302_EVENT_DIRECTORY_ADC\n",ret);}
+            else
+            {
+                (*ptr) = data;
+                ptr++;
+            }
+            addr += 4;
+        }
+    }
+    else
+    {
+        ret = iface->readA32BLT32(addr,ptr,reqNofLwords,&gotNofLwords);
+        if(reqNofLwords != gotNofLwords) { printf("Error %d at VME DMA READ SIS3302_EVENT_DIRECTORY_ADC\n",ret);}
+    }
+
+    for(unsigned int i=0; i<reqNofLwords; i++)
+    {
+        if(eventDir[ch][i].addr > 0)
+        {
+            uint32_t off = (eventDir[ch][i].addr & 0x1fffffc) - i*getWrapSizeFromConfig(conf.wrapSize);
+            printf("Event Dir ch %d event %d: Stop pointer 0x%x, wrap bit: 0x%x (0x%08x)\n",ch,i,eventDir[ch][i].addr,eventDir[ch][i].wrap,eventDir[ch][i].data);
+            printf("Derived offset for single trace wrt page border: %d (bytes)\n",off);
+        }
     }
     return ret;
 }
@@ -306,6 +490,8 @@ bool Sis3302Module::isNotArmedNotBusy()
 
 int Sis3302Module::waitForSamplingComplete()
 {
+    //printf("sis3302: waitForSamplingComplete \n");
+
     bool ret = false;
     int test = 0;
     AbstractInterface *iface = getInterface ();
@@ -327,18 +513,27 @@ int Sis3302Module::waitForSamplingComplete()
 int Sis3302Module::acquire(Event *ev)
 {
     int ret = 0;
-    ret = acquisitionStart();
+
+    printf("sis3302: Acquiring event 0x%08x\n",&ev);
+
+    if(conf.acMode == Sis3302config::singleEvent ||
+       conf.enable_page_wrap == false) {
+        ret = acquisitionStartSingle(); }
+    if(conf.acMode == Sis3302config::multiEvent &&
+       conf.enable_page_wrap == true) {
+        ret = acquisitionStartMulti(); }
     if(ret == 0) writeToBuffer(ev);
+
     return ret;
 }
 
-int Sis3302Module::acquisitionStart()
+int Sis3302Module::acquisitionStartSingle()
 {
     int ret = 0;
     uint32_t evCnt = 0;
     uint32_t curEvent = 0;
     uint32_t nextSampleAddrExp = 0; // Expected next sample address after sampling
-    uint32_t startAddr = 0;         // Sampling start address
+    uint32_t startAddr = conf.event_sample_start_addr; // Sampling start address
 
     for(int i=0; i<8; i++)
     {
@@ -347,10 +542,11 @@ int Sis3302Module::acquisitionStart()
 
     ret = this->arm();
 
-    if(!this->isArmedNotBusy()) printf("sis3302 is not armed or busy!\n");
-
-    ret = this->getEventCounter(&evCnt);
-    if (evCnt != 0) printf("sis3302 Event counter is not 0 after arm!\n");
+    if(conf.autostart_acq == false) {
+        if(!this->isArmedNotBusy()) printf("sis3302 is not armed or busy!\n");
+        ret = this->getEventCounter(&evCnt);
+        if (evCnt != 0) printf("sis3302 Event counter is not 0 after arm!\n");
+    }
 
     for(curEvent = 0; curEvent < conf.nof_events; curEvent++)
     {
@@ -365,6 +561,8 @@ int Sis3302Module::acquisitionStart()
         else if(evCnt < conf.nof_events && isNotArmedNotBusy()) printf("sis3302 not armed before last event.\n");
     }
 
+
+    // Check if the next sample address matches the expected value
     nextSampleAddrExp = (((startAddr &  0xfffffffc) + (conf.event_length & 0xfffffffc) ) & 0x1ffffff)  ;
     nextSampleAddrExp =  nextSampleAddrExp * conf.nof_events ;
 
@@ -379,11 +577,12 @@ int Sis3302Module::acquisitionStart()
         }
     }
 
+    // Read the timestamp dir (only one entry)
     getTimeStampDir();
 
     for(int i=0; i<8; i++)
     {
-        readAdcChannel(i);
+        readAdcChannel(i, (conf.event_length/2)*evCnt);
         /*if(conf.ch_enabled[i])
         {
             for(uint32_t s = 0; s < readLength[i]; s++)
@@ -398,11 +597,65 @@ int Sis3302Module::acquisitionStart()
     return ret;
 }
 
+int Sis3302Module::acquisitionStartMulti()
+{
+    int ret = 0;
+    uint32_t evCnt = 0;
+    uint32_t nofReqWords = 0;
+
+    for(int i=0; i<8; i++)
+    {
+        readLength[i] = 0;
+    }
+
+    // Acquire
+
+    //printf("sis3302: acquisitionStartMulti\n");
+
+    ret = this->arm(); // After arm, sampling should start automatically
+
+    //printf("sis3302: arm \n");
+
+    if(conf.autostart_acq == false) ret = this->start_sampling(); // If not, force start
+
+    //printf("sis3302: start_sampling \n");
+
+    ret = waitForSamplingComplete(); // Wait and poll
+
+    //printf("sis3302: getEventCounter \n");
+
+    ret = this->getEventCounter(&evCnt);
+    if(evCnt != conf.nof_events) printf("sis3302 event counter mismatch (expected: %u, got: %u).\n",conf.nof_events,evCnt);
+    nofReqWords = evCnt * (getWrapSizeFromConfig(conf.wrapSize) / 2);
+    printf("sis3302 nofReqWords = %d\n",nofReqWords);
+
+    // Read the timestamp dir
+    getTimeStampDir();
+
+    //printf("sis3302: getTimeStampDir \n");
+
+    // Read the event dirs
+    for(int ch=0; ch<8; ch++)
+    {
+        if(conf.ch_enabled[ch] == true)
+            getEventDir(ch);
+    }
+
+    // Read data from the ADC buffers
+    for(int ch=0; ch<8; ch++)
+    {
+        readAdcChannel(ch, nofReqWords);
+    }
+
+    return ret;
+}
+
 int Sis3302Module::writeToBuffer(Event *ev)
 {
     for(unsigned int i = 0; i < 8; i++)
     {
         if(conf.ch_enabled[i] == false) continue;
+        if(conf.enable_page_wrap == true) dmx.setMetaData(conf.nof_events,eventDir[i],timestampDir);
         dmx.process (ev, readBuffer[i], readLength[i]);
     }
     return 0;
@@ -414,19 +667,23 @@ bool Sis3302Module::dataReady()
     return dready;
 }
 
-int Sis3302Module::readAdcChannel(int ch)
+int Sis3302Module::readAdcChannel(int ch, uint32_t _reqNofWords)
 {
+    printf("sis3302 Starting ADC ch %d read of %d lwords\n",ch,_reqNofWords);
+
     const int vmeMode = 1;
     AbstractInterface *iface = getInterface ();
 
-    const uint32_t pageLength = 0x400000;
+    const uint32_t pageLength = 0x400000; // 4 MSample == 8 MByte
     uint32_t pageLengthMask = pageLength - 1;
 
-    uint32_t nextEventSampleStartAddr = (conf.event_sample_start_addr & 0x01fffffc)  ; // max 32 MSample
-    uint32_t restEventSampleLength = (conf.event_length & 0x03fffffc); // max 32 MSample
+    uint32_t nextEventSampleStartAddr = (conf.event_sample_start_addr & 0x01fffffc)  ; // max 32 MSample == 64 MByte
+    uint32_t restEventSampleLength = ((_reqNofWords*2) & 0x01fffffc); // max 32 MSample == 64 MByte
     if (restEventSampleLength  >= 0x2000000) {restEventSampleLength =  0x2000000 ;}
 
     int ret = 0 ;
+
+    readLength[ch] = 0;
 
     do {
         uint32_t subEventSampleAddr = 0;
@@ -434,14 +691,14 @@ int Sis3302Module::readAdcChannel(int ch)
         uint32_t subEventSampleLength = 0;
         uint32_t subPageAddrOffset = 0;
 
-        uint32_t dmaRequestNofLwords = 0;
-        uint32_t dmaAdcAddrOffsetBytes = 0;
-        uint32_t reqNofLwords = 0;
-        uint32_t gotNofLwords = 0;
+        uint32_t dmaRequestNofLwords = 0;   // LWord aligned
+        uint32_t dmaAdcAddrOffsetBytes = 0; // Byte aligned
+        uint32_t reqNofLwords = 0;  // LWord aligned
+        uint32_t gotNofLwords = 0;  // LWord aligned
 
-        uintptr_t readBufferPtr = 0;
+        uintptr_t readBufferPtr = 0;    // Byte aligned
 
-        uint32_t startPos = 0x0;
+        uint32_t startPos = 0x0;    // Byte aligned
 
         subEventSampleAddr      =  (nextEventSampleStartAddr & pageLengthMask) ;
         subMaxPageSampleLength  =  pageLength - subEventSampleAddr ;
@@ -473,45 +730,46 @@ int Sis3302Module::readAdcChannel(int ch)
 
         reqNofLwords = dmaRequestNofLwords;
 
-        //printf("sis3302: Starting read from adc %d from addr: 0x%x\n",ch,addr);
+        printf("sis3302: Starting read from adc %d from addr: 0x%x\n",ch,addr);
 
-        readBufferPtr = (uintptr_t) &(readBuffer[ch][0]);
+        readBufferPtr = (uintptr_t) &(readBuffer[ch][startPos]);
+
         if (vmeMode == 0) { // Single Cycles
             for (uint32_t i=0; i<reqNofLwords; i++) {
-                uint32_t* ptr = (uint32_t*)(readBufferPtr+startPos+4*i);
+                uint32_t* ptr = (uint32_t*)(readBufferPtr+4*i);
                 ret = iface->readA32D32(addr,ptr);
                 if (ret != 0) printf("sis3302 return_code = 0x%08x at addr = 0x%08x\n",ret,addr);
                 //printf("sis3302: read from addr 0x%x value: 0x%x to buffer 0x%x\n",addr,(*ptr),ptr);
                 addr = addr + 4 ;
             }
-            startPos = startPos + reqNofLwords;
-            readLength[ch] = reqNofLwords;
+            startPos += reqNofLwords*4;
+            readLength[ch] += reqNofLwords;
         }
         else { // DMA
             ret = iface->readA32MBLT64(addr,(uint32_t*)(readBufferPtr),reqNofLwords,&gotNofLwords);
-            //ret = iface->readA32MBLT64(addr,&(readBuffer[ch][0]),reqNofLwords,&gotNofLwords);
-            readLength[ch] = gotNofLwords;
             if(ret != 0) {
                 printf("sis3302 return_code = 0x%08x at addr = 0x%08x\n", ret, addr );
-                printf("reqNofLwords = 0x%08x  gotNofLwords = 0x%08x\n", reqNofLwords, gotNofLwords );
+                printf("sis3302 reqNofLwords = 0x%08x  gotNofLwords = 0x%08x\n", reqNofLwords, gotNofLwords );
                 return -1;
             }
             if(reqNofLwords != gotNofLwords) {
-                printf("Length Error sis1100w_Vme_Dma_Read:   reqNofLwords = 0x%08x  gotNofLwords = 0x%08x\n", reqNofLwords, gotNofLwords );
+                printf("sis3302 Length Error sis1100w_Vme_Dma_Read:   reqNofLwords = 0x%08x  gotNofLwords = 0x%08x\n", reqNofLwords, gotNofLwords );
                 return -1;
             }
-            startPos = startPos + gotNofLwords ;
+            startPos += gotNofLwords*4;
+            readLength[ch] += gotNofLwords;
         }
 
-        /*
-        printf("\nDump data ch %d\n",ch);
+        printf("\nsis3302 After read Ch %d: StartPos: %d byte, ReadLength: %d lwords\n",ch,startPos,readLength[ch]);
+
+        /*printf("\nsis3302 Dump data ch %d\n",ch);
         for(uint32_t i=0; i<gotNofLwords; i++)
         {
             printf(" %d:0x%x  ",i,readBuffer[ch][i]);
         }*/
 
         nextEventSampleStartAddr =  nextEventSampleStartAddr + subEventSampleLength     ;
-        restEventSampleLength     =  restEventSampleLength - subEventSampleLength     ;
+        restEventSampleLength    =  restEventSampleLength - subEventSampleLength     ;
 
     } while ((ret == 0) && (restEventSampleLength > 0)) ;
     return ret;
@@ -587,6 +845,9 @@ int Sis3302Module::sis3302_write_dac_offset(unsigned int *offset_value_array)
 
         return ret;
 }
+
+
+
 
 // Configuration handling
 

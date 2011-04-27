@@ -86,7 +86,6 @@ SOURCES += core/baseplugin.cpp \
     plugin/pack/eventbuilderplugin.cpp \
     plugin/pack/packsis3350plugin.cpp \
     plugin/plot/plot2dplugin.cpp
-
 HEADERS += core/addeditdlgs.h \
     core/geckoremote.h \
     core/pluginthread.h \
@@ -173,7 +172,5 @@ HEADERS += core/addeditdlgs.h \
     plugin/pack/eventbuilderplugin.h \
     plugin/pack/packsis3350plugin.h \
     plugin/plot/plot2dplugin.h
-
-
 OTHER_FILES +=
 

@@ -5,39 +5,72 @@
 
 
 Sis3302Demux::Sis3302Demux(const QList<EventSlot *> &evsl)
-    : evslots (evsl)
+    : evslots (evsl), pageWrap(false)
 {
+}
+
+void Sis3302Demux::setMetaData(uint32_t _nofTraces, EventDirEntry_t* _evDir, TimestampDir_t *_tsDir)
+{
+    nofTraces = _nofTraces;
+    evDir = _evDir;
+    tsDir = _tsDir;
+    pageWrap = true;
 }
 
 void Sis3302Demux::process (Event *ev, uint32_t *_data, uint32_t _len)
 {
     //printf("DemuxSis3302Plugin processing...\n");
-    data = _data;
+    data = (DataStruct_t*)_data;
     len = _len;
 
     // Recover channel information
     uint8_t curCh = (len >> 29) & 0x7;
     // Revover length
-    uint32_t length = (len & 0x1ffffff);
+    uint32_t length = (len & 0x1ffffff); // lWords
 
-    //printf("Current channel: %d with %d data points.\n",curCh,nofSamples);
+    printf("Current channel: %d with %d data points.\n",curCh,length*2);
 
-    // Publish event data
-    QVector<uint32_t> outData;
-
-    for(uint32_t i = 0; i < length; i++)
+    // In case of page wrap mode, untangle data
+    if(pageWrap == true)
     {
-        outData.push_back (data[i] & 0xffff);
-        outData.push_back ((data[i] & 0xffffffff) >> 16);
+        uint32_t traceLength = length/nofTraces; // lwords
+        for(unsigned int tr = 0; tr < nofTraces; tr++)
+        {
+            DataStruct_t tmp[traceLength];
+            uint32_t off = evDir[tr].addr/2 - tr*traceLength; // Offset wrt to page border in Lwords
+
+            // Fill temporary vector
+            for(unsigned int s = off; s < traceLength; s++)
+            {
+                tmp[s-off] = data[tr*traceLength+s];
+            }
+            for(unsigned int s = 0; s < off; s++)
+            {
+                tmp[traceLength-off+s] = data[tr*traceLength+s];
+            }
+
+            // Fill rearranged data vector
+            for(unsigned int s = 0; s < traceLength; s++)
+            {
+                data[tr*traceLength+s] = tmp[s];
+            }
+        }
     }
 
-    //outData->assign(length,(*data));
+    // Publish event data
+    QVector<uint32_t> outData(length*2,0);
+    int cnt = 0;
+    for(uint32_t i = 0; i < length; i++)
+    {
+        outData[cnt++] = data[i].low;
+        outData[cnt++] = data[i].high;
+    }
     ev->put (evslots.at(curCh), QVariant::fromValue (outData));
 
-    /*printf("Data dump:\n");
-    for(uint32_t i=0; i < nofSamples; i++)
+    /*printf("Data dump from DMX:\n");
+    for(uint32_t i=0; i < length*2; i++)
     {
-        printf("<%d> %u  ",i,(*outData)[i]);
+        printf("<%d> %u  ",i,outData[i]);
     }
     printf("\n");*/
 }
