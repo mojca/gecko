@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <QCheckBox>
 #include "baseplugin.h"
-#include "../../samdsp/samdsp.h"
+#include <samdsp.h>
 
 class BasePlugin;
 class QSpinBox;

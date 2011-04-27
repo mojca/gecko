@@ -97,8 +97,8 @@ public:
             trigger_pulse_length[i] = 10;
             trigger_gap_length[i]   = 8;
             trigger_peak_length[i]  = 4;
-            trigger_threshold[i]    = 50;
-            dac_offset[i]           = 0;
+            trigger_threshold[i]    = 65000; // 65536 is the "zero" threshold (FIXME: this should be done better)
+            dac_offset[i]           = 37000; // About the middle of the input range
             ch_enabled[i]           = true;
         }
     }

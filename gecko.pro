@@ -18,7 +18,7 @@ LIBS += -g \
     -lusb
 INCLUDEPATH += include \
     lib/sis3150_calls \
-    lib/sis3100_calls \
+    lib/sis3100_calls
 SOURCES += core/baseplugin.cpp \
     core/eventbuffer.cpp \
     core/geckoremote.cpp \
@@ -86,7 +86,6 @@ SOURCES += core/baseplugin.cpp \
     plugin/pack/eventbuilderplugin.cpp \
     plugin/pack/packsis3350plugin.cpp \
     plugin/plot/plot2dplugin.cpp
-
 HEADERS += core/addeditdlgs.h \
     core/geckoremote.h \
     core/pluginthread.h \
@@ -173,7 +172,5 @@ HEADERS += core/addeditdlgs.h \
     plugin/pack/eventbuilderplugin.h \
     plugin/pack/packsis3350plugin.h \
     plugin/plot/plot2dplugin.h
-
-
 OTHER_FILES +=
 

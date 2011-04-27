@@ -55,7 +55,7 @@ Sis3302Module::Sis3302Module(int _id, QString _name)
 
     setChannels();
     createOutputPlugin();
-
+    getUI()->applySettings();
 
     std::cout << "Instantiated Sis3302 Module" << std::endl;
 }
