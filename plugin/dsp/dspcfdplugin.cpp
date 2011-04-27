@@ -1,11 +1,7 @@
 #include "dspcfdplugin.h"
 #include "confmap.h"
 #include "pluginconnectorqueued.h"
-<<<<<<< HEAD
 #include <samdsp.h>
-=======
-#include "samdsp.h"
->>>>>>> dffea3314a983c09eb0fde023b556b45220a675f
 #include "samqvector.h"
 #include "pluginmanager.h"
 #include "confmap.h"
