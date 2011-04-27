@@ -9,7 +9,7 @@
 #include <QLineEdit>
 #include <QTimer>
 #include "baseplugin.h"
-#include "../../samdsp/samdsp.h"
+#include "samdsp.h"
 
 class BasePlugin;
 class QSpinBox;
