@@ -9,7 +9,7 @@
 #include <iostream>
 #include <QThread>
 
-/*! Base class for signals of the ThreadBuffer template class. */
+/*! Base class for signals of the ThreadBuffer template class. Provides signals. */
 class ThreadBufferSignals : public QObject
 {
     Q_OBJECT
@@ -33,8 +33,9 @@ class ThreadBuffer : public ThreadBufferSignals
 public:
     /*! Create a ThreadBuffer.
      *  \param size number of elements the buffer can hold.
-     *  \param chunkSize preferred read size
+     *  \param chunkSize preferred read size.
      *  \param moduleId id of the module the ThreadBuffer belongs to.
+     *  \param defaultValue the value that should be assigned to unused ringbuffer elements.
      *
      *  \todo Is moduleId needed anymore ?
      */

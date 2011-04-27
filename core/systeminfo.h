@@ -8,6 +8,10 @@
 #include <QThread>
 #include <QStringList>
 
+/*! The SystemInfo class provides information about the current state of the operating system.
+ *  Its attributes are updated in regular intervals. Currently, it provides the current CPU
+ *  usage and the number of cores available.
+ */
 class SystemInfo : public QObject
 {
     Q_OBJECT

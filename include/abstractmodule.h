@@ -19,16 +19,13 @@ class Event;
 /*! Base class for data acquisition modules.
  *  This class is used by all modules that receive data from VME modules.
  *  All daq modules feature an output plugin that provides output PluginConnectors
- *  for plugins to connect to. All modules are polled by the RunThread using the #acquire method.
+ *  for plugins to connect to. All modules are polled by the RunThread using the #dataReady and #acquire methods.
  *  They should retrieve new data from their VME module and pass it back to the runthread using the supplied Event object.
  *  This is done by calling Event::put with the EventSlot object the data belongs to. The PluginThread will make the data
  *  available on the output connectors of the output plugin.
  *
  *  All daq modules communicate via an interface and have the VME base address of their VME module.
- *
- *  Implementors must fill the #channels list with at least as many ScopeChannels as there are output connectors.
- *  Their names will be shown in the Run Setup tab. There should also be a trigger channel so the RunThread calls
- *  the module's #acquire function.
+ *  To build a new module please inherit from BaseModule, which already provides some methods.
  */
 class AbstractModule : public QObject
 {

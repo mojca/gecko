@@ -33,7 +33,7 @@ public:
 
     void identify();
 
-    /*! returns a list of all registered interface and daq modules. */
+    /*! returns a list of all registered daq modules. */
     const QList<AbstractModule*>* list() { return items; }
 
     /*! removes all modules. */
@@ -47,10 +47,10 @@ public:
     /*! assigns a new name to the given module. */
     void setModuleName (AbstractModule *m, const QString &name);
 
-    /*! Iterates through all registered modules and calls BaseModule::applySettings on each of them. */
+    /*! Iterates through all registered modules and calls AbstractModule::applySettings on each of them. */
     void applySettings(QSettings*);
 
-    /*! Iterates through all registered modules and calls BaseModule::saveSettings on each of them. */
+    /*! Iterates through all registered modules and calls AbstractModule::saveSettings on each of them. */
     void saveSettings(QSettings*);
 
     /*! Creates a new ThreadBuffer with the given parameters. \deprecated */
@@ -60,7 +60,6 @@ public:
     /*! Registers a new module type. Each type has to be registered to be visible to users.
      *  \param type   name that will be used to identify the type
      *  \param fac    method to create instances of the type
-     *  \param mclass defines whether this type is an interface or a daq type
      *  \sa ModuleRegistrar
      */
     void registerModuleType (const QString &type, ModuleFactory fac);
@@ -81,6 +80,7 @@ public:
     /*! Returns whether the given channel is mandatory. */
     bool isMandatory (const EventSlot* sl) const { return mandatoryslots.contains (sl); }
 
+    /*! returns a set of all mandatory slots. */
     const QSet<const EventSlot*>& getMandatorySlots () const { return mandatoryslots; }
 
     /*! Adds the given module to the list of triggers. A data available signal from this module will cause an event to be generated. */
@@ -88,6 +88,7 @@ public:
     /*! Removes the given module from the trigger list. */
     bool isTrigger (AbstractModule* mod) const { return triggers.contains (mod); }
 
+    /*! returns a set of all modules that act as triggers. */
     const QSet<AbstractModule*>& getTriggers () const { return triggers; }
 
 signals:
@@ -113,13 +114,26 @@ private: // no copying
 	ModuleManager &operator=(const ModuleManager &);
 };
 
+/*! The ModuleRegistrar class is a helper class to facilitate the registering of modules on application startup.
+ *  It is meant to be used as static object in global scope and calls ModuleManager::registerModuleType on
+ *  construction. The module type registered that way is usable from the start of the program.
+ *
+ *  To use it, add the following line to the module's cpp file
+ *  \code static ModuleRegistrar reg ("MyModule", MyModule::create); \endcode
+ *
+ *  \sa ModuleManager::registerModuleType
+*/
 class ModuleRegistrar {
 public:
+    /*! Constructor, calls ModuleManager::registerModuleType with the given arguments.
+        \param type name of the module type, should be human-friendly
+        \param fac factory method for the module type
+    */
     ModuleRegistrar (const QString &type, ModuleManager::ModuleFactory fac) {
         ModuleManager::ref ().registerModuleType (type, fac);
     }
 
-private:
+private: // no copy, no new
     ModuleRegistrar (const ModuleRegistrar &);
     ModuleRegistrar &operator=(const ModuleRegistrar &);
     void *operator new (size_t);

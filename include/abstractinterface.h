@@ -10,7 +10,7 @@ class BaseUI;
 class QSettings;
 
 /*! Abstract base class for all VME interfaces.
- * To implement a new interface please derive from BaseInterface which already handles ids names and types. */
+ * To implement a new interface please derive from BaseInterface which already handles ids, names and types. */
 class AbstractInterface : public QObject {
 public:
     virtual ~AbstractInterface () {}

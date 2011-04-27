@@ -103,12 +103,12 @@ public slots:
      *  Implementors should get their input data from the input connectors via PluginConnector::getData:
      *  \code
      *    // retrieve a vector of uint32 data from the first input
-     *    const std::vector<uint32_t> *pdata = reinterpret_cast<const std::vector<uint32_t>*> (inputs->at (0)-> getData ());
+     *    QVector<uint32_t> pdata = inputs->at (0)->getData ().value< QVector<uint32_t> > ();
      *  \endcode
      *
-     *  Output data should be held in an internal output buffer and handed down to the next plugin via a pointer:
+     *  Output data can then be handed down to the next plugin:
      *  \code
-     *    outputs->at (0)->setData (&outData)
+     *    outputs->at (0)->setData (QVariant::fromValue (outData))
      *  \endcode
      *  \sa PluginConnector::setData, PluginConnector::getData
      */

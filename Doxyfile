@@ -590,8 +590,11 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = ../../samdsp \
-                         . \
+INPUT                  = core \
+                         include \
+                         module \
+                         plugin \
+                         interface \
                          manual.doxy
 
 # This tag can be used to specify the character encoding of the source files 
@@ -645,7 +648,7 @@ FILE_PATTERNS          = *.c \
 # should be searched for input files as well. Possible values are YES and NO. 
 # If left blank NO is used.
 
-RECURSIVE              = NO
+RECURSIVE              = YES
 
 # The EXCLUDE tag can be used to specify files and/or directories that should 
 # excluded from the INPUT source files. This way you can easily exclude a 

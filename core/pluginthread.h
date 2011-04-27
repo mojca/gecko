@@ -40,9 +40,8 @@
  *    "Layer 0" -> "Layer 1" -> "Layer 2" -> "Layer 3";
  *  }
  *  \enddot
- *  The thread then walks through each layer calling the BasePlugin::process function for each plugin
- *  if all the plugin's input connectors contain data. If not, the plugin is skipped. The process functions
- *  for plugins in the same layer might be called in parallel.
+ *  The thread then walks through each layer calling the AbstractPlugin::process function for each plugin.
+ *  The process functions for plugins in the same layer might be called in parallel.
  */
 class PluginThread : public QThread
 {

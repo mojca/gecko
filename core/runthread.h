@@ -13,6 +13,9 @@ class QSettings;
 class AbstractModule;
 class EventSlot;
 
+/*! The RunThread waits for a AbstractPlugin::dataReady from the modules marked as triggers
+ *  and acquires data for processing by the plugin thread.
+ */
 class RunThread : public QThread
 {
     Q_OBJECT

@@ -66,6 +66,7 @@ public:
      *
      *  \param type  The name by which the plugin type will be known
      *  \param fac   The factory method that returns an instance of the plugin when called
+     *  \param group The group under which the plugin will be shown
      *  \param attrs The attributes that are meaningful for the plugin and their types
      *
      *  \sa PluginRegistrar
@@ -143,11 +144,11 @@ private: //no copying
 /*! Convenience class to facilitate plugin registration.
  *  This class registers a plugin when it is constructed. For automatic registration of a plugin, add a line like the
  *  following to the plugin's cpp file:
- *  \code static PluginRegistrar reg ("MyPlugin", MyPlugin::create, AbstractPlugin::theGroup) \endcode
+ *  \code static PluginRegistrar reg ("MyPlugin", MyPlugin::create, AbstractPlugin::theGroup); \endcode
  *
  *  For plugins with attributes, the situation is a little more complicated as QMap does not allow in-place addition of elements to temporaries.
  *  In that case, add a static method to your plugin class that returns the attribute map:
- *  \code static PluginRegistrar reg ("MyPlugin", MyPlugin::create, AbstractPlugin::theGroup, MyPlugin::myPluginAttrs ()) \endcode
+ *  \code static PluginRegistrar reg ("MyPlugin", MyPlugin::create, AbstractPlugin::theGroup, MyPlugin::myPluginAttrs ()); \endcode
  */
 class PluginRegistrar {
 public:
