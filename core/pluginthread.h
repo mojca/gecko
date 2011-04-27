@@ -16,7 +16,6 @@
 
 #include "pluginmanager.h"
 #include "modulemanager.h"
-#include "pluginconnectorthreadbuffered.h"
 
 /*! Thread for plugin processing.
  *  The plugin enumerates all configured plugins and sorts them into layers:

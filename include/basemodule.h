@@ -12,7 +12,6 @@
 #include "outputplugin.h"
 
 class BaseUI;
-class ScopeChannel;
 class ModuleManager;
 
 /*! base class for all modules.

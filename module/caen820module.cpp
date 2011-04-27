@@ -5,7 +5,6 @@
 #include "confmap.h"
 #include "modulemanager.h"
 #include "runmanager.h"
-#include "scopechannel.h"
 
 #include <vector>
 

@@ -8,7 +8,6 @@
 #include <QMetaType>
 #include <QMessageBox>
 
-class ScopeChannel;
 class QSettings;
 class AbstractModule;
 class EventSlot;

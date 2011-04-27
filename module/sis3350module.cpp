@@ -1,6 +1,5 @@
 #include "sis3350module.h"
 #include "modulemanager.h"
-#include "scopechannel.h"
 
 static ModuleRegistrar registrar ("sis3350", Sis3350Module::create);
 

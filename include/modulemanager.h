@@ -53,9 +53,6 @@ public:
     /*! Iterates through all registered modules and calls AbstractModule::saveSettings on each of them. */
     void saveSettings(QSettings*);
 
-    /*! Creates a new ThreadBuffer with the given parameters. \deprecated */
-    ThreadBuffer<uint32_t>* createBuffer(uint32_t _size, uint32_t _chunkSize, int _id);
-
     // module instantiation facilities
     /*! Registers a new module type. Each type has to be registered to be visible to users.
      *  \param type   name that will be used to identify the type

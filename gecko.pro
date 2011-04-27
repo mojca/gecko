@@ -28,13 +28,11 @@ SOURCES += core/baseplugin.cpp \
     core/outputplugin.cpp \
     core/plot2d.cpp \
     core/pluginconnector.cpp \
-    core/pluginconnectorthreadbuffered.cpp \
     core/pluginmanager.cpp \
     core/pluginthread.cpp \
     core/remotecontrolpanel.cpp \
     core/runmanager.cpp \
     core/runthread.cpp \
-    core/scopechannel.cpp \
     core/scopemainwindow.cpp \
     core/threadbuffer.cpp \
     core/viewport.cpp \
@@ -53,15 +51,12 @@ SOURCES += core/baseplugin.cpp \
     module/caen820dmx.cpp \
     module/caen820ui.cpp \
     module/caenadcdmx.cpp \
-    module/dummymodule.cpp \
-    module/dummyui.cpp \
     module/sis3302dmx.cpp \
     module/sis3302module.cpp \
     module/sis3302ui.cpp \
     module/sis3350dmx.cpp \
     module/sis3350module.cpp \
     module/sis3350ui.cpp \
-    plugin/aux/dummyplugin.cpp \
     plugin/aux/fanoutplugin.cpp \
     plugin/aux/inttodoubleplugin.cpp \
     plugin/cache/basecacheplugin.cpp \
@@ -93,8 +88,8 @@ HEADERS += core/addeditdlgs.h \
     core/runthread.h \
     core/scopemainwindow.h \
     core/systeminfo.h \
+    core/threadbuffer.h \
     include/abstractinterface.h \
-    include/abstractmanager.h \
     include/abstractmodule.h \
     include/abstractplugin.h \
     include/baseinterface.h \
@@ -111,12 +106,9 @@ HEADERS += core/addeditdlgs.h \
     include/pluginconnector.h \
     include/pluginconnectorplain.h \
     include/pluginconnectorqueued.h \
-    include/pluginconnectorthreadbuffered.h \
     include/pluginmanager.h \
     include/runmanager.h \
     include/samqvector.h \
-    include/scopechannel.h \
-    include/threadbuffer.h \
     include/viewport.h \
     interface/sis3100module.h \
     interface/sis3100ui.h \
@@ -137,8 +129,6 @@ HEADERS += core/addeditdlgs.h \
     module/caen_v785.h \
     module/caen_v792.h \
     module/caen_v820.h \
-    module/dummymodule.h \
-    module/dummyui.h \
     module/sis3302dmx.h \
     module/sis3302.h \
     module/sis3302module.h \
@@ -147,7 +137,6 @@ HEADERS += core/addeditdlgs.h \
     module/sis3350.h \
     module/sis3350module.h \
     module/sis3350ui.h \
-    plugin/aux/dummyplugin.h \
     plugin/aux/fanoutplugin.h \
     plugin/aux/inttodoubleplugin.h \
     plugin/cache/basecacheplugin.h \
@@ -173,4 +162,3 @@ HEADERS += core/addeditdlgs.h \
     plugin/pack/packsis3350plugin.h \
     plugin/plot/plot2dplugin.h
 OTHER_FILES +=
-

@@ -4,7 +4,6 @@
 #include "modulemanager.h"
 #include "runmanager.h"
 #include "confmap.h"
-#include "scopechannel.h"
 
 #include <cstdio>
 #include <cstring>

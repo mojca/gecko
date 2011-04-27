@@ -13,7 +13,6 @@ class BaseUI;
 class EventSlot;
 class OutputPlugin;
 class PluginConnector;
-class ScopeChannel;
 class Event;
 
 /*! Base class for data acquisition modules.

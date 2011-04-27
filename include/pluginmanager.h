@@ -5,7 +5,6 @@
 #include <QSettings>
 #include <QMap>
 
-#include "abstractmanager.h"
 #include "baseplugin.h"
 #include "pluginconnector.h"
 #include "modulemanager.h"
@@ -47,11 +46,6 @@ public:
     AbstractPlugin* get (int id);
     AbstractPlugin* get (const QString &name); /*!< \overload */
 
-    /*! get the output connectors from all daq modules.
-     *  \deprecated
-     */
-    QList<PluginConnector*>* getRootConnectors() { return roots; }
-
     /*! change the name of the given plugin */
     void setPluginName (AbstractPlugin *p, const QString &name);
 
@@ -72,8 +66,6 @@ public:
      *  \sa PluginRegistrar
      */
     void registerPluginType (const QString &type, PluginFactory fac, const AbstractPlugin::Group, const AbstractPlugin::AttributeMap & attrs);
-
-    void registerPluginType (const QString &type, const AbstractPlugin::Group, const AbstractPlugin::AttributeMap & attrs);
 
     /*! create a plugin of the specified type with the given attributes. */
     AbstractPlugin *create (const QString &type, const QString &name, const AbstractPlugin::Attributes &attrs = AbstractPlugin::Attributes ());
@@ -155,10 +147,6 @@ public:
     PluginRegistrar (const QString &type, PluginManager::PluginFactory fac, const AbstractPlugin::Group group = AbstractPlugin::GroupUnspecified, const AbstractPlugin::AttributeMap & attrs = AbstractPlugin::AttributeMap ()) {
         PluginManager::ref ().registerPluginType (type, fac, group, attrs);
     }
-
-    PluginRegistrar (const QString &type, const AbstractPlugin::Group group = AbstractPlugin::GroupUnspecified, const BasePlugin::AttributeMap & attrs = AbstractPlugin::AttributeMap ()) {
-        PluginManager::ref ().registerPluginType (type, group, attrs);
-    } /*!< \overload */
 
 private: // no copy, no dynamic alloc
     PluginRegistrar (const PluginRegistrar &);
