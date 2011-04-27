@@ -9,8 +9,8 @@ CONFIG += thread
 QMAKE_CXXFLAGS_RELEASE += -march=native \
     -O3
 LIBS += -g \
-    -Llib/sis3150_calls \
-    -Llib/sis3100_calls \
+    -L$$PWD/lib/sis3150_calls \
+    -L$$PWD/lib/sis3100_calls \
     -l_sis3150 \
     -l_sis3100 \
     -lgsl \
