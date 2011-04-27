@@ -1,3 +1,7 @@
+#ifndef SIS3302_H
+#define SIS3302_H
+
+
 /***************************************************************************/
 /*                                                                         */
 /*  Filename: SIS3302.h                                                    */
@@ -23,6 +27,8 @@
 /*  � 2006                                                                 */
 /*                                                                         */
 /***************************************************************************/
+
+#include <inttypes.h>
 
 #define SIS3302_CONTROL_STATUS                       0x0	  /* read/write; D32 */
 #define SIS3302_MODID                                0x4	  /* read only; D32 */
@@ -202,3 +208,37 @@
 #define EVENT_CONF_PAGE_SIZE_64_WRAP					0xB
 
 #define SIS3302_MAX_NOF_LWORDS 0x1000000
+
+
+// Structs
+
+typedef union {
+    struct {
+        uint32_t addr    :25;
+        uint32_t unused2 :3;
+        uint32_t wrap    :1;
+        uint32_t trigger :1;
+        uint32_t unused  :2;
+    };
+    uint32_t data;
+} EventDirEntry_t;
+
+typedef union {
+    struct {
+        uint32_t high;
+        uint32_t low;
+    };
+    uint32_t data[2];
+    uint64_t data64;
+} TimestampDir_t;
+
+typedef union {
+    struct {
+        uint32_t high   :16;    // Not quite sure about this order
+        uint32_t low    :16;
+    };
+    uint32_t data;
+} DataStruct_t;
+
+
+#endif

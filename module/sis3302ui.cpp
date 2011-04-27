@@ -63,7 +63,7 @@ void Sis3302UI::createUI()
         {
             gn.append(tr("Channel %1").arg(ch)); ng++; addGroupToGroup(tn[nt],un,gn[ng],tr("ch_enabled%1").arg(ch));
             addPopupToGroup(tn[nt],un+gn[ng],"Mode",tr("trgMode_%1").arg(ch),(QStringList() << "LED, rising" << "LED, falling" << "FIR, rising" << "FIR, falling"));
-            addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),0,0xffff); // 16 bits
+            addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),0,0x1ffff); // 17 bits
             addSpinnerToGroup(tn[nt],un+gn[ng],"Sum time",tr("trigger_gap_length_%1").arg(ch),1,16);
             addSpinnerToGroup(tn[nt],un+gn[ng],"Peak time",tr("trigger_peak_length_%1").arg(ch),1,16);
             addSpinnerToGroup(tn[nt],un+gn[ng],"Pulse Length",tr("trigger_pulse_length_%1").arg(ch),0,0xff);  // 8 bits
@@ -96,7 +96,7 @@ void Sis3302UI::createUI()
     gn.append("Delay and Length"); ng++; addGroupToTab(tn[nt],gn[ng]);
     addSpinnerToGroup(tn[nt],gn[ng],"Start Delay","start_delay",0,0xffffff); // 24 bits
     addSpinnerToGroup(tn[nt],gn[ng],"Stop Delay","stop_delay",0,0xffffff); // 24 bits
-    addSpinnerToGroup(tn[nt],gn[ng],"Number of Events","nof_events",0,0x0fffff); // 20 bits
+    addSpinnerToGroup(tn[nt],gn[ng],"Number of Events","nof_events",0,512 /*0x0fffff*/); // 20 bits actually, but only 512 can be stored
     addCheckBoxToGroup(tn[nt],gn[ng],"Event Length Stop Mode","event_length_as_stop");
     addSpinnerToGroup(tn[nt],gn[ng],"Event Length","event_length",0,0x1ffffff); // 25 bits
 
@@ -175,28 +175,28 @@ void Sis3302UI::uiInput(QString _name)
             else module->conf.autostart_acq = false;
         }
         if(_name == "internal_trg_as_stop") {
-            if(cb->isChecked()) module->conf.autostart_acq = true;
-            else module->conf.autostart_acq = false;
+            if(cb->isChecked()) module->conf.internal_trg_as_stop = true;
+            else module->conf.internal_trg_as_stop = false;
         }
         if(_name == "event_length_as_stop") {
-            if(cb->isChecked()) module->conf.autostart_acq = true;
-            else module->conf.autostart_acq = false;
+            if(cb->isChecked()) module->conf.event_length_as_stop = true;
+            else module->conf.event_length_as_stop = false;
         }
         if(_name == "adc_value_big_endian") {
-            if(cb->isChecked()) module->conf.autostart_acq = true;
-            else module->conf.autostart_acq = false;
+            if(cb->isChecked()) module->conf.adc_value_big_endian = true;
+            else module->conf.adc_value_big_endian = false;
         }
         if(_name == "enable_page_wrap") {
-            if(cb->isChecked()) module->conf.autostart_acq = true;
-            else module->conf.autostart_acq = false;
+            if(cb->isChecked()) module->conf.enable_page_wrap = true;
+            else module->conf.enable_page_wrap = false;
         }
         if(_name == "enable_irq") {
-            if(cb->isChecked()) module->conf.autostart_acq = true;
-            else module->conf.autostart_acq = false;
+            if(cb->isChecked()) module->conf.enable_irq = true;
+            else module->conf.enable_irq = false;
         }
         if(_name == "enable_external_trg") {
-            if(cb->isChecked()) module->conf.autostart_acq = true;
-            else module->conf.autostart_acq = false;
+            if(cb->isChecked()) module->conf.enable_external_trg = true;
+            else module->conf.enable_external_trg = false;
         }
         //QMessageBox::information(this,"uiInput","You changed the checkbox "+_name);
     }

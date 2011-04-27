@@ -108,20 +108,9 @@ class Sis3302Module : public BaseModule
 {
     Q_OBJECT
 
-    typedef union { struct {
-        uint8_t unused  :2;
-        bool trigger    :1;
-        bool wrap       :1;
-        uint8_t unused2 :3;
-        uint32_t addr   :25;
-    }; uint32_t data; } EventDirEntry_t;
-
-    typedef union { struct {
-        uint32_t high;
-        uint32_t low;
-    }; uint32_t data[2]; } TimestampDir_t;
 
 public:
+
     Sis3302Module(int _id, QString _name);
     ~Sis3302Module();
 
@@ -149,6 +138,7 @@ public:
     int getEventCounter(uint32_t*);
     int getNextSampleAddr(int adc, uint32_t* _addr);
     int getTimeStampDir();
+    int getEventDir(int ch);
     int arm();
     int disarm();
     int start_sampling();
@@ -156,11 +146,15 @@ public:
     int reset_DDR2_logic();
     int timestamp_clear();
     int waitForSamplingComplete();
-    int readAdcChannel(int ch);
+    int readAdcChannel(int ch, uint32_t _reqNofWords);
+    int acquisitionStartSingle();
+    int acquisitionStartMulti();
+    int checkConfig();
     int writeToBuffer(Event *);
-    int acquisitionStart();
     bool isArmedNotBusy();
     bool isNotArmedNotBusy();
+
+    uint32_t getWrapSizeFromConfig(Sis3302config::WrapSize);
 
     int sis3302_write_dac_offset(unsigned int *offset_value_array);
 
@@ -173,7 +167,7 @@ private:
     uint32_t readBuffer[8][SIS3302_MAX_NOF_LWORDS]; // 512 MB total
     uint32_t readLength[8];
 
-    EventDirEntry_t eventDir[512];
+    EventDirEntry_t eventDir[8][512];
     TimestampDir_t timestampDir[512];
     QList<EventSlot*> evslots;
     Sis3302Demux dmx;
