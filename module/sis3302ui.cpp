@@ -2,10 +2,8 @@
 #include <iostream>
 
 Sis3302UI::Sis3302UI(Sis3302Module* _module)
+    : module(_module), uif(this,&tabs), applyingSettings(false)
 {
-    module = _module;
-    applyingSettings = false;
-
     createUI();
     std::cout << "Instantiated Sis3302 UI" << std::endl;
 }
@@ -25,100 +23,100 @@ void Sis3302UI::createUI()
     int ng = 0; // current group number
 
     // TAB ACQUISITION
-    tn.append("Acquisition"); addTab(tn[nt]);
+    tn.append("Acquisition"); uif.addTab(tn[nt]);
 
-    gn.append("Basic Setup"); addGroupToTab(tn[nt],gn[ng]);
-    addPopupToGroup(tn[nt],gn[ng],"Mode","acMode",(QStringList() << "Single Event" << "Multi Event"));
+    gn.append("Basic Setup"); uif.addGroupToTab(tn[nt],gn[ng]);
+    uif.addPopupToGroup(tn[nt],gn[ng],"Mode","acMode",(QStringList() << "Single Event" << "Multi Event"));
 
-    gn.append("Advanced Setup"); ng++; addGroupToTab(tn[nt],gn[ng]);
-    addCheckBoxToGroup(tn[nt],gn[ng],"Autostart Acquisition","autostart_acq");
-    addCheckBoxToGroup(tn[nt],gn[ng],"Use Internal Trigger","internal_trg_as_stop");
-    addCheckBoxToGroup(tn[nt],gn[ng],"Use External Trigger (LEMO)","enable_external_trg");
-    addCheckBoxToGroup(tn[nt],gn[ng],"ADC value as Big Endian","adc_value_big_endian");
+    gn.append("Advanced Setup"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    uif.addCheckBoxToGroup(tn[nt],gn[ng],"Autostart Acquisition","autostart_acq");
+    uif.addCheckBoxToGroup(tn[nt],gn[ng],"Use Internal Trigger","internal_trg_as_stop");
+    uif.addCheckBoxToGroup(tn[nt],gn[ng],"Use External Trigger (LEMO)","enable_external_trg");
+    uif.addCheckBoxToGroup(tn[nt],gn[ng],"ADC value as Big Endian","adc_value_big_endian");
 
-    gn.append("Control"); ng++; addGroupToTab(tn[nt],gn[ng]);
-    addUnnamedGroupToGroup(tn[nt],gn[ng],"b0_");
-    addButtonToGroup(tn[nt],gn[ng]+"b0_","Start","start_button");
-    addButtonToGroup(tn[nt],gn[ng]+"b0_","Stop","stop_button");
-    addUnnamedGroupToGroup(tn[nt],gn[ng],"b1_");
-    addButtonToGroup(tn[nt],gn[ng]+"b1_","Arm","arm_button");
-    addButtonToGroup(tn[nt],gn[ng]+"b1_","Disarm","disarm_button");
-    addUnnamedGroupToGroup(tn[nt],gn[ng],"b2_");
-    addButtonToGroup(tn[nt],gn[ng]+"b2_","Reset","reset_button");
-    addButtonToGroup(tn[nt],gn[ng]+"b2_","Clear Timestamp","clear_button");
-    addUnnamedGroupToGroup(tn[nt],gn[ng],"b3_");
-    addButtonToGroup(tn[nt],gn[ng]+"b3_","Configure","configure_button");
-    addButtonToGroup(tn[nt],gn[ng]+"b3_","Single Shot","singleshot_button");
-    widgets.find("singleshot_button").value()->setEnabled(false);
+    gn.append("Control"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    uif.addUnnamedGroupToGroup(tn[nt],gn[ng],"b0_");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b0_","Start","start_button");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b0_","Stop","stop_button");
+    uif.addUnnamedGroupToGroup(tn[nt],gn[ng],"b1_");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b1_","Arm","arm_button");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b1_","Disarm","disarm_button");
+    uif.addUnnamedGroupToGroup(tn[nt],gn[ng],"b2_");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b2_","Reset","reset_button");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b2_","Clear Timestamp","clear_button");
+    uif.addUnnamedGroupToGroup(tn[nt],gn[ng],"b3_");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b3_","Configure","configure_button");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b3_","Single Shot","singleshot_button");
+    uif.getWidgets()->find("singleshot_button").value()->setEnabled(false);
 
     // TAB TRIGGER
-    tn.append("Ch 0-3"); nt++; addTab(tn[nt]);
+    tn.append("Ch 0-3"); nt++; uif.addTab(tn[nt]);
 
     int ch = 0;
     for(int i=0; i<2; i++)
     {
         QString un = tr("noname_%1").arg(i);
-        gn.append(un); ng++; addUnnamedGroupToTab(tn[nt],gn[ng]);
+        gn.append(un); ng++; uif.addUnnamedGroupToTab(tn[nt],gn[ng]);
         for(int j=0; j<2; j++)
         {
-            gn.append(tr("Channel %1").arg(ch)); ng++; addGroupToGroup(tn[nt],un,gn[ng],tr("ch_enabled%1").arg(ch));
-            addPopupToGroup(tn[nt],un+gn[ng],"Mode",tr("trgMode_%1").arg(ch),(QStringList() << "LED, rising" << "LED, falling" << "FIR, rising" << "FIR, falling"));
-            addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),0,0x1ffff); // 17 bits
-            addSpinnerToGroup(tn[nt],un+gn[ng],"Sum time",tr("trigger_gap_length_%1").arg(ch),1,16);
-            addSpinnerToGroup(tn[nt],un+gn[ng],"Peak time",tr("trigger_peak_length_%1").arg(ch),1,16);
-            addSpinnerToGroup(tn[nt],un+gn[ng],"Pulse Length",tr("trigger_pulse_length_%1").arg(ch),0,0xff);  // 8 bits
+            gn.append(tr("Channel %1").arg(ch)); ng++; uif.addGroupToGroup(tn[nt],un,gn[ng],tr("ch_enabled%1").arg(ch));
+            uif.addPopupToGroup(tn[nt],un+gn[ng],"Mode",tr("trgMode_%1").arg(ch),(QStringList() << "LED, rising" << "LED, falling" << "FIR, rising" << "FIR, falling"));
+            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),0,0x1ffff); // 17 bits
+            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Sum time",tr("trigger_gap_length_%1").arg(ch),1,16);
+            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Peak time",tr("trigger_peak_length_%1").arg(ch),1,16);
+            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Pulse Length",tr("trigger_pulse_length_%1").arg(ch),0,0xff);  // 8 bits
             ch++;
         }
     }
 
-    tn.append("Ch 4-7"); nt++; addTab(tn[nt]);
+    tn.append("Ch 4-7"); nt++; uif.addTab(tn[nt]);
 
     ch = 4;
     for(int i=0; i<2; i++)
     {
         QString un = tr("noname_%1").arg(i);
-        gn.append(un); ng++; addUnnamedGroupToTab(tn[nt],gn[ng]);
+        gn.append(un); ng++; uif.addUnnamedGroupToTab(tn[nt],gn[ng]);
         for(int j=0; j<2; j++)
         {
-            gn.append(tr("Channel %1").arg(ch)); ng++; addGroupToGroup(tn[nt],un,gn[ng],tr("ch_enabled%1").arg(ch));
-            addPopupToGroup(tn[nt],un+gn[ng],"Mode",tr("trgMode_%1").arg(ch),(QStringList() << "LED, rising" << "LED, falling" << "FIR, rising" << "FIR, falling"));
-            addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),0,0xffff); // 16 bits
-            addSpinnerToGroup(tn[nt],un+gn[ng],"Sum time",tr("trigger_gap_length_%1").arg(ch),1,16);
-            addSpinnerToGroup(tn[nt],un+gn[ng],"Peak time",tr("trigger_peak_length_%1").arg(ch),1,16);
-            addSpinnerToGroup(tn[nt],un+gn[ng],"Pulse Length",tr("trigger_pulse_length_%1").arg(ch),0,0xff);  // 8 bits
+            gn.append(tr("Channel %1").arg(ch)); ng++; uif.addGroupToGroup(tn[nt],un,gn[ng],tr("ch_enabled%1").arg(ch));
+            uif.addPopupToGroup(tn[nt],un+gn[ng],"Mode",tr("trgMode_%1").arg(ch),(QStringList() << "LED, rising" << "LED, falling" << "FIR, rising" << "FIR, falling"));
+            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),0,0xffff); // 16 bits
+            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Sum time",tr("trigger_gap_length_%1").arg(ch),1,16);
+            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Peak time",tr("trigger_peak_length_%1").arg(ch),1,16);
+            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Pulse Length",tr("trigger_pulse_length_%1").arg(ch),0,0xff);  // 8 bits
             ch++;
         }
     }
 
     // TAB EVENT
-    tn.append("Event"); nt++; addTab(tn[nt]);
+    tn.append("Event"); nt++; uif.addTab(tn[nt]);
 
-    gn.append("Delay and Length"); ng++; addGroupToTab(tn[nt],gn[ng]);
-    addSpinnerToGroup(tn[nt],gn[ng],"Start Delay","start_delay",0,0xffffff); // 24 bits
-    addSpinnerToGroup(tn[nt],gn[ng],"Stop Delay","stop_delay",0,0xffffff); // 24 bits
-    addSpinnerToGroup(tn[nt],gn[ng],"Number of Events","nof_events",0,512 /*0x0fffff*/); // 20 bits actually, but only 512 can be stored
-    addCheckBoxToGroup(tn[nt],gn[ng],"Event Length Stop Mode","event_length_as_stop");
-    addSpinnerToGroup(tn[nt],gn[ng],"Event Length","event_length",0,0x1ffffff); // 25 bits
+    gn.append("Delay and Length"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    uif.addSpinnerToGroup(tn[nt],gn[ng],"Start Delay","start_delay",0,0xffffff); // 24 bits
+    uif.addSpinnerToGroup(tn[nt],gn[ng],"Stop Delay","stop_delay",0,0xffffff); // 24 bits
+    uif.addSpinnerToGroup(tn[nt],gn[ng],"Number of Events","nof_events",0,512 /*0x0fffff*/); // 20 bits actually, but only 512 can be stored
+    uif.addCheckBoxToGroup(tn[nt],gn[ng],"Event Length Stop Mode","event_length_as_stop");
+    uif.addSpinnerToGroup(tn[nt],gn[ng],"Event Length","event_length",0,0x1ffffff); // 25 bits
 
-    gn.append("Advanced"); ng++; addGroupToTab(tn[nt],gn[ng]);
-    addCheckBoxToGroup(tn[nt],gn[ng],"Page Wrap","enable_page_wrap");
-    addPopupToGroup(tn[nt],gn[ng],"Page Wrap Size","wrapSize",(QStringList() << "64" << "128" << "256" << "512" << "1k" << "4k" << "16k" << "64" << "256k" << "1M" << "4M" << "16M"));
-    addPopupToGroup(tn[nt],gn[ng],"Averaging Mode","avgMode",(QStringList() << "1" << "2" << "4" << "8" << "16" << "32" << "64" << "128"));
+    gn.append("Advanced"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    uif.addCheckBoxToGroup(tn[nt],gn[ng],"Page Wrap","enable_page_wrap");
+    uif.addPopupToGroup(tn[nt],gn[ng],"Page Wrap Size","wrapSize",(QStringList() << "64" << "128" << "256" << "512" << "1k" << "4k" << "16k" << "64" << "256k" << "1M" << "4M" << "16M"));
+    uif.addPopupToGroup(tn[nt],gn[ng],"Averaging Mode","avgMode",(QStringList() << "1" << "2" << "4" << "8" << "16" << "32" << "64" << "128"));
 
     // TAB DAC SETUP
-    tn.append("DAC setup"); nt++; addTab(tn[nt]);
+    tn.append("DAC setup"); nt++; uif.addTab(tn[nt]);
 
-    gn.append("Offsets"); ng++; addGroupToTab(tn[nt],gn[ng]);
+    gn.append("Offsets"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
     for(int ch=0; ch<8; ch++)
     {
-        addSpinnerToGroup(tn[nt],gn[ng],tr("DAC offset %1").arg(ch),tr("dac_offset_%1").arg(ch),0,0xffff);
+        uif.addSpinnerToGroup(tn[nt],gn[ng],tr("DAC offset %1").arg(ch),tr("dac_offset_%1").arg(ch),0,0xffff);
     }
 
     // TAB Clock and IRQ
-    tn.append("Clock && IRQ"); nt++; addTab(tn[nt]);
+    tn.append("Clock && IRQ"); nt++; uif.addTab(tn[nt]);
 
-    gn.append("Clock"); ng++; addGroupToTab(tn[nt],gn[ng]);
-    addPopupToGroup(tn[nt],gn[ng],"Clock source","clockSource",(QStringList()
+    gn.append("Clock"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    uif.addPopupToGroup(tn[nt],gn[ng],"Clock source","clockSource",(QStringList()
              << "Internal 100 MHz"
              << "Internal 50 MHz"
              << "Internal 25 MHz"
@@ -128,20 +126,19 @@ void Sis3302UI::createUI()
              << "external clock (from LEMO)"
              << "Real 100 MHz internal"));
 
-    gn.append("Interrupt Setup"); ng++; addGroupToTab(tn[nt],gn[ng]);
-    addCheckBoxToGroup(tn[nt],gn[ng],"VME enable IRQ","enable_irq");
-    addPopupToGroup(tn[nt],gn[ng],"IRQ Mode","irqMode",(QStringList() << "RORA" << "ROAK"));
-    addPopupToGroup(tn[nt],gn[ng],"IRQ Source","irqSource",(QStringList() << "End of Event" << "End of Multi Event"));
-    addSpinnerToGroup(tn[nt],gn[ng],"IRQ level","irq_level",0,7);
-    addHexSpinnerToGroup(tn[nt],gn[ng],"IRQ vector","irq_vector",0,0xff);
+    gn.append("Interrupt Setup"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    uif.addCheckBoxToGroup(tn[nt],gn[ng],"VME enable IRQ","enable_irq");
+    uif.addPopupToGroup(tn[nt],gn[ng],"IRQ Mode","irqMode",(QStringList() << "RORA" << "ROAK"));
+    uif.addPopupToGroup(tn[nt],gn[ng],"IRQ Source","irqSource",(QStringList() << "End of Event" << "End of Multi Event"));
+    uif.addSpinnerToGroup(tn[nt],gn[ng],"IRQ level","irq_level",0,7);
+    uif.addHexSpinnerToGroup(tn[nt],gn[ng],"IRQ vector","irq_vector",0,0xff);
 
 
     //###
 
     l->addWidget(dynamic_cast<QWidget*>(&tabs));
     this->setLayout(l);
-
-    connect(&sm,SIGNAL(mapped(QString)),this,SLOT(uiInput(QString)));
+    connect(uif.getSignalMapper(),SIGNAL(mapped(QString)),this,SLOT(uiInput(QString)));
 
 //    QList<QWidget*> li = this->findChildren<QWidget*>();
 //    foreach(QWidget* w, li)
@@ -387,217 +384,6 @@ void Sis3302UI::applySettings()
     applyingSettings = false;
 }
 
-
-// Generic UI constructor methods
-
-void Sis3302UI::addTab(QString _name)
-{
-    QWidget* c = new QWidget();
-    QGridLayout* l = new QGridLayout;
-    l->setMargin(0);
-    l->setVerticalSpacing(0);
-    c->setLayout(l);
-    int idx = tabs.addTab(c,_name);
-    tabsMap.insert(_name,tabs.widget(idx));
-}
-
-void Sis3302UI::addGroupToTab(QString _tname, QString _name, QString _cname)
-{
-    if (tabsMap.contains(_tname)) {
-        QWidget* c = tabsMap.value(_tname);
-        QGroupBox* b = new QGroupBox(_name,c);
-        QString identifier = _tname+_name;
-        QGridLayout* l = new QGridLayout;
-        l->setMargin(0);
-        l->setVerticalSpacing(0);
-        b->setLayout(l);
-        c->layout()->addWidget(b);
-        groups.insert(identifier,b);
-        //cout << "Adding " << identifier.toStdString() << " to groups." << endl;
-        if(!_cname.isEmpty())
-        {
-            b->setCheckable(true);
-            b->setObjectName(_cname);
-            widgets.insert(_cname,b);
-            sm.setMapping(b,_cname);
-            connect(b,SIGNAL(toggled(bool)),&sm,SLOT(map()));
-        }
-    }
-}
-
-void Sis3302UI::addUnnamedGroupToTab(QString _tname, QString _name)
-{
-    if (tabsMap.contains(_tname)) {
-        QWidget* c = tabsMap.value(_tname);
-        QWidget* g = new QWidget(c);
-        QString identifier = _tname+_name;
-        QHBoxLayout* l = new QHBoxLayout;
-        l->setMargin(0);
-        l->setSpacing(0);
-        g->setLayout(l);
-        g->setObjectName(identifier);
-        c->layout()->addWidget(g);
-        groups.insert(identifier,g);
-        //cout << "Adding " << identifier.toStdString() << " to groups." << endl;
-    }
-}
-
-void Sis3302UI::addGroupToGroup(QString _tname, QString _gname, QString _name, QString _cname)
-{
-    QString identifier = _tname+_gname;
-    if (groups.contains(identifier)) {
-        QWidget* g = groups.value(identifier);
-        QGroupBox* b = new QGroupBox(_name,g);
-        QGridLayout* l = new QGridLayout;
-        l->setMargin(0);
-        l->setVerticalSpacing(0);
-        b->setLayout(l);
-        g->layout()->addWidget(b);
-        identifier += _name;
-        groups.insert(identifier,b);
-        //cout << "Adding " << identifier.toStdString() << " to groups." << endl;
-        b->setObjectName(identifier);
-        if(!_cname.isEmpty())
-        {
-            b->setCheckable(true);
-            b->setObjectName(_cname);
-            widgets.insert(_cname,b);
-            sm.setMapping(b,_cname);
-            connect(b,SIGNAL(toggled(bool)),&sm,SLOT(map()));
-        }
-    }
-}
-
-void Sis3302UI::addUnnamedGroupToGroup(QString _tname, QString _gname, QString _name)
-{
-    QString identifier = _tname+_gname;
-    if (groups.contains(identifier)) {
-        QWidget* g = groups.value(identifier);
-        QWidget* b = new QWidget(g);
-        QHBoxLayout* l = new QHBoxLayout;
-        l->setMargin(0);
-        l->setSpacing(0);
-        b->setLayout(l);
-        g->layout()->addWidget(b);
-        identifier += _name;
-        groups.insert(identifier,b);
-        //cout << "Adding " << identifier.toStdString() << " to groups." << endl;
-        b->setObjectName(identifier);
-    }
-}
-void Sis3302UI::addButtonToGroup(QString _tname, QString _gname, QString _name, QString _cname)
-{
-    QString identifier = _tname+_gname;
-    if (groups.contains(identifier)) {
-        QWidget* g = groups.value(identifier);
-        QPushButton* b = new QPushButton(_name,g);
-        g->layout()->addWidget(b);
-        widgets.insert(_cname,b);
-        b->setObjectName(_cname);
-        sm.setMapping(b,_cname);
-        connect(b,SIGNAL(clicked()),&sm,SLOT(map()));
-    }
-}
-
-void Sis3302UI::addSpinnerToGroup(QString _tname, QString _gname, QString _name, QString _cname, int min, int max)
-{
-    QString identifier = _tname+_gname;
-    if (groups.contains(identifier)) {
-        QWidget* g = groups.value(identifier);
-        QSpinBox* b = new QSpinBox(g);
-        b->setMinimum(min);
-        b->setMaximum(max);
-        QWidget* w = attachLabel(b,_name);
-        g->layout()->addWidget(w);
-        sm.setMapping(b,_cname);
-        widgets.insert(_cname,b);
-        b->setObjectName(_cname);
-        connect(b,SIGNAL(valueChanged(int)),&sm,SLOT(map()));
-    }
-}
-
-void Sis3302UI::addDoubleSpinnerToGroup(QString _tname, QString _gname, QString _name, QString _cname, double min, double max)
-{
-    QString identifier = _tname+_gname;
-    if (groups.contains(identifier)) {
-        QWidget* g = groups.value(identifier);
-        QDoubleSpinBox* b = new QDoubleSpinBox(g);
-        b->setMinimum(min);
-        b->setMaximum(max);
-        QWidget* w = attachLabel(b,_name);
-        g->layout()->addWidget(w);
-        sm.setMapping(b,_cname);
-        widgets.insert(_cname,b);
-        b->setObjectName(_cname);
-        connect(b,SIGNAL(valueChanged(int)),&sm,SLOT(map()));
-    }
-}
-
-void Sis3302UI::addHexSpinnerToGroup(QString _tname, QString _gname, QString _name, QString _cname, int min, int max)
-{
-    QString identifier = _tname+_gname;
-    if (groups.contains(identifier)) {
-        QWidget* g = groups.value(identifier);
-        HexSpinBox* b = new HexSpinBox(g);
-        b->setPrefix ("0x");
-        b->setMinimum(min);
-        b->setMaximum(max);
-        QWidget* w = attachLabel(b,_name);
-        g->layout()->addWidget(w);
-        sm.setMapping(b,_cname);
-        widgets.insert(_cname,b);
-        b->setObjectName(_cname);
-        connect(b,SIGNAL(valueChanged(int)),&sm,SLOT(map()));
-    }
-}
-
-void Sis3302UI::addCheckBoxToGroup(QString _tname, QString _gname, QString _name, QString _cname)
-{
-    QString identifier = _tname+_gname;
-    if (groups.contains(identifier)) {
-        QWidget* g = groups.value(identifier);
-        QCheckBox* b = new QCheckBox(g);
-        QWidget* w = attachLabel(b,_name);
-        g->layout()->addWidget(w);
-        sm.setMapping(b,_cname);
-        widgets.insert(_cname,b);
-        b->setObjectName(_cname);
-        connect(b,SIGNAL(stateChanged(int)),&sm,SLOT(map()));
-    }
-}
-
-void Sis3302UI::addPopupToGroup(QString _tname, QString _gname, QString _name, QString _cname, QStringList _itNames)
-{
-    QString identifier = _tname+_gname;
-    if (groups.contains(identifier)) {
-        QWidget* g = groups.value(identifier);
-        QComboBox* b = new QComboBox(g);
-        QWidget* w = attachLabel(b,_name);
-        g->layout()->addWidget(w);
-        for(int i = 0; i<_itNames.size();i++)
-        {
-            QString _it = _itNames.at(i);
-            b->addItem(_it,QVariant(i));
-        }
-        sm.setMapping(b,_cname);
-        widgets.insert(_cname,b);
-        b->setObjectName(_cname);
-        connect(b,SIGNAL(currentIndexChanged(int)),&sm,SLOT(map()));
-    }
-}
-
-QWidget* Sis3302UI::attachLabel(QWidget* w,QString _label)
-{
-    QLabel* lbl = new QLabel(_label);
-    QHBoxLayout* l = new QHBoxLayout();
-    QWidget* ret = new QWidget();
-    l->setMargin(0);
-    l->addWidget(lbl);
-    l->addWidget(w);
-    l->setSpacing(0);
-    ret->setLayout(l);
-    return ret;
-}
 
 
 

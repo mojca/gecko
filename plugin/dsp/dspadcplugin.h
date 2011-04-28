@@ -5,12 +5,10 @@
 #include <vector>
 #include <cstdio>
 #include <stdint.h>
-#include "baseplugin.h"
 #include <samdsp.h>
+#include "baseplugin.h"
 
 class BasePlugin;
-class QSpinBox;
-class QCheckBox;
 
 struct DspAdcPluginConfig
 {

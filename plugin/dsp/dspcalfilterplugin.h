@@ -16,6 +16,12 @@ struct DspCalFilterPluginConfig
     int width;
     int shift;
     double attenuation;
+
+    DspCalFilterPluginConfig() :
+            width(1),
+            shift(0),
+            attenuation(1.0)
+    {}
 };
 
 class DspCalFilterPlugin : public virtual BasePlugin

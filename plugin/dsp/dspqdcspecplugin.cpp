@@ -15,12 +15,6 @@ DspQdcSpecPlugin::DspQdcSpecPlugin(int _id, QString _name)
 {
     srand(time(NULL));
 
-    conf.width = 20;
-    conf.pointsForBaseline = 10;
-    conf.min = 0;
-    conf.max = 100;
-    conf.nofBins = 4096;
-
     nofLowClip = 0;
     nofHiClip = 0;
     estimateForBaseline = 0;
@@ -197,7 +191,7 @@ void DspQdcSpecPlugin::saveSettings(QSettings* settings)
     }
 }
 
-void    DspQdcSpecPlugin::userProcess()
+void DspQdcSpecPlugin::userProcess()
 {
     int tmp = 0;
     int baselineArea = 0;

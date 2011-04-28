@@ -21,6 +21,7 @@
 #include <QTimer>
 #include "viewport.h"
 #include "hexspinbox.h"
+#include "geckoui.h"
 
 #include "sis3302module.h"
 #include "baseui.h"
@@ -40,13 +41,9 @@ public:
 protected:
     Sis3302Module* module;
 
-    QTabWidget tabs;
-
-    QMap<QString,QWidget*> tabsMap;
-    QMap<QString,QWidget*> groups;
-    QMap<QString,QWidget*> widgets;
-    QSignalMapper sm;
-
+    // UI
+    QTabWidget tabs;    // Tabs widget
+    GeckoUiFactory uif; // UI generator factory
     QStringList tn; // Tab names
     QStringList gn; // Group names
     QStringList wn; // WidgetNames
@@ -56,20 +53,20 @@ protected:
     bool applyingSettings;
 
     // Generic methods for ui creation
-    void addTab(QString _name);
-    void addGroupToTab(QString _tname, QString _name, QString _cname = QString(""));
-    void addUnnamedGroupToTab(QString _tname, QString _name);
-    void addGroupToGroup(QString _tname, QString _gname, QString _name, QString _cname = QString(""));
-    void addUnnamedGroupToGroup(QString _tname, QString _gname, QString _name);
+//    void addTab(QString _name);
+//    void addGroupToTab(QString _tname, QString _name, QString _cname = QString(""));
+//    void addUnnamedGroupToTab(QString _tname, QString _name);
+//    void addGroupToGroup(QString _tname, QString _gname, QString _name, QString _cname = QString(""));
+//    void addUnnamedGroupToGroup(QString _tname, QString _gname, QString _name);
 
-    void addButtonToGroup (QString _tname, QString _gname, QString _name, QString _cname);
-    void addSpinnerToGroup (QString _tname, QString _gname, QString _name, QString _cname, int min, int max);
-    void addDoubleSpinnerToGroup (QString _tname, QString _gname, QString _name, QString _cname, double min, double max);
-    void addHexSpinnerToGroup (QString _tname, QString _gname, QString _name, QString _cname, int min, int max);
-    void addCheckBoxToGroup (QString _tname, QString _gname, QString _name, QString _cname);
-    void addPopupToGroup (QString _tname, QString _gname, QString _name, QString _cname, QStringList _itNames);
+//    void addButtonToGroup (QString _tname, QString _gname, QString _name, QString _cname);
+//    void addSpinnerToGroup (QString _tname, QString _gname, QString _name, QString _cname, int min, int max);
+//    void addDoubleSpinnerToGroup (QString _tname, QString _gname, QString _name, QString _cname, double min, double max);
+//    void addHexSpinnerToGroup (QString _tname, QString _gname, QString _name, QString _cname, int min, int max);
+//    void addCheckBoxToGroup (QString _tname, QString _gname, QString _name, QString _cname);
+//    void addPopupToGroup (QString _tname, QString _gname, QString _name, QString _cname, QStringList _itNames);
 
-    QWidget* attachLabel(QWidget* w,QString _label);
+//    QWidget* attachLabel(QWidget* w,QString _label);
 
 public slots:
     void uiInput(QString _name);
