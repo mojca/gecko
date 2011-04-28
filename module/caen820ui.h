@@ -4,11 +4,14 @@
 #include "caen820module.h"
 #include "baseui.h"
 
-#include <vector>
+#include <QVector>
 
 class QCheckBox;
 class QComboBox;
 class QSpinBox;
+class QLabel;
+class QPushButton;
+class QTimer;
 
 class Caen820UI : public BaseUI
 {
@@ -27,6 +30,11 @@ private slots:
     void updateDwellTime (int);
     void updateAcqMode (int);
 
+    void startMonitor ();
+    void stopMonitor ();
+    void updateMonitor ();
+    void resetCounters ();
+
 private:
     Caen820Module *module_;
 
@@ -35,10 +43,15 @@ private:
     QCheckBox *clearMeb;
     QCheckBox *boxAutoRst;
 
-    std::vector<QCheckBox *> boxChEn;
+    QVector<QCheckBox *> boxChEn;
 
     QSpinBox *sbDwellTime;
     QComboBox *cbAcqMode;
+
+    QVector<QLabel *> lblChMon;
+    QPushButton *btnStartStop;
+    QPushButton *btnCounterReset;
+    QTimer *monitorTimer;
 };
 
 #endif // CAEN820UI_H

@@ -133,6 +133,16 @@ int Caen820Module::acquire (Event *ev) {
     return 0;
 }
 
+QVector<uint32_t> Caen820Module::acquireMonitor () {
+    QVector<uint32_t> data (32, 0);
+    AbstractInterface *iface = getInterface();
+
+    for (int i = 0; i < 32; ++i)
+        iface->readA32D32 (conf_.baddr + 0x1000 + 4 * i, &data [i]);
+
+    return data;
+}
+
 int Caen820Module::getNofActiveChannels () {
     int cnt = 0;
     for (int i = 0; i < 32; ++i)
