@@ -12,7 +12,7 @@
 #include <QMouseEvent>
 #include <QToolTip>
 #include <vector>
-#include "samdsp.h"
+#include <samdsp.h>
 
 //#define MAX_NOF_LWORDS 0x4000000 // 128 MByte
 

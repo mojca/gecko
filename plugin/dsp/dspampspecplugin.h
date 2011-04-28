@@ -8,7 +8,7 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include "baseplugin.h"
-#include "samdsp.h"
+#include <samdsp.h>
 
 class BasePlugin;
 class QSpinBox;

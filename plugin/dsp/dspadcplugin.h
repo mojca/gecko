@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <stdint.h>
 #include "baseplugin.h"
-#include "samdsp.h"
+#include <samdsp.h>
 
 class BasePlugin;
 class QSpinBox;
