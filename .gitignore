@@ -1,1 +1,4 @@
 doc/*
+*.a
+*.o
+*.pro.user
