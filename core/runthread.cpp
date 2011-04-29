@@ -82,7 +82,8 @@ bool RunThread::acquire(AbstractModule* _trg)
     while(m != modules.end())
     {
         AbstractModule* curM = (*m);
-        curM->acquire(ev);
+        if (curM->dataReady ())
+            curM->acquire(ev);
         m++;
     }
 

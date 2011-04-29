@@ -79,7 +79,7 @@ public:
 
         T result;
         typename Sam::vector_traits<T>::value_type min = v.at(0);
-        typename Sam::vector_traits<T>::value_type time;
+        typename Sam::vector_traits<T>::value_type time = 0;
 
         for(int i = 0; i < static_cast<int> (v.size()); i++)
         {

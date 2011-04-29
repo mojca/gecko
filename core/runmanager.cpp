@@ -134,6 +134,12 @@ void RunManager::stop () {
         }
     }
 
+    foreach(AbstractInterface* iface, (*InterfaceManager::ref ().list ()))
+    {
+        if(iface->isOpen())
+            iface->close ();
+    }
+
     running = false;
     state.setBit(StateRunning,false);
 

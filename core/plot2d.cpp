@@ -294,8 +294,8 @@ void plot2d::setBoundaries()
         }
         else if(ch->isEnabled())
         {
-            int newymin;
-            int newymax;
+            int newymin = 0;
+            int newymax = 0;
 
             QVector<double> data = ch->getData();
             if(data.size() > 0)

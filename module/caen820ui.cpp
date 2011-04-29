@@ -11,6 +11,7 @@
 #include <QTabWidget>
 #include <QTimer>
 #include <QPushButton>
+#include <QMessageBox>
 
 Caen820UI::Caen820UI(Caen820Module *mod)
 : module_ (mod)
@@ -161,21 +162,35 @@ void Caen820UI::updateChannels (int ch) {
 }
 
 void Caen820UI::startMonitor () {
-    if (module_->getInterface () && module_->getInterface ()->isOpen ()) {
-        module_->configure ();
+    if (module_->getInterface ()) {
+        if (!module_->getInterface ()->isOpen ())
+            module_->getInterface ()->open ();
+
+        if (0 != module_->configure ()) {
+            QMessageBox::warning (this, tr ("<%1> Caen Scaler").arg (module_->getName ()), tr ("Configuring failed. Check base address."), QMessageBox::Ok);
+            return;
+        }
+
         monitorTimer->start ();
+        btnStartStop->setText (tr ("Stop Monitor"));
         disconnect (btnStartStop, SIGNAL(clicked()), this, SLOT(startMonitor()));
         connect (btnStartStop, SIGNAL(clicked()), this, SLOT(stopMonitor()));
+
+        updateMonitor();
     }
 }
 
 void Caen820UI::stopMonitor () {
     monitorTimer->stop();
+    btnStartStop->setText (tr ("Start Monitor"));
     disconnect (btnStartStop, SIGNAL(clicked()), this, SLOT(stopMonitor()));
     connect (btnStartStop, SIGNAL(clicked()), this, SLOT(startMonitor()));
 }
 
 void Caen820UI::updateMonitor () {
+    if (!module_->getInterface ()->isOpen ())
+        stopMonitor ();
+
     QVector<uint32_t> data = module_->acquireMonitor ();
 
     for (int i = 0; i < 32; ++i) {
