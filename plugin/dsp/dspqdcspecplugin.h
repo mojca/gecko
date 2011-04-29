@@ -21,7 +21,14 @@ struct DspQdcSpecPluginConfig
     int min;
     int max;
     int nofBins;
+
+    DspQdcSpecPluginConfig() : width(20),
+        pointsForBaseline(10),
+        min(0),
+        max(100),
+        nofBins(4096) {}
 };
+
 
 class DspQdcSpecPlugin : public virtual BasePlugin
 {

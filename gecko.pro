@@ -80,7 +80,8 @@ SOURCES += core/baseplugin.cpp \
     plugin/output/vectoroutputplugin.cpp \
     plugin/pack/eventbuilderplugin.cpp \
     plugin/pack/packsis3350plugin.cpp \
-    plugin/plot/plot2dplugin.cpp
+    plugin/plot/plot2dplugin.cpp \
+    plugin/dsp/dspqdcmultieventplugin.cpp
 HEADERS += core/addeditdlgs.h \
     core/geckoremote.h \
     core/pluginthread.h \
@@ -160,5 +161,7 @@ HEADERS += core/addeditdlgs.h \
     plugin/output/vectoroutputplugin.h \
     plugin/pack/eventbuilderplugin.h \
     plugin/pack/packsis3350plugin.h \
-    plugin/plot/plot2dplugin.h
+    plugin/plot/plot2dplugin.h \
+    include/geckoui.h \
+    plugin/dsp/dspqdcmultieventplugin.h
 OTHER_FILES +=

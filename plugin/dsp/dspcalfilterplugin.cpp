@@ -35,9 +35,9 @@ void DspCalFilterPlugin::createSettings(QGridLayout * l)
         shiftSpinner = new QSpinBox();
         attenuationSpinner = new QDoubleSpinBox();
 
-        widthSpinner->setValue(5);
-        shiftSpinner->setValue(5);
-        attenuationSpinner->setValue(5);
+        widthSpinner->setValue(conf.width);
+        shiftSpinner->setValue(conf.shift);
+        attenuationSpinner->setValue(conf.attenuation);
 
         attenuationSpinner->setMaximum(5.0);
         attenuationSpinner->setMinimum(-5.0);
