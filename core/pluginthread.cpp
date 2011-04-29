@@ -132,6 +132,7 @@ void PluginThread::process()
             m->getOutputPlugin()->latchData (ev);
 
         execProcessList();
+        delete ev;
     }
     else
     {

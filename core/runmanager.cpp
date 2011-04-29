@@ -134,6 +134,10 @@ void RunManager::stop () {
         }
     }
 
+    while (!evbuf->empty())
+        delete evbuf->dequeue ();
+
+    // close interfaces
     foreach(AbstractInterface* iface, (*InterfaceManager::ref ().list ()))
     {
         if(iface->isOpen())
