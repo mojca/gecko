@@ -101,14 +101,16 @@ void DspTimeFilterPlugin::userProcess()
 {
     //std::cout << "DspTimeFilterPlugin Processing" << std::endl;
     QVector<uint32_t> data = inputs->first()->getData().value< QVector<uint32_t> > ();
+    QVector<double> odata (data.size (), 0);
     SamDSP dsp;
 
     // Convert to double
-    outData.assign(data.begin(), data.end());
+    for (int i= 0; i < data.size (); ++i)
+        odata [i] = data.at (i);
 
     //std::cout << conf.width << "  " << conf.spacing << std::endl;
-    dsp.fast_pad(outData,conf.width+conf.spacing,0,outData[0]);
-    dsp.fast_differentiator(outData,conf.width,conf.spacing);
-    outData.resize(data.size());
-    outputs->first()->setData(QVariant::fromValue (QVector<double>::fromStdVector (outData)));
+    dsp.fast_pad(odata,conf.width+conf.spacing,0,odata[0]);
+    dsp.fast_differentiator(odata,conf.width,conf.spacing);
+    odata.resize(data.size());
+    outputs->first()->setData(QVariant::fromValue (odata));
 }

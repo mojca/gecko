@@ -2141,7 +2141,8 @@ public:
         return 0;
     }
 
-    int fast_biboxfilter(std::vector<double> & v, unsigned int width)
+    template <typename T>
+    int fast_biboxfilter(T & v, unsigned int width)
     {
         unsigned int n = v.size();
         if(n > 2*width)
@@ -2155,7 +2156,8 @@ public:
         return 0;
     }
 
-    int fast_differentiator(std::vector<double> & v, unsigned int width, unsigned int delay)
+    template <typename T>
+    int fast_differentiator(T & v, unsigned int width, unsigned int delay)
     {
         unsigned int n = v.size();
         if(n > width + delay)
