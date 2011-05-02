@@ -109,6 +109,7 @@ HEADERS += core/addeditdlgs.h \
     include/pluginconnectorqueued.h \
     include/pluginmanager.h \
     include/runmanager.h \
+    include/samdsp.h \
     include/samqvector.h \
     include/viewport.h \
     interface/sis3100module.h \
