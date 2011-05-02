@@ -65,7 +65,7 @@ public:
     bool isEnabled() {return this->enabled; }
     double getStepSize() {return this->stepSize; }
     plotType getType() {return this->type; }
-    QVector<double> getData() {QReadLocker rd (&lock); return this->data; }
+    QVector<double> getData() {return this->data; }
     QList<Annotation*> *getAnnotations() {return &annotations; }
 
     double xmin, xmax, ymin, ymax;
@@ -84,7 +84,6 @@ private:
 
     QVector<double> data;
     QList<Annotation *> annotations;
-    QReadWriteLock lock;
 };
 
 /*! A widget for showing two-dimensional plots.
@@ -109,6 +108,7 @@ public:
 
     unsigned int getNofChannels() {return this->channels->size();}
     Channel* getChannelById(unsigned int id) {return this->channels->at(id);}
+    QReadWriteLock* getChanLock () { return &lock; }
 
 public slots:
     void clearHistogram();
@@ -167,6 +167,7 @@ private:
 
     QPixmap *backbuffer;
     bool backbuffervalid;
+    QReadWriteLock lock;
 };
 
 #endif // PLOT2D_H

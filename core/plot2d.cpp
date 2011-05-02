@@ -50,10 +50,7 @@ void Channel::clearAnnotations(){
 void Channel::setColor(QColor color){ this->color = color;}
 void Channel::setData(QVector<double> _data)
 {
-    {
-        QWriteLocker wr (&lock);
-        this->data = _data;
-    }
+    this->data = _data;
     emit changed ();
 }
 
@@ -235,8 +232,11 @@ void plot2d::paintEvent(QPaintEvent *)
 
         backbuffer->fill (Qt::white);
         QPainter pixmappainter (backbuffer);
-        setBoundaries();
-        drawChannels(pixmappainter);
+        {
+            QReadLocker rd (&lock);
+            setBoundaries();
+            drawChannels(pixmappainter);
+        }
         drawTicks(pixmappainter);
         backbuffervalid = true;
     }
