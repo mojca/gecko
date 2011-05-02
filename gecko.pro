@@ -67,10 +67,12 @@ SOURCES += core/baseplugin.cpp \
     plugin/dsp/dspcalfilterplugin.cpp \
     plugin/dsp/dspcfdplugin.cpp \
     plugin/dsp/dspclippingdetectorplugin.cpp \
+    plugin/dsp/dspcoincplugin.cpp \
     plugin/dsp/dspextractsignalplugin.cpp \
     plugin/dsp/dspkalmanbaselineplugin.cpp \
     plugin/dsp/dsppileupcorrectionplugin.cpp \
     plugin/dsp/dsppileupseparatorplugin.cpp \
+    plugin/dsp/dspqdcmultieventplugin.cpp \
     plugin/dsp/dspqdcspecplugin.cpp \
     plugin/dsp/dsptimefilterplugin.cpp \
     plugin/dsp/dsptriggerlmaxplugin.cpp \
@@ -80,8 +82,7 @@ SOURCES += core/baseplugin.cpp \
     plugin/output/vectoroutputplugin.cpp \
     plugin/pack/eventbuilderplugin.cpp \
     plugin/pack/packsis3350plugin.cpp \
-    plugin/plot/plot2dplugin.cpp \
-    plugin/dsp/dspqdcmultieventplugin.cpp
+    plugin/plot/plot2dplugin.cpp
 HEADERS += core/addeditdlgs.h \
     core/geckoremote.h \
     core/pluginthread.h \
@@ -99,6 +100,7 @@ HEADERS += core/addeditdlgs.h \
     include/baseui.h \
     include/confmap.h \
     include/eventbuffer.h \
+    include/geckoui.h \
     include/hexspinbox.h \
     include/interfacemanager.h \
     include/modulemanager.h \
@@ -149,10 +151,12 @@ HEADERS += core/addeditdlgs.h \
     plugin/dsp/dspcalfilterplugin.h \
     plugin/dsp/dspcfdplugin.h \
     plugin/dsp/dspclippingdetectorplugin.h \
+    plugin/dsp/dspcoincplugin.h \
     plugin/dsp/dspextractsignalplugin.h \
     plugin/dsp/dspkalmanbaselineplugin.h \
     plugin/dsp/dsppileupcorrectionplugin.h \
     plugin/dsp/dsppileupseparatorplugin.h \
+    plugin/dsp/dspqdcmultieventplugin.h \
     plugin/dsp/dspqdcspecplugin.h \
     plugin/dsp/dsptimefilterplugin.h \
     plugin/dsp/dsptriggerlmaxplugin.h \
@@ -162,7 +166,5 @@ HEADERS += core/addeditdlgs.h \
     plugin/output/vectoroutputplugin.h \
     plugin/pack/eventbuilderplugin.h \
     plugin/pack/packsis3350plugin.h \
-    plugin/plot/plot2dplugin.h \
-    include/geckoui.h \
-    plugin/dsp/dspqdcmultieventplugin.h
+    plugin/plot/plot2dplugin.h
 OTHER_FILES +=
