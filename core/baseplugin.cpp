@@ -43,7 +43,7 @@ BasePlugin::~BasePlugin()
     delete outputs;
 }
 
-AbstractPlugin::Group BasePlugin::getPluginGroup () {
+AbstractPlugin::Group BasePlugin::getPluginGroup () const {
     return PluginManager::ref().getGroupFromType(typename_);
 }
 

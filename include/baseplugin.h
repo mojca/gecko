@@ -45,7 +45,7 @@ public:
     const QString &getTypeName () const { return typename_; }
 
     /*! return the group of the plugin */
-    virtual AbstractPlugin::Group getPluginGroup ();
+    virtual AbstractPlugin::Group getPluginGroup () const;
 
     /*! return the list of input connectors */
     ConnectorList* getInputs() { return inputs; }

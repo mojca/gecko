@@ -16,7 +16,7 @@ class OutputPlugin : public BasePlugin {
 public:
     OutputPlugin (AbstractModule *mod);
 
-    AbstractPlugin::Group getPluginGroup () { return AbstractPlugin::GroupDemux; }
+    AbstractPlugin::Group getPluginGroup () const { return AbstractPlugin::GroupDemux; }
     void applySettings(QSettings *) { }
     void saveSettings(QSettings *) { }
 

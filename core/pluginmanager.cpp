@@ -155,7 +155,7 @@ QStringList PluginManager::getAvailableTypesOfGroup (AbstractPlugin::Group group
     return ret;
 }
 
-AbstractPlugin::Group PluginManager::getGroupFromType (QString &type) const {
+AbstractPlugin::Group PluginManager::getGroupFromType (QString type) const {
     return registry.value(type).group;
 }
 

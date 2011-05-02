@@ -85,7 +85,7 @@ public:
     }
 
     /*! Return the group for a specific type. */
-    AbstractPlugin::Group getGroupFromType (QString &type) const;
+    AbstractPlugin::Group getGroupFromType (QString type) const;
 
     /*! Return the name of the group */
     QString getGroupName (AbstractPlugin::Group group) const;

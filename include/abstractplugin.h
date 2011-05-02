@@ -53,7 +53,7 @@ public:
     /*! Return a list of the plugin's output connectors. */
     virtual QList<PluginConnector*>* getOutputs() = 0;
     /*! return the plugin's type */
-    virtual Group getPluginGroup () = 0;
+    virtual Group getPluginGroup () const = 0;
 
     /*! Make the plugin process an event. */
     virtual void process() = 0;
