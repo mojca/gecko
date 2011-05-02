@@ -50,7 +50,10 @@ void Channel::clearAnnotations(){
 void Channel::setColor(QColor color){ this->color = color;}
 void Channel::setData(QVector<double> _data)
 {
-    this->data = _data;
+    {
+        QWriteLocker wr (&lock);
+        this->data = _data;
+    }
     emit changed ();
 }
 

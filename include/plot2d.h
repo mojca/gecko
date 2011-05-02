@@ -11,6 +11,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QToolTip>
+#include <QReadWriteLock>
 #include <vector>
 #include <samdsp.h>
 
@@ -64,7 +65,7 @@ public:
     bool isEnabled() {return this->enabled; }
     double getStepSize() {return this->stepSize; }
     plotType getType() {return this->type; }
-    QVector<double> getData() {return this->data; }
+    QVector<double> getData() {QReadLocker rd (&lock); return this->data; }
     QList<Annotation*> *getAnnotations() {return &annotations; }
 
     double xmin, xmax, ymin, ymax;
@@ -83,6 +84,7 @@ private:
 
     QVector<double> data;
     QList<Annotation *> annotations;
+    QReadWriteLock lock;
 };
 
 /*! A widget for showing two-dimensional plots.
