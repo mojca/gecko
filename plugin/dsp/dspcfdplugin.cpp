@@ -48,6 +48,7 @@ void DspCfdPlugin::createSettings(QGridLayout *l) {
 
     fractionSpinner_ = new QDoubleSpinBox ();
     fractionSpinner_->setDecimals (3);
+    fractionSpinner_->setSingleStep (0.001);
     fractionSpinner_->setMinimum (0);
     fractionSpinner_->setMaximum (1);
     l->addWidget (new QLabel (tr ("Fraction:")), 1, 0, 1, 1);

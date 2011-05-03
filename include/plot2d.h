@@ -11,6 +11,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QToolTip>
+#include <QReadWriteLock>
 #include <vector>
 #include <samdsp.h>
 
@@ -107,6 +108,7 @@ public:
 
     unsigned int getNofChannels() {return this->channels->size();}
     Channel* getChannelById(unsigned int id) {return this->channels->at(id);}
+    QReadWriteLock* getChanLock () { return &lock; }
 
 public slots:
     void clearHistogram();
@@ -165,6 +167,7 @@ private:
 
     QPixmap *backbuffer;
     bool backbuffervalid;
+    QReadWriteLock lock;
 };
 
 #endif // PLOT2D_H

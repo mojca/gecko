@@ -516,7 +516,7 @@ int Sis3302Module::acquire(Event *ev)
 {
     int ret = 0;
 
-    printf("sis3302: Acquiring event 0x%08x\n",&ev);
+    printf("sis3302: Acquiring event %p\n", ev);
 
     if(conf.acMode == Sis3302config::singleEvent ||
        conf.enable_page_wrap == false) {

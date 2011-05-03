@@ -21,7 +21,7 @@ public:
     /*! returns a list of all registered interfaces. */
     const QList<AbstractInterface*>* list () const { return items_; }
 
-    /*! removes all modules. */
+    /*! removes all interfaces. */
     void clear();
 
     /*! sets the main interface. The main interface module's output 1 is set during data acquisition.

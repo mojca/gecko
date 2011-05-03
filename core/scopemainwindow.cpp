@@ -1,6 +1,5 @@
 #include "scopemainwindow.h"
 #include "addeditdlgs.h"
-#include "scopechannel.h"
 #include "baseui.h"
 #include "systeminfo.h"
 #include "remotecontrolpanel.h"

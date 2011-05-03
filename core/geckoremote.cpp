@@ -122,7 +122,7 @@ void GeckoRemote::readUdpDatagram () {
     }
 }
 
-void GeckoRemote::processDatagram (QByteArray datagram, QHostAddress sender, quint16 senderPort)
+void GeckoRemote::processDatagram (QByteArray datagram, QHostAddress sender, uint16_t senderPort)
 {
     std::cout << "Data: " << std::hex;
     for(int i = 0; i < datagram.size(); i++)

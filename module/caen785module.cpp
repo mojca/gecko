@@ -1,7 +1,6 @@
 #include "caen785module.h"
 #include "modulemanager.h"
 #include "runmanager.h"
-#include "scopechannel.h"
 
 static ModuleRegistrar registrar ("caen785", Caen785Module::create);
 

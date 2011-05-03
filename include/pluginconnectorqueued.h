@@ -9,6 +9,9 @@
 
 class BasePlugin;
 
+/*! A plugin connector that uses QQueue to queue outgoing data.
+ *
+ */
 template<typename T>
 class PluginConnectorQueued : public PluginConnector
 {

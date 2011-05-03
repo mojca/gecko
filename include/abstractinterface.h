@@ -10,7 +10,7 @@ class BaseUI;
 class QSettings;
 
 /*! Abstract base class for all VME interfaces.
- * To implement a new interface please derive from BaseInterface which already handles ids names and types. */
+ * To implement a new interface please derive from BaseInterface which already handles ids, names and types. */
 class AbstractInterface : public QObject {
 public:
     virtual ~AbstractInterface () {}
@@ -61,7 +61,14 @@ public:
     virtual int readA32D32(const uint32_t addr, uint32_t* data) = 0;
     /*! read a 16-bit word from the specified address. */
     virtual int readA32D16(const uint32_t addr, uint16_t* data) = 0;
-    /*! read 32-bit words from the specified address.
+    /*! read multiple 32-bit words, starting with the specified address.
+     *  This function continuously reads words into the dma_buffer, increasing the address after each successful read.
+     *  If a bus error occurs reading is stopped and the number of words read is returned in got_nof_words.
+     *
+     *  This function uses D32 requests to access the VME module.
+     */
+    virtual int readA32DMA32(const uint32_t addr, uint32_t* dma_buffer, uint32_t request_nof_words, uint32_t* got_nof_words) = 0;
+    /*! read multiple 32-bit words from the specified address.
      *  This function performs at most \c request_nof_words reads on address \c addr, storing
      *  the words into the dma_buffer. If a bus error occurs, the reading stops and the number of words read
      *  is stored in \c got_nof_words.

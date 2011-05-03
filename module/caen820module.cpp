@@ -5,7 +5,6 @@
 #include "confmap.h"
 #include "modulemanager.h"
 #include "runmanager.h"
-#include "scopechannel.h"
 
 #include <vector>
 
@@ -132,6 +131,18 @@ int Caen820Module::acquire (Event *ev) {
     }
 
     return 0;
+}
+
+QVector<uint32_t> Caen820Module::acquireMonitor () {
+    QVector<uint32_t> data (32, 0);
+    AbstractInterface *iface = getInterface();
+    uint32_t got = 0;
+
+//    for (int i = 0; i < 32; ++i)
+//        iface->readA32D32 (conf_.baddr + 0x1000 + 4 * i, &data [i]);
+    iface->readA32DMA32 (conf_.baddr + CAEN820_CTR00, data.data (), 32, &got);
+
+    return data;
 }
 
 int Caen820Module::getNofActiveChannels () {

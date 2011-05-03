@@ -4,6 +4,9 @@
 #include "pluginconnector.h"
 #include <assert.h>
 
+/*! A simple plugin connector that performs no buffering at all.
+ *  Use this connector type for input connectors because it has the smallest memory footprint.
+ */
 class PluginConnectorPlain : public PluginConnector {
 public:
     PluginConnectorPlain (AbstractPlugin* _plugin, ScopeCommon::ConnectorType _type, QString _name, DataType _dt)

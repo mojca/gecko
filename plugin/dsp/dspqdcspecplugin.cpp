@@ -250,7 +250,7 @@ void DspQdcSpecPlugin::userProcess()
             tmp *= -1;
         }
 
-        outputs->at(1)->setData (QVariant::fromValue<double> (tmp));
+        outputs->at(1)->setData (QVariant::fromValue (QVector<double> () << tmp));
 
         // Determine bin
         tmp -= conf.min;

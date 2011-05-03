@@ -63,7 +63,6 @@ class SystemInfo;
 class RemoteControlPanel;
 
 Q_DECLARE_METATYPE(QWidget*)
-Q_DECLARE_METATYPE(ScopeChannel*)
 Q_DECLARE_METATYPE(QHostAddress)
 Q_DECLARE_METATYPE(QAbstractSocket::SocketError)
 

@@ -231,16 +231,16 @@ public:
     void createUI () {
         name_ = new QLineEdit (this);
 
-        typeselector_ = new QComboBox (this);
-        typeselector_->setEditable (false);
-        typeselector_->setInsertPolicy (QComboBox::InsertAlphabetically);
-        typeselector_->addItems (PluginManager::ref ().getAvailableTypes ());
-
         groupselector_ = new QComboBox (this);
         groupselector_->setEditable (false);
         groupselector_->setInsertPolicy (QComboBox::InsertAlphabetically);
         groupselector_->addItem("Select Type");
         groupselector_->addItems (PluginManager::ref ().getAvailableGroups());
+
+        typeselector_ = new QComboBox (this);
+        typeselector_->setEditable (false);
+        typeselector_->setInsertPolicy (QComboBox::InsertAlphabetically);
+        typeselector_->addItems (PluginManager::ref ().getAvailableTypes ());
 
         attributes_ = new QTableWidget (this);
         attributes_->setColumnCount (2);

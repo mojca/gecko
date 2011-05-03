@@ -43,6 +43,9 @@ public:
     int configure ();
     void setBaseAddress (uint32_t baddr);
     uint32_t getBaseAddress () const;
+    int dataClear ();
+
+    QVector<uint32_t> acquireMonitor ();
 
     void applySettings (QSettings *);
     void saveSettings (QSettings *);
@@ -51,7 +54,6 @@ private:
     Caen820Module (int id, const QString &name);
 
     int getNofActiveChannels ();
-    int dataClear ();
 
 private:
     Caen820Config conf_;

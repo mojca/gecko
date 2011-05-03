@@ -12,13 +12,16 @@
 #include "outputplugin.h"
 
 class BaseUI;
-class ScopeChannel;
 class ModuleManager;
 
 /*! base class for all modules.
  *  Each module is registered with the module manager to allow generalised access.
  *  To implement a new DAQ module inherit from this class.
  *  You will need to call #setUI in your constructor because the main window needs the UI right after construction of the module.
+ *
+ *  The OutputPlugin created by the #createOutputPlugin method uses the registered EventSlots to derive the naming and
+ *  number of its output connectors. Therefore you should register all EventSlots (using #addSlot) prior to calling #createOutputPlugin.
+ *  This should also happen inside the constructor.
  */
 class BaseModule : public AbstractModule
 {

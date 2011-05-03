@@ -7,12 +7,16 @@ class AbstractModule;
 class Event;
 class EventSlot;
 
+/*! The OutputPlugin class handles the transition from the module world to the plugin world.
+ *  It generates output connectors from the EventSlots registered by its owning module and
+ *  transfers the corrsponding data from the Event objects to them.
+ */
 class OutputPlugin : public BasePlugin {
     Q_OBJECT
 public:
     OutputPlugin (AbstractModule *mod);
 
-    AbstractPlugin::Group getPluginGroup () { return AbstractPlugin::GroupDemux; }
+    AbstractPlugin::Group getPluginGroup () const { return AbstractPlugin::GroupDemux; }
     void applySettings(QSettings *) { }
     void saveSettings(QSettings *) { }
 

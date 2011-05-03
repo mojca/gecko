@@ -165,8 +165,8 @@ void Sis3150UI::readButtonClicked()
     switch (datamode) {
     case D32:
         {
-            int ret;
-            uint32_t data;
+            int ret = 0;
+            uint32_t data = 0xC0FFEEEE;
             switch (addrmode) {
             case A32:
             case A24:
@@ -179,8 +179,8 @@ void Sis3150UI::readButtonClicked()
         break;
     case D16:
         {
-            int ret;
-            uint16_t data;
+            int ret = 0;
+            uint16_t data = 0xDEAD;
             switch (addrmode) {
             case A32:
             case A24:
@@ -199,7 +199,7 @@ void Sis3150UI::writeButtonClicked()
     bool ok;
     uint32_t addr = addrEdit->text().toUInt(&ok,16);
     uint32_t data = dataEdit->text().toUInt(&ok,16);
-    int ret;
+    int ret = 0;
 
     if(!ok) { outputText(tr("Sis3150UI::writeButtonClicked(): conversion failed.")); return; }
 
@@ -227,6 +227,7 @@ void Sis3150UI::writeButtonClicked()
 
 void Sis3150UI::outputText(QString text)
 {
+    statusViewTextEdit->textCursor().movePosition(QTextCursor::End);
     statusViewTextEdit->insertPlainText(text);
     statusViewTextEdit->ensureCursorVisible();
 }

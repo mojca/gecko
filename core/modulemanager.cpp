@@ -148,11 +148,6 @@ void ModuleManager::setModuleName (AbstractModule *m, const QString &name) {
     emit moduleNameChanged (m, oldname);
 }
 
-ThreadBuffer<uint32_t>* ModuleManager::createBuffer(uint32_t _size, uint32_t _chunkSize, int _id)
-{
-    return new ThreadBuffer<uint32_t>(_size,_chunkSize,_id);
-}
-
 void ModuleManager::registerModuleType (const QString &type, ModuleFactory fac) {
     if (registry.contains (type)) {
         std::cout << "Double registration of module type " << type.toStdString () << ". Ignoring!" << std::endl;

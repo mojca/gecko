@@ -128,6 +128,7 @@ void Plot2DPlugin::userProcess()
     //std::cout << "Plot2DPlugin Processing" << std::endl;
 
     int i = 0;
+    QWriteLocker wr (plot->getChanLock ());
     foreach(PluginConnector* input, (*inputs))
     {
         if(input->getData().canConvert< QVector<double> > ())

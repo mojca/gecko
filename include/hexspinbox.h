@@ -2,7 +2,10 @@
 #define HEXSPINBOX_H
 
 #include <QSpinBox>
-
+/*! The HexSpinBox widget displays a hexadecimal value inside a QSpinBox widget.
+ *  It provides the means for validating hexadecimal input and conversion from and to
+ *  hex strings.
+ */
 class HexSpinBox : public QSpinBox {
 public:
     HexSpinBox (QWidget *p)

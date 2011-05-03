@@ -57,6 +57,7 @@ public:
     int writeA32D32(const uint32_t addr, const uint32_t data);
     int readA32D16(const uint32_t addr, uint16_t* data);
     int writeA32D16(const uint32_t addr, const uint16_t data);
+    int readA32DMA32(const uint32_t addr, uint32_t* dma_buffer, uint32_t request_nof_words, uint32_t* got_nof_words);
     int readA32FIFO(const uint32_t addr, uint32_t* dma_buffer, uint32_t request_nof_words, uint32_t* got_nof_words);
     int readA32BLT32(const uint32_t addr, uint32_t* dma_buffer, uint32_t request_nof_words, uint32_t* got_nof_words);
     int readA32MBLT64(const uint32_t addr, uint32_t* dma_buffer, uint32_t request_nof_words, uint32_t* got_nof_words);

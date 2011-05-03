@@ -4,7 +4,6 @@
 #include "pluginthread.h"
 #include "abstractmodule.h"
 #include "outputplugin.h"
-#include "scopechannel.h"
 #include "runmanager.h"
 #include "eventbuffer.h"
 
@@ -133,6 +132,7 @@ void PluginThread::process()
             m->getOutputPlugin()->latchData (ev);
 
         execProcessList();
+        delete ev;
     }
     else
     {

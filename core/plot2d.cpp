@@ -232,8 +232,11 @@ void plot2d::paintEvent(QPaintEvent *)
 
         backbuffer->fill (Qt::white);
         QPainter pixmappainter (backbuffer);
-        setBoundaries();
-        drawChannels(pixmappainter);
+        {
+            QReadLocker rd (&lock);
+            setBoundaries();
+            drawChannels(pixmappainter);
+        }
         drawTicks(pixmappainter);
         backbuffervalid = true;
     }
@@ -294,8 +297,8 @@ void plot2d::setBoundaries()
         }
         else if(ch->isEnabled())
         {
-            int newymin;
-            int newymax;
+            int newymin = 0;
+            int newymax = 0;
 
             QVector<double> data = ch->getData();
             if(data.size() > 0)
@@ -364,33 +367,80 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
         //cout << "Bounds: (" << curChan->xmin << "," << curChan->xmax << ") (" << curChan->ymin << "," << curChan->ymax << ") " << endl;
 
         QPolygon poly;
-        int lastX = 0;
-        double stepX = (curChan->xmax*1.)/(double)(width()/viewport.width());
-        if(stepX < 1) stepX = 1;
-        int delta = 0;
-        int deltaX = 0;
-        int lastData = 0;
-        for(unsigned int i = curChan->xmin; (i < nofPoints && i < curChan->xmax); i++)
-        {
-            // Only append point, if it would actually be displayed
-            if(abs(data[i]-data[lastX]) > abs(delta))
-            {
-                delta = data[i]-data[lastX];
-                deltaX = i;
-                //std::cout << "Delta: " << delta << " , i: " << i << std::endl;
+        double stepX = (curChan->xmax*1. - curChan->xmin)/(double)(width()/viewport.width());
+        if (stepX > 1) { // there are multiple points per pixel
+            long lastX = 0;
+            int coord = curChan->xmin;
+            double dataMin, dataMax, dataFirst, dataLast;
+            dataMin = dataMax = dataFirst = dataLast = data [curChan->xmin];
+
+            // draw at most 4 points per picture column: first, min, max, last. That way
+            // the lines between pixels are correct and not too much detail gets lost
+            for (unsigned int i = curChan->xmin + 1; (i < nofPoints && i < curChan->xmax); ++i) {
+                long x = lrint ((i - curChan->xmin) / stepX);
+                if (lastX != x) { // begin drawing a new pixel
+                    poly.push_back(QPoint (coord, -dataFirst));
+                    if (dataLast == dataMin) { // save a point by drawing the min last
+                        if (dataMax != dataFirst)
+                            poly.push_back (QPoint (coord, -dataMax));
+                        if (dataMin != dataMax)
+                            poly.push_back (QPoint (coord, -dataMin));
+                    } else {
+                        if (dataMin != dataFirst)
+                            poly.push_back (QPoint (coord, -dataMin));
+                        if (dataMax != dataMin)
+                            poly.push_back (QPoint (coord, -dataMax));
+                        if (dataLast != dataMin)
+                            poly.push_back (QPoint (coord, -dataLast));
+                    }
+                    lastX = x;
+                    coord = i;
+                    dataMin = dataMax = dataFirst = dataLast = data [i];
+                } else { // continue pixel
+                    dataLast = data [i];
+                    if (dataMin > dataLast)
+                        dataMin = dataLast;
+                    if (dataMax < dataLast)
+                        dataMax = dataLast;
+                }
             }
-            if((int)(i) >= lastX+stepX || i == (curChan->xmax-1))
+
+            //finish last pixel
+            poly.push_back(QPoint (coord, -dataFirst));
+            if (dataMin != dataFirst)
+                poly.push_back (QPoint (coord, -dataMin));
+            if (dataMax != dataMin)
+                poly.push_back (QPoint (coord, -dataMax));
+            if (dataLast != dataMin)
+                poly.push_back (QPoint (coord, -dataLast));
+        } else {
+            int lastX = 0;
+            int delta = 0;
+            int deltaX = 0;
+            int lastData = 0;
+            for(unsigned int i = curChan->xmin; (i < nofPoints && i < curChan->xmax); i++)
             {
-                 // y-values increase downwards
-                 //poly.push_back(QPoint(i,-data[i]));
-                 //poly.push_back(QPoint(i+1,-data[i]));
-                 lastData += delta;
-                 poly.push_back(QPoint(i,-data[deltaX]));
-                 poly.push_back(QPoint(i+1,-data[deltaX]));
-                 lastX = i;
-                 delta=0;
+                // Only append point, if it would actually be displayed
+                if(abs(data[i]-data[lastX]) > abs(delta))
+                {
+                    delta = data[i]-data[lastX];
+                    deltaX = i;
+                    //std::cout << "Delta: " << delta << " , i: " << i << std::endl;
+                }
+                if((int)(i) >= lastX+1 || i == (curChan->xmax-1))
+                {
+                     // y-values increase downwards
+                     //poly.push_back(QPoint(i,-data[i]));
+                     //poly.push_back(QPoint(i+1,-data[i]));
+                     lastData += delta;
+                     poly.push_back(QPoint(i,-data[deltaX]));
+                     poly.push_back(QPoint(i+1,-data[deltaX]));
+                     lastX = i;
+                     delta=0;
+                }
             }
         }
+
         painter.setPen(QPen(curChan->getColor()));
         painter.drawText(QPoint(0,id*20),tr("%1").arg(id,1,10));
 

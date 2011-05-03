@@ -1,4 +1,5 @@
 #include "sis3350ui.h"
+#include <QMessageBox>
 
 Sis3350UI::Sis3350UI(Sis3350Module* _module)
 : module (_module)
@@ -74,6 +75,7 @@ QWidget* Sis3350UI::createButtons()
     singleShot = new QPushButton(tr("Update"));
     connect(singleShot,SIGNAL(clicked()),this,SLOT(singleShotClicked()));
     freeRunningButton = new QPushButton(tr("Free Running"));
+    freeRunningButton->setCheckable (true);
     connect(freeRunningButton,SIGNAL(clicked()),this,SLOT(freeRunningButtonClicked()));
     previewButton = new QPushButton(tr("Preview..."));
     connect(previewButton,SIGNAL(clicked()),this,SLOT(previewButtonClicked()));
@@ -694,8 +696,14 @@ void Sis3350UI::singleShotClicked()
     }
     timerArmMutex.unlock();
 
-    if(module->isIfaceOpen())
+    if(module->getInterface())
     {
+        if (!module->getInterface()->isOpen())
+            if (0 != module->getInterface()->open ()) {
+                QMessageBox::warning (this, tr ("<%1> SIS3350 ADC").arg (name), tr ("Could not open interface"), QMessageBox::Ok);
+                return;
+            }
+
         // Only do one acquisition and do not save files
         module->conf.nof_reads = 1;
         unsigned int tempPollcount = module->conf.pollcount;
@@ -725,22 +733,30 @@ void Sis3350UI::armTimer()
 
 void Sis3350UI::freeRunningButtonClicked()
 {
-    if(module->isIfaceOpen())
+    if(module->getInterface())
     {
         static bool isRunning = false;
 
         if(isRunning == false)
         {
+            if (!module->getInterface()->isOpen())
+                if (0 != module->getInterface()->open ()) {
+                    QMessageBox::warning (this, tr ("<%1> SIS3350 ADC").arg (name), tr ("Could not open interface"), QMessageBox::Ok);
+                    return;
+                }
+
             isRunning = true;
             timerArmMutex.lock();
             timerArmed = true;
             timerArmMutex.unlock();
             freeRunnerTimer->start();
+            freeRunningButton->setChecked(true);
         }
         else
         {
             isRunning = false;
             freeRunnerTimer->stop();
+            freeRunningButton->setChecked(false);
         }
     }
 }

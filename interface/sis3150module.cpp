@@ -113,6 +113,12 @@ int Sis3150Module::writeA32D16(const uint32_t addr, const uint16_t data)
     return sis3150_vme_A32D16_write(m_device,addr,data);
 }
 
+int Sis3150Module::readA32DMA32(const uint32_t addr, uint32_t* dma_buffer,
+                                uint32_t request_nof_words, uint32_t* got_nof_words)
+{
+    return sis3150Usb_Vme_Dma_Read(m_device, addr, 0x9, 4, 0, dma_buffer, request_nof_words, got_nof_words);
+}
+
 int Sis3150Module::readA32FIFO(const uint32_t addr, uint32_t* dma_buffer,
                                 uint32_t request_nof_words, uint32_t* got_nof_words)
 {

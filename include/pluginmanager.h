@@ -5,7 +5,6 @@
 #include <QSettings>
 #include <QMap>
 
-#include "abstractmanager.h"
 #include "baseplugin.h"
 #include "pluginconnector.h"
 #include "modulemanager.h"
@@ -47,11 +46,6 @@ public:
     AbstractPlugin* get (int id);
     AbstractPlugin* get (const QString &name); /*!< \overload */
 
-    /*! get the output connectors from all daq modules.
-     *  \deprecated
-     */
-    QList<PluginConnector*>* getRootConnectors() { return roots; }
-
     /*! change the name of the given plugin */
     void setPluginName (AbstractPlugin *p, const QString &name);
 
@@ -66,13 +60,12 @@ public:
      *
      *  \param type  The name by which the plugin type will be known
      *  \param fac   The factory method that returns an instance of the plugin when called
+     *  \param group The group under which the plugin will be shown
      *  \param attrs The attributes that are meaningful for the plugin and their types
      *
      *  \sa PluginRegistrar
      */
     void registerPluginType (const QString &type, PluginFactory fac, const AbstractPlugin::Group, const AbstractPlugin::AttributeMap & attrs);
-
-    void registerPluginType (const QString &type, const AbstractPlugin::Group, const AbstractPlugin::AttributeMap & attrs);
 
     /*! create a plugin of the specified type with the given attributes. */
     AbstractPlugin *create (const QString &type, const QString &name, const AbstractPlugin::Attributes &attrs = AbstractPlugin::Attributes ());
@@ -92,7 +85,7 @@ public:
     }
 
     /*! Return the group for a specific type. */
-    AbstractPlugin::Group getGroupFromType (QString &type) const;
+    AbstractPlugin::Group getGroupFromType (QString type) const;
 
     /*! Return the name of the group */
     QString getGroupName (AbstractPlugin::Group group) const;
@@ -143,21 +136,17 @@ private: //no copying
 /*! Convenience class to facilitate plugin registration.
  *  This class registers a plugin when it is constructed. For automatic registration of a plugin, add a line like the
  *  following to the plugin's cpp file:
- *  \code static PluginRegistrar reg ("MyPlugin", MyPlugin::create, AbstractPlugin::theGroup) \endcode
+ *  \code static PluginRegistrar reg ("MyPlugin", MyPlugin::create, AbstractPlugin::theGroup); \endcode
  *
  *  For plugins with attributes, the situation is a little more complicated as QMap does not allow in-place addition of elements to temporaries.
  *  In that case, add a static method to your plugin class that returns the attribute map:
- *  \code static PluginRegistrar reg ("MyPlugin", MyPlugin::create, AbstractPlugin::theGroup, MyPlugin::myPluginAttrs ()) \endcode
+ *  \code static PluginRegistrar reg ("MyPlugin", MyPlugin::create, AbstractPlugin::theGroup, MyPlugin::myPluginAttrs ()); \endcode
  */
 class PluginRegistrar {
 public:
     PluginRegistrar (const QString &type, PluginManager::PluginFactory fac, const AbstractPlugin::Group group = AbstractPlugin::GroupUnspecified, const AbstractPlugin::AttributeMap & attrs = AbstractPlugin::AttributeMap ()) {
         PluginManager::ref ().registerPluginType (type, fac, group, attrs);
     }
-
-    PluginRegistrar (const QString &type, const AbstractPlugin::Group group = AbstractPlugin::GroupUnspecified, const BasePlugin::AttributeMap & attrs = AbstractPlugin::AttributeMap ()) {
-        PluginManager::ref ().registerPluginType (type, group, attrs);
-    } /*!< \overload */
 
 private: // no copy, no dynamic alloc
     PluginRegistrar (const PluginRegistrar &);

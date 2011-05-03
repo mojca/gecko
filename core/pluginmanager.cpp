@@ -127,16 +127,6 @@ void PluginManager::registerPluginType (const QString &type, PluginFactory fac, 
     registry.insert (type, desc);
 }
 
-void PluginManager::registerPluginType (const QString &type, const AbstractPlugin::Group group, const AbstractPlugin::AttributeMap & attrs) {
-    if (registry.contains (type)) {
-        std::cout << "Double registration of plugin type " << type.toStdString () << "! Ignoring." << std::endl;
-        return;
-    }
-
-    PluginTypeDesc desc = {0, group, attrs};
-    registry.insert (type, desc);
-}
-
 AbstractPlugin *PluginManager::create(const QString &type, const QString &name, const AbstractPlugin::Attributes &attrs) {
     if (get (name)) // name already exists
         return NULL;
@@ -165,7 +155,7 @@ QStringList PluginManager::getAvailableTypesOfGroup (AbstractPlugin::Group group
     return ret;
 }
 
-AbstractPlugin::Group PluginManager::getGroupFromType (QString &type) const {
+AbstractPlugin::Group PluginManager::getGroupFromType (QString type) const {
     return registry.value(type).group;
 }
 

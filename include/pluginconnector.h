@@ -14,7 +14,10 @@ namespace ScopeCommon
     enum ConnectorType{in,out}; /*!< The direction of data flow for a PluginConnector */
 }
 
-/*! A source or sink for data transferred between plugins. */
+/*! A source or sink for data transferred between plugins.
+ *  All data handling is performed by output connectors. Input connectors only
+ *  pass commands to the output they are connected to.
+ */
 class PluginConnector
 {
 public:

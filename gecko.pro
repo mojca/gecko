@@ -28,13 +28,11 @@ SOURCES += core/baseplugin.cpp \
     core/outputplugin.cpp \
     core/plot2d.cpp \
     core/pluginconnector.cpp \
-    core/pluginconnectorthreadbuffered.cpp \
     core/pluginmanager.cpp \
     core/pluginthread.cpp \
     core/remotecontrolpanel.cpp \
     core/runmanager.cpp \
     core/runthread.cpp \
-    core/scopechannel.cpp \
     core/scopemainwindow.cpp \
     core/threadbuffer.cpp \
     core/viewport.cpp \
@@ -53,15 +51,12 @@ SOURCES += core/baseplugin.cpp \
     module/caen820dmx.cpp \
     module/caen820ui.cpp \
     module/caenadcdmx.cpp \
-    module/dummymodule.cpp \
-    module/dummyui.cpp \
     module/sis3302dmx.cpp \
     module/sis3302module.cpp \
     module/sis3302ui.cpp \
     module/sis3350dmx.cpp \
     module/sis3350module.cpp \
     module/sis3350ui.cpp \
-    plugin/aux/dummyplugin.cpp \
     plugin/aux/fanoutplugin.cpp \
     plugin/aux/inttodoubleplugin.cpp \
     plugin/cache/basecacheplugin.cpp \
@@ -72,10 +67,12 @@ SOURCES += core/baseplugin.cpp \
     plugin/dsp/dspcalfilterplugin.cpp \
     plugin/dsp/dspcfdplugin.cpp \
     plugin/dsp/dspclippingdetectorplugin.cpp \
+    plugin/dsp/dspcoincplugin.cpp \
     plugin/dsp/dspextractsignalplugin.cpp \
     plugin/dsp/dspkalmanbaselineplugin.cpp \
     plugin/dsp/dsppileupcorrectionplugin.cpp \
     plugin/dsp/dsppileupseparatorplugin.cpp \
+    plugin/dsp/dspqdcmultieventplugin.cpp \
     plugin/dsp/dspqdcspecplugin.cpp \
     plugin/dsp/dsptimefilterplugin.cpp \
     plugin/dsp/dsptriggerlmaxplugin.cpp \
@@ -85,8 +82,7 @@ SOURCES += core/baseplugin.cpp \
     plugin/output/vectoroutputplugin.cpp \
     plugin/pack/eventbuilderplugin.cpp \
     plugin/pack/packsis3350plugin.cpp \
-    plugin/plot/plot2dplugin.cpp \
-    plugin/dsp/dspqdcmultieventplugin.cpp
+    plugin/plot/plot2dplugin.cpp
 HEADERS += core/addeditdlgs.h \
     core/geckoremote.h \
     core/pluginthread.h \
@@ -94,8 +90,8 @@ HEADERS += core/addeditdlgs.h \
     core/runthread.h \
     core/scopemainwindow.h \
     core/systeminfo.h \
+    core/threadbuffer.h \
     include/abstractinterface.h \
-    include/abstractmanager.h \
     include/abstractmodule.h \
     include/abstractplugin.h \
     include/baseinterface.h \
@@ -104,6 +100,7 @@ HEADERS += core/addeditdlgs.h \
     include/baseui.h \
     include/confmap.h \
     include/eventbuffer.h \
+    include/geckoui.h \
     include/hexspinbox.h \
     include/interfacemanager.h \
     include/modulemanager.h \
@@ -112,12 +109,10 @@ HEADERS += core/addeditdlgs.h \
     include/pluginconnector.h \
     include/pluginconnectorplain.h \
     include/pluginconnectorqueued.h \
-    include/pluginconnectorthreadbuffered.h \
     include/pluginmanager.h \
     include/runmanager.h \
+    include/samdsp.h \
     include/samqvector.h \
-    include/scopechannel.h \
-    include/threadbuffer.h \
     include/viewport.h \
     interface/sis3100module.h \
     interface/sis3100ui.h \
@@ -138,8 +133,6 @@ HEADERS += core/addeditdlgs.h \
     module/caen_v785.h \
     module/caen_v792.h \
     module/caen_v820.h \
-    module/dummymodule.h \
-    module/dummyui.h \
     module/sis3302dmx.h \
     module/sis3302.h \
     module/sis3302module.h \
@@ -148,7 +141,6 @@ HEADERS += core/addeditdlgs.h \
     module/sis3350.h \
     module/sis3350module.h \
     module/sis3350ui.h \
-    plugin/aux/dummyplugin.h \
     plugin/aux/fanoutplugin.h \
     plugin/aux/inttodoubleplugin.h \
     plugin/cache/basecacheplugin.h \
@@ -159,10 +151,12 @@ HEADERS += core/addeditdlgs.h \
     plugin/dsp/dspcalfilterplugin.h \
     plugin/dsp/dspcfdplugin.h \
     plugin/dsp/dspclippingdetectorplugin.h \
+    plugin/dsp/dspcoincplugin.h \
     plugin/dsp/dspextractsignalplugin.h \
     plugin/dsp/dspkalmanbaselineplugin.h \
     plugin/dsp/dsppileupcorrectionplugin.h \
     plugin/dsp/dsppileupseparatorplugin.h \
+    plugin/dsp/dspqdcmultieventplugin.h \
     plugin/dsp/dspqdcspecplugin.h \
     plugin/dsp/dsptimefilterplugin.h \
     plugin/dsp/dsptriggerlmaxplugin.h \
@@ -172,7 +166,5 @@ HEADERS += core/addeditdlgs.h \
     plugin/output/vectoroutputplugin.h \
     plugin/pack/eventbuilderplugin.h \
     plugin/pack/packsis3350plugin.h \
-    plugin/plot/plot2dplugin.h \
-    include/geckoui.h \
-    plugin/dsp/dspqdcmultieventplugin.h
+    plugin/plot/plot2dplugin.h
 OTHER_FILES +=
