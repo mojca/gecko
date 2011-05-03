@@ -29,7 +29,7 @@ void Caen785Module::setChannels()
     // Setup channels
     EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
     for (int i= 0; i < 32; ++i)
-        evbuf->registerSlot (this, QString ("out %1").arg (i), PluginConnector::VectorUint32);
+        evslots << evbuf->registerSlot (this, QString ("out %1").arg (i), PluginConnector::VectorUint32);
 }
 
 int Caen785Module::softReset()

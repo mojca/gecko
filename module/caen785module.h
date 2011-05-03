@@ -55,6 +55,10 @@ public:
     , slideSubEnabled (false), alwaysIncrementEventCounter (true)
     , pollcount (0)
     {
+        for (int i = 0; i < 32; ++i) {
+            thresholds [i] = 0;
+            killChannel [i] = false;
+        }
     }
 };
 
