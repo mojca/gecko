@@ -17,7 +17,7 @@ struct Caen820Config {
 
     Caen820Config ()
     : baddr (0)
-    , channel_enable (0xFFFFFFFF)
+    , channel_enable (0xFFFFFFFFU)
     , acq_mode (1)
     , dwell_time (3)
     , short_data_format (false)
