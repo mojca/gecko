@@ -28,13 +28,13 @@ void Sis3302UI::createUI()
     gn.append("Basic Setup"); uif.addGroupToTab(tn[nt],gn[ng]);
     uif.addPopupToGroup(tn[nt],gn[ng],"Mode","acMode",(QStringList() << "Single Event" << "Multi Event"));
 
-    gn.append("Advanced Setup"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    gn.append("Advanced Setup"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addCheckBoxToGroup(tn[nt],gn[ng],"Autostart Acquisition","autostart_acq");
     uif.addCheckBoxToGroup(tn[nt],gn[ng],"Use Internal Trigger","internal_trg_as_stop");
     uif.addCheckBoxToGroup(tn[nt],gn[ng],"Use External Trigger (LEMO)","enable_external_trg");
     uif.addCheckBoxToGroup(tn[nt],gn[ng],"ADC value as Big Endian","adc_value_big_endian");
 
-    gn.append("Control"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    gn.append("Control"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addUnnamedGroupToGroup(tn[nt],gn[ng],"b0_");
     uif.addButtonToGroup(tn[nt],gn[ng]+"b0_","Start","start_button");
     uif.addButtonToGroup(tn[nt],gn[ng]+"b0_","Stop","stop_button");
@@ -91,14 +91,14 @@ void Sis3302UI::createUI()
     // TAB EVENT
     tn.append("Event"); nt++; uif.addTab(tn[nt]);
 
-    gn.append("Delay and Length"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    gn.append("Delay and Length"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addSpinnerToGroup(tn[nt],gn[ng],"Start Delay","start_delay",0,0xffffff); // 24 bits
     uif.addSpinnerToGroup(tn[nt],gn[ng],"Stop Delay","stop_delay",0,0xffffff); // 24 bits
     uif.addSpinnerToGroup(tn[nt],gn[ng],"Number of Events","nof_events",0,512 /*0x0fffff*/); // 20 bits actually, but only 512 can be stored
     uif.addCheckBoxToGroup(tn[nt],gn[ng],"Event Length Stop Mode","event_length_as_stop");
     uif.addSpinnerToGroup(tn[nt],gn[ng],"Event Length","event_length",0,0x1ffffff); // 25 bits
 
-    gn.append("Advanced"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    gn.append("Advanced"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addCheckBoxToGroup(tn[nt],gn[ng],"Page Wrap","enable_page_wrap");
     uif.addPopupToGroup(tn[nt],gn[ng],"Page Wrap Size","wrapSize",(QStringList() << "64" << "128" << "256" << "512" << "1k" << "4k" << "16k" << "64" << "256k" << "1M" << "4M" << "16M"));
     uif.addPopupToGroup(tn[nt],gn[ng],"Averaging Mode","avgMode",(QStringList() << "1" << "2" << "4" << "8" << "16" << "32" << "64" << "128"));
@@ -106,7 +106,7 @@ void Sis3302UI::createUI()
     // TAB DAC SETUP
     tn.append("DAC setup"); nt++; uif.addTab(tn[nt]);
 
-    gn.append("Offsets"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    gn.append("Offsets"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     for(int ch=0; ch<8; ch++)
     {
         uif.addSpinnerToGroup(tn[nt],gn[ng],tr("DAC offset %1").arg(ch),tr("dac_offset_%1").arg(ch),0,0xffff);
@@ -126,7 +126,7 @@ void Sis3302UI::createUI()
              << "external clock (from LEMO)"
              << "Real 100 MHz internal"));
 
-    gn.append("Interrupt Setup"); ng++; uif.addGroupToTab(tn[nt],gn[ng]);
+    gn.append("Interrupt Setup"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addCheckBoxToGroup(tn[nt],gn[ng],"VME enable IRQ","enable_irq");
     uif.addPopupToGroup(tn[nt],gn[ng],"IRQ Mode","irqMode",(QStringList() << "RORA" << "ROAK"));
     uif.addPopupToGroup(tn[nt],gn[ng],"IRQ Source","irqSource",(QStringList() << "End of Event" << "End of Multi Event"));

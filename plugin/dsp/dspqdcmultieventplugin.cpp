@@ -30,7 +30,7 @@ void DspQdcMultiEventPlugin::createSettings(QGridLayout * l)
 {
     tn.append("QDC"); uif.addTab(tn.last());
 
-    gn.append(""); uif.addGroupToTab(tn.last(),gn.last(),"","v");
+    gn.append(""); uif.addUnnamedGroupToTab(tn.last(),gn.last(),"v");
     uif.addSpinnerToGroup(tn.last(),gn.last(),"Points for Baseline",tr("pointsForBaseline"),1,0x1fffffff);
     uif.addSpinnerToGroup(tn.last(),gn.last(),"Width",tr("width"),1,0x1fffffff);
     uif.addSpinnerToGroup(tn.last(),gn.last(),"Min",tr("min"),0,0x1fffffff);
