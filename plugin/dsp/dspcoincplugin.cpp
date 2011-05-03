@@ -184,6 +184,15 @@ void DspCoincPlugin::applySettings (QSettings *s) {
     s->beginGroup (getName());
     ConfMap::apply (s, conf_, confmap);
     s->endGroup ();
+
+    for (int i = 0; i < boxGateOpener_->count(); ++i) {
+        if (boxGateOpener_->itemData (i).toBool () == conf_->anyopener) {
+            boxGateOpener_->setCurrentIndex (i);
+        }
+    }
+    sbDelay_->setValue (conf_->delay);
+    sbWidth_->setValue (conf_->width);
+    cbTimestamps_->setChecked (conf_->trgtimestamps);
 }
 
 void DspCoincPlugin::saveSettings (QSettings *s) {
