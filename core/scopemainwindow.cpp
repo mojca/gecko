@@ -1097,27 +1097,6 @@ void ScopeMainWindow::saveConfig (QSettings *s) {
         }
     }
     s->endArray ();
-
-    // Save config from triggers and channels
-    i = 0;
-    s->beginWriteArray("TriggerConfig");
-    QTreeWidgetItemIterator it(triggerList);
-    while (*it) {
-        s->setArrayIndex(i++);
-        s->setValue("checked",(*it)->checkState (0) == Qt::Checked);
-        it++;
-    }
-    s->endArray ();
-    i = 0;
-    s->beginWriteArray("ChannelConfig");
-    it = QTreeWidgetItemIterator(channelList);
-    while (*it) {
-        s->setArrayIndex(i++);
-        s->setValue("checked",(*it)->checkState (0) == Qt::Checked);
-        it++;
-    }
-    s->endArray ();
-
     s->endGroup ();
 }
 
