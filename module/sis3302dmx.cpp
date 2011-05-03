@@ -28,7 +28,7 @@ void Sis3302Demux::process (Event *ev, uint32_t *_data, uint32_t _len)
     // Revover length
     uint32_t length = (len & 0x1ffffff); // lWords
 
-    printf("Current channel: %d with %d data points.\n",curCh,length*2);
+    //printf("sis3302dmx: Current channel: %d with %d data points.\n",curCh,length*2);
 
     // In case of page wrap mode, untangle data
     if(pageWrap == true)

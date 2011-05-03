@@ -13,7 +13,7 @@
 static PluginRegistrar registrar ("dspqdcmultievent", DspQdcMultiEventPlugin::create, AbstractPlugin::GroupDSP);
 
 DspQdcMultiEventPlugin::DspQdcMultiEventPlugin(int _id, QString _name)
-    : BasePlugin(_id, _name), uif(this,&tabs), scheduleResize(false)
+    : BasePlugin(_id, _name), uif(this,&tabs), scheduleResize(true)
 {
     srand(time(NULL));
     createSettings(settingsLayout);
@@ -118,6 +118,7 @@ void DspQdcMultiEventPlugin::saveSettings(QSettings* settings)
             settings->setValue("min",conf.min);
             settings->setValue("max",conf.max);
             settings->setValue("nofBins",conf.nofBins);
+            settings->setValue("nofEvents",conf.nofEvents);
         settings->endGroup();
         std::cout << " done" << std::endl;
     }
@@ -175,12 +176,12 @@ void DspQdcMultiEventPlugin::userProcess()
         // Check for clipping
         if(hiCnt > 1)
         {
-            //std::cout << "hiclip" << std::endl;
+            std::cout << "hiclip" << std::endl;
             //nofHiClip++;
         }
         else if(loCnt > 1)
         {
-            //std::cout << "loclip" << std::endl;
+            std::cout << "loclip" << std::endl;
             //nofLowClip++;
         }
         else
@@ -203,20 +204,28 @@ void DspQdcMultiEventPlugin::userProcess()
             // Sort into histogram
             if(bin > 0 && bin < conf.nofBins)
             {
-                //std::cout << "qdc: "  << tmp << std::endl;
+                //std::cout << "qdc: "  << tmp << " -> " << bin << std::endl;
                 outData [bin]++;
             }
             else
             {
-                //std::cout << "out of range: " << std::dec << bin << std::endl;
+                std::cout << "out of range: " << tmp << " -> " << std::dec << bin << std::endl;
             }
         }
     }
+
+    /*for(int i = 0; i < conf.nofBins; i++)
+    {
+        if(outData.at(i) > 0)
+        {
+            std::cout << "dspqdcmulti: <" << i << "> :" << outData.at(i) << std::endl; fflush(stdout);
+        }
+    }*/
 
     outputs->first()->setData(QVariant::fromValue (outData));
 }
 
 void DspQdcMultiEventPlugin::clicked_reset_button()
 {
-
+    scheduleResize = true;
 }

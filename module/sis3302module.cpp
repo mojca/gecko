@@ -241,6 +241,8 @@ int Sis3302Module::checkConfig()
             printf("sis3302: Config warning: Autostart acquisition should be used in multi event mode.\n");
         if(conf.internal_trg_as_stop == false)
             printf("sis3302: Config warning: Internal trigger as stop should be used in multi event mode.\n");
+        if(conf.event_length_as_stop == true)
+            printf("sis3302: Config warning: Event length stop mode should not be used in multi event mode.\n");
         if(conf.stop_delay < 2)
             printf("sis3302: Config warning: Stop delay should be at least 2 in multi event mode to prevent data loss.\n");
         if(conf.nof_events > 0x2000000 / getWrapSizeFromConfig(conf.wrapSize))
@@ -329,11 +331,11 @@ int Sis3302Module::getTimeStampDir()
         if(reqNofLwords != gotNofLwords) { printf("Error %d at VME DMA READ SIS3302_TIMESTAMP_DIRECTORY\n",ret);}
     }
 
-    for(unsigned int i=0; i<reqNofLwords/2; i++)
+    /*for(unsigned int i=0; i<reqNofLwords/2; i++)
     {
         if(timestampDir[i].low != 0)
             printf("TimestampDir %d: high: 0x%x, low: 0x%x\n",i,timestampDir[i].high,timestampDir[i].low);
-    }
+    }*/
     return ret;
 }
 
@@ -375,12 +377,12 @@ int Sis3302Module::getEventDir(int ch)
 
     for(unsigned int i=0; i<reqNofLwords; i++)
     {
-        if(eventDir[ch][i].addr > 0)
+        /*if(eventDir[ch][i].trigger == true)
         {
             uint32_t off = (eventDir[ch][i].addr & 0x1fffffc) - i*getWrapSizeFromConfig(conf.wrapSize);
             printf("Event Dir ch %d event %d: Stop pointer 0x%x, wrap bit: 0x%x (0x%08x)\n",ch,i,eventDir[ch][i].addr,eventDir[ch][i].wrap,eventDir[ch][i].data);
             printf("Derived offset for single trace wrt page border: %d (bytes)\n",off);
-        }
+        }*/
     }
     return ret;
 }
@@ -669,7 +671,7 @@ bool Sis3302Module::dataReady()
 
 int Sis3302Module::readAdcChannel(int ch, uint32_t _reqNofWords)
 {
-    printf("sis3302 Starting ADC ch %d read of %d lwords\n",ch,_reqNofWords);
+    //printf("sis3302 Starting ADC ch %d read of %d lwords\n",ch,_reqNofWords);
 
     const int vmeMode = 1;
     AbstractInterface *iface = getInterface ();
@@ -730,7 +732,7 @@ int Sis3302Module::readAdcChannel(int ch, uint32_t _reqNofWords)
 
         reqNofLwords = dmaRequestNofLwords;
 
-        printf("sis3302: Starting read from adc %d from addr: 0x%x\n",ch,addr);
+        //printf("sis3302: Starting read from adc %d from addr: 0x%x\n",ch,addr);
 
         readBufferPtr = (uintptr_t) &(readBuffer[ch][startPos]);
 
@@ -760,7 +762,7 @@ int Sis3302Module::readAdcChannel(int ch, uint32_t _reqNofWords)
             readLength[ch] += gotNofLwords;
         }
 
-        printf("\nsis3302 After read Ch %d: StartPos: %d byte, ReadLength: %d lwords\n",ch,startPos,readLength[ch]);
+        //printf("\nsis3302 After read Ch %d: StartPos: %d byte, ReadLength: %d lwords\n",ch,startPos,readLength[ch]);
 
         /*printf("\nsis3302 Dump data ch %d\n",ch);
         for(uint32_t i=0; i<gotNofLwords; i++)
