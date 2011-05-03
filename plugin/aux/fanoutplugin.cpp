@@ -5,8 +5,8 @@ static PluginRegistrar registrarDouble ("fanoutDouble", FanOutPlugin<double>::cr
 
 /*!
 \page fanoutplg FanOut Plugin
-<b>Plugin names:</b> \c fanoutInt, \c fanoutDouble
-<b>Group:</b> Aux
+\li <b>Plugin names:</b> \c fanoutInt, \c fanoutDouble
+\li <b>Group:</b> Aux
 
 \section desc Plugin Description
 The fanout plugin is an auxiliary plugin.
