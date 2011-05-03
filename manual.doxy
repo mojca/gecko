@@ -29,6 +29,9 @@
 
 \section outplg Data Output Plugins
 
+\section auxplg Auxiliary Plugins
+\li \ref fanoutplg
+
 *******************************************************************************
 \page umanual GECKO User's Manual
 \section overv Overview
