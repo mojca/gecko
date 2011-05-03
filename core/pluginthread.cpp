@@ -42,7 +42,7 @@ void PluginThread::createProcessList()
 void PluginThread::addChildrenToProcessList()
 {
     //std::cout << "pmgr->list()->size(): " << pmgr->list()->size() << std::endl;
-    for(int level = 1; level <= pmgr->list()->size(); level++)
+    for(int level = 1; level <= pmgr->list()->size() + 1; level++)
     {
         QMap<AbstractPlugin*, int>::const_iterator i = processList.constBegin();
         while (i != processList.constEnd())
