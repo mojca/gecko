@@ -1630,6 +1630,8 @@ public:
             result [2][i-1] = z1; // cfd difference signal for testing
             // zero-crossing found and peak height sufficient
             if (sign (z1) * sign (z2) <= 0 && fabs (v [i-1] / fraction) >= thr) {
+                if (z1 == 0 && z2 == 0) // zero-crossing is detected when the signal becomes non-zero
+                    continue;
                 double phase = -z1 / (z2 - z1);
                 int nearest = rint (i-1 + phase);
                 result [TIME][nearest] = 1;
