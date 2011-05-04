@@ -316,7 +316,10 @@ void CacheHistogramPlugin::userProcess()
 
     if(conf.normalize) dsp.fast_scale(cache,1.0/(dsp.max(cache)[AMP]));
 
-    if(!cache.empty()) plot->getChannelById(0)->setData(cache);
+    if(!cache.empty()) {
+        QWriteLocker wr (plot->getChanLock());
+        plot->getChannelById(0)->setData(cache);
+    }
 
     outputs->at(0)->setData(QVariant::fromValue (cache));
     outputs->at(1)->setData(QVariant::fromValue (cache));

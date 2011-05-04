@@ -81,7 +81,10 @@ void CacheSignalPlugin::userProcess()
             dsp.fast_addC(signal,-min);
             dsp.fast_scale(signal,1.0/(dsp.max(signal)[AMP]));
         }
-        if(signal.size() != 0) plot->getChannelById(0)->setData(signal);
+        if(signal.size() != 0) {
+            QWriteLocker wr (plot->getChanLock ());
+            plot->getChannelById(0)->setData(signal);
+        }
     }
 
     outputs->at(0)->setData(QVariant::fromValue (signal));
