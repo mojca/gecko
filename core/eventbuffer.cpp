@@ -165,8 +165,16 @@ QSet<const EventSlot *> Event::getOccupiedSlots () const {
 }
 
 void Event::clear () {
-    for (DataMap::iterator i = Data_.begin (); i != Data_.end (); ++i)
+    for (DataMap::iterator i = Data_.begin (); i != Data_.end (); ++i) {
+        if (i.value ().canConvert< QVector<uint32_t> > ()) {
+            QVector<uint32_t> v = i.value().value< QVector<uint32_t> > ();
+            v.reserve (v.size ());
+            v.resize (0);
+            i.value () = QVariant::fromValue (v);
+        }
+
         i.value ().clear ();
+    }
 }
 
 EventBuffer *Event::getBuffer () const {

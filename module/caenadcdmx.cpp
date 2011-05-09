@@ -112,8 +112,12 @@ bool CaenADCDemux::finishEvent(Event *ev)
 
     for (std::map<uint8_t,uint16_t>::const_iterator i = chData.begin (); i != chData.end (); ++i) {
         // Publish event data
-        if (owner->getOutputPlugin ()->isSlotConnected (evslots.at (i->first)))
-            ev->put (evslots.at (i->first), QVariant::fromValue (QVector<uint32_t> () << i->second));
+        if (owner->getOutputPlugin ()->isSlotConnected (evslots.at (i->first))) {
+            const EventSlot* sl = evslots.at (i->first);
+            QVector<uint32_t> v = ev->get (sl).value< QVector<uint32_t> > ();
+            v << i->second;
+            ev->put (evslots.at (i->first), QVariant::fromValue (v));
+        }
     }
     return true;
 }
