@@ -6,7 +6,7 @@ TEMPLATE = app
 CONFIG += qt
 QT += network
 CONFIG += thread
-QMAKE_CXXFLAGS_RELEASE += -march=native \
+QMAKE_CXXFLAGS_RELEASE += -g -march=native \
     -O3
 LIBS += -g \
     -L$$PWD/lib/sis3150_calls \
