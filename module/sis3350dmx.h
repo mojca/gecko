@@ -9,6 +9,7 @@
 
 class EventSlot;
 class Event;
+class AbstractModule;
 
 struct Sis3350Event
 {
@@ -37,6 +38,7 @@ private:
     uint32_t len;
 
     const QVector<EventSlot*> &evslots;
+    const AbstractModule *owner_;
     Event *ev;
 
     void startNewHeader();
@@ -46,7 +48,7 @@ private:
     void printHeader();
 
 public:
-    Sis3350Demux (const QVector<EventSlot*> &_evslots);
+    Sis3350Demux (const QVector<EventSlot*> &_evslots, const AbstractModule* own);
 
     void process(Event *_ev, uint32_t *_data, uint32_t _len);
 };

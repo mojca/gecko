@@ -9,6 +9,7 @@
 
 class Event;
 class EventSlot;
+class AbstractModule;
 template <typename T> class QVector;
 
 class CaenADCDemux
@@ -25,6 +26,7 @@ private:
     uint8_t id;
     std::map<uint8_t, uint16_t> chData;
     const QVector<EventSlot*>& evslots;
+    const AbstractModule *owner;
 
     uint32_t* it;
 
@@ -35,7 +37,7 @@ private:
     void printEob();
 
 public:
-    CaenADCDemux(const QVector<EventSlot*>& _evslots, uint chans = 32, uint bits = 12);
+    CaenADCDemux(const QVector<EventSlot*>& _evslots, const AbstractModule* op, uint chans = 32, uint bits = 12);
 
     bool processData (Event *ev, uint32_t* data, uint32_t len, bool singleev);
 };

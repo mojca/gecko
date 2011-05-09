@@ -5,7 +5,7 @@ static ModuleRegistrar registrar ("sis3350", Sis3350Module::create);
 
 Sis3350Module::Sis3350Module(int _id, QString _name)
         : BaseModule(_id, _name)
-        , demux (evslots)
+        , demux (evslots, this)
 {
     setDefaultConfig();
     setUI (new Sis3350UI(this));

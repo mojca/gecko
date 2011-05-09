@@ -1,10 +1,13 @@
 #include "sis3350dmx.h"
 #include "runmanager.h"
 #include "eventbuffer.h"
+#include "abstractmodule.h"
+#include "outputplugin.h"
 #include <iostream>
 
-Sis3350Demux::Sis3350Demux (const QVector<EventSlot *> &_evslots)
+Sis3350Demux::Sis3350Demux (const QVector<EventSlot *> &_evslots, const AbstractModule *owner)
     : evslots (_evslots)
+    , owner_ (owner)
 {
     inHeader = false;
     inTrace = false;
@@ -79,7 +82,8 @@ void Sis3350Demux::startNewTrace()
         metainfo [6] = 0x0;          // Module count
         metainfo [7] = 0xFFFFFFFF;   // unused
 
-        ev->put (evslots.at (4), QVariant::fromValue (metainfo));
+        if (owner_->getOutputPlugin ()->isSlotConnected (evslots.at (4)))
+            ev->put (evslots.at (4), QVariant::fromValue (metainfo));
     }
 }
 
@@ -103,8 +107,10 @@ void Sis3350Demux::continueTrace()
         //std::cout << "Sis3350Demux: Trace end" << std::endl;
 
         // Publish event data
-        QVector<uint32_t> outData (QVector<uint32_t>::fromStdVector (curEvent[curChannel]->data));
-        ev->put (evslots.at (curChannel), QVariant::fromValue (outData));
+        if (owner_->getOutputPlugin ()->isSlotConnected (evslots.at (curChannel))) {
+            QVector<uint32_t> outData (QVector<uint32_t>::fromStdVector (curEvent[curChannel]->data));
+            ev->put (evslots.at (curChannel), QVariant::fromValue (outData));
+        }
     }
     else
     {

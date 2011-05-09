@@ -6,7 +6,7 @@ static ModuleRegistrar registrar ("caen785", Caen785Module::create);
 
 Caen785Module::Caen785Module(int _id, QString _name)
         : BaseModule(_id, _name)
-        , dmx (evslots)
+        , dmx (evslots, this)
 {
     setChannels();
     createOutputPlugin();

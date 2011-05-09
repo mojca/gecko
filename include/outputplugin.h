@@ -20,6 +20,10 @@ public:
     void applySettings(QSettings *) { }
     void saveSettings(QSettings *) { }
 
+    bool isSlotConnected (const EventSlot *sl) const {
+        return (datamap_.find (sl) != datamap_.end() && datamap_.at (sl)->hasOtherSide ());
+    }
+
 public slots:
     void userProcess () { }
 

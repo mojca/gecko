@@ -16,11 +16,11 @@ Caen792Module::Caen792Module (int i, const QString &n, bool _isqdc)
     : BaseModule (i, n)
     , isqdc   (_isqdc)
     , bitset1 (0)
-	, bitset2 (0)
-	, status1 (0)
-	, status2 (0)
-	, evcnt   (0)
-    , dmx_    (evslots_)
+    , bitset2 (0)
+    , status1 (0)
+    , status2 (0)
+    , evcnt   (0)
+    , dmx_    (evslots_, this)
 {
     conf_.pollcount = 100000;
     setChannels ();

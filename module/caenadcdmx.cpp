@@ -1,14 +1,17 @@
 #include "caenadcdmx.h"
 #include "eventbuffer.h"
+#include "abstractmodule.h"
+#include "outputplugin.h"
 #include <iostream>
 
-CaenADCDemux::CaenADCDemux(const QVector<EventSlot*>& _evslots, uint chans, uint bits)
+CaenADCDemux::CaenADCDemux(const QVector<EventSlot*>& _evslots, const AbstractModule* own, uint chans, uint bits)
     : inEvent (false)
     , cnt (0)
     , nofChannels (chans)
     , nofChannelsInEvent(0)
     , nofBits (bits)
     , evslots (_evslots)
+    , owner (own)
 {
     if (nofChannels == 0) {
         nofChannels = 32;
@@ -109,7 +112,8 @@ bool CaenADCDemux::finishEvent(Event *ev)
 
     for (std::map<uint8_t,uint16_t>::const_iterator i = chData.begin (); i != chData.end (); ++i) {
         // Publish event data
-        ev->put (evslots.at (i->first), QVariant::fromValue (QVector<uint32_t> () << i->second));
+        if (owner->getOutputPlugin ()->isSlotConnected (evslots.at (i->first)))
+            ev->put (evslots.at (i->first), QVariant::fromValue (QVector<uint32_t> () << i->second));
     }
     return true;
 }
