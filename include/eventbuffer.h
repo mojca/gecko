@@ -33,8 +33,11 @@ public:
      */
     void setSize (size_t newsz);
 
-    /*! Create a new event. The object has to be deleted when it is not used anymore. */
+    /*! Create a new event. The object has to be returned via #releaseEvent when it is not used anymore. */
     Event* createEvent ();
+
+    /*! Releases an event object obtained via #createEvent. The object is scheduled for reuse. */
+    void releaseEvent (Event *);
 
     /*! Queues an event in the buffer. The buffer takes ownership of the event.
         This call is synchronous. It waits until there is enough room inside the buffer to queue the event.
@@ -72,6 +75,7 @@ private:
     SlotMap Slots_;
 
     ThreadBuffer<Event*>* Buffer_;
+    ThreadBuffer<Event*>* UnusedQ_;
 };
 
 class Event {
@@ -81,6 +85,7 @@ public:
 
     void put (const EventSlot *, QVariant data);
     QVariant get (const EventSlot *) const;
+    void clear ();
 
     QSet<const EventSlot *> getOccupiedSlots () const;
 

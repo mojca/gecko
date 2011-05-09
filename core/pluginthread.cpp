@@ -132,7 +132,7 @@ void PluginThread::process()
             m->getOutputPlugin()->latchData (ev);
 
         execProcessList();
-        delete ev;
+        RunManager::ref ().getEventBuffer ()->releaseEvent (ev);
     }
     else
     {

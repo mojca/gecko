@@ -92,7 +92,7 @@ bool RunThread::acquire(AbstractModule* _trg)
         emit acquisitionDone();
         return true;
     } else {
-        delete ev;
+        RunManager::ref ().getEventBuffer ()->releaseEvent (ev);
         return false;
     }
 }
