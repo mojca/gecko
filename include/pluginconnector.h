@@ -62,7 +62,6 @@ public:
      *  \note This function may only be called for input connectors
      */
     virtual QVariant getData() = 0;
-    virtual QVariant getDataDummy() = 0;
 
     /*! Tell the connector that the data retrieved by getData has been used and may now be discarded.
      *  \note This function may only be called for input connectors

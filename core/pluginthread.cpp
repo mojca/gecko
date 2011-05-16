@@ -8,7 +8,7 @@
 #include "eventbuffer.h"
 
 PluginThread::PluginThread(PluginManager* _pmgr, ModuleManager* _mmgr)
-        : pmgr(_pmgr), mmgr(_mmgr), nofAcqsWaiting (0), maxDepth (0)
+        : pmgr(_pmgr), mmgr(_mmgr), nofAcqsWaiting (0)
 {
     abort = false;
     moveToThread(this);
@@ -20,13 +20,15 @@ PluginThread::PluginThread(PluginManager* _pmgr, ModuleManager* _mmgr)
 
 void PluginThread::createProcessList()
 {
-    int level = 0;
-    processList.clear();
+    QMap<AbstractPlugin*, int> processList;
+    int maxDepth;
+
+    unconnectedList.clear ();
     foreach(AbstractModule* module, (*mmgr->list ()))
     {
-        processList.insert(module->getOutputPlugin(),level);
+        processList.insert(module->getOutputPlugin(),0);
     }
-    addChildrenToProcessList();
+    addChildrenToProcessList(processList, maxDepth);
 
     std::cout << "ProcessList: " << std::endl;
     QMap<AbstractPlugin*, int>::const_iterator i = processList.constBegin();
@@ -37,9 +39,18 @@ void PluginThread::createProcessList()
         ++i;
     }
     std::cout << std::endl;
+
+    // construct lists of AbstractPlugins better suited for use in the process methods
+    levelList.clear();
+    for (int i = 1; i <= maxDepth; ++i)
+    {
+        QList<AbstractPlugin*> l = processList.keys (i);
+        if (!l.empty())
+            levelList.push_back (l);
+    }
 }
 
-void PluginThread::addChildrenToProcessList()
+void PluginThread::addChildrenToProcessList(QMap<AbstractPlugin *, int> &processList, int &maxDepth)
 {
     //std::cout << "pmgr->list()->size(): " << pmgr->list()->size() << std::endl;
     for(int level = 1; level <= pmgr->list()->size() + 1; level++)
@@ -86,7 +97,7 @@ PluginThread::~PluginThread()
 void PluginThread::run()
 {
     std::cout << "PluginThread started." << std::endl;
-    if(maxDepth == 0)
+    if(levelList.empty())
         std::cout << "No plugins connected." << std::endl;
 
     for(;;)
@@ -117,12 +128,10 @@ void PluginThread::stop()
 void PluginThread::process()
 {
     //std::cout << " ### PluginThread processing. " << std::endl;
-    mutex.lock();
-    if(nofAcqsWaiting > 0)
+    if(!!nofAcqsWaiting)
     {
         //std::cout << ".... " << q.size() << " ";
-        --nofAcqsWaiting;
-        mutex.unlock();
+        nofAcqsWaiting.deref();
 
         Event *ev = RunManager::ref ().getEventBuffer ()->dequeue ();
 
@@ -136,8 +145,8 @@ void PluginThread::process()
     }
     else
     {
+        QMutexLocker l (&mutex);
         cond.wait(&mutex);
-        mutex.unlock();
     }
 }
 
@@ -145,40 +154,24 @@ void PluginThread::execProcessList()
 {
     //std::cout << "PluginThread::execProcessList" << std::endl;
 
-    int level = 1; // Level 0 plugins are never executed in this thread
-    while(level <= maxDepth)
+    for (QList< QList<AbstractPlugin*> >::const_iterator i = levelList.begin ();
+         i != levelList.end ();
+         ++i)
     {
 
-        if(false && processList.keys(level).size() > 1)
+        if(false && i->size() > 1)
         {
             QFutureSynchronizer<void> fsync;
-            foreach(AbstractPlugin* p, processList.keys(level))
+            foreach(AbstractPlugin* p, *i)
             {
                 fsync.addFuture(QtConcurrent::run(p, &AbstractPlugin::process));
             }
         }
         else
         {
-            foreach(AbstractPlugin* p, processList.keys(level))
+            foreach(AbstractPlugin* p, *i)
             {
                 p->process();
-            }
-        }
-
-        level++;
-    }
-
-    // Use all unconnected channels
-    foreach(AbstractModule* module, (*mmgr->list ()))
-    {
-        foreach(PluginConnector* out, (*module->getOutputPlugin()->getOutputs()))
-        {
-            AbstractPlugin* p = out->getConnectedPlugin();
-            if(p == NULL)
-            {
-                //std::cout << "Trying to delete data from " << out->getName() << std::endl;
-                out->getDataDummy();
-                out->useData();
             }
         }
     }
@@ -191,7 +184,7 @@ void PluginThread::execProcessList()
 }
 
 void PluginThread::acquisitionDone () {
+    nofAcqsWaiting.ref();
     QMutexLocker locker (&mutex);
-    ++nofAcqsWaiting;
     cond.wakeAll ();
 }

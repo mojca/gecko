@@ -1,9 +1,11 @@
 #include "eventbuffer.h"
 #include "threadbuffer.h"
 
+#include <QAtomicInt>
+
 EventBuffer::EventBuffer (size_t size)
 : Buffer_ (new ThreadBuffer<Event*> (size, 1, -1))
-, UnusedQ_ (new ThreadBuffer<Event*> (10*size, 1, -1))
+, UnusedQ_ (new ThreadBuffer<Event*> (size, 1, -1))
 {
 }
 
@@ -25,7 +27,7 @@ size_t EventBuffer::level () const {
 
 void EventBuffer::setSize (size_t newsz) {
     ThreadBuffer<Event*>* newbuf = new ThreadBuffer<Event*> (newsz, 1, -1);
-    ThreadBuffer<Event*>* newq = new ThreadBuffer<Event*> (3*newsz, 1, -1);
+    ThreadBuffer<Event*>* newq = new ThreadBuffer<Event*> (newsz, 1, -1);
     ThreadBuffer<Event*>* oldbuf = Buffer_;
     ThreadBuffer<Event*>* oldq = UnusedQ_;
 
@@ -48,8 +50,9 @@ void EventBuffer::setSize (size_t newsz) {
 
 Event* EventBuffer::createEvent () {
     std::vector<Event*> rd (1, NULL);
-    if (UnusedQ_->read (rd, 1) != 1)
+    if (UnusedQ_->read (rd, 1) != 1) {
         return new Event (this);
+    }
 
     return rd.front ();
 }

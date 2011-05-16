@@ -282,8 +282,8 @@ void BasePlugin::process()
 
         foreach(PluginConnector * in, (*inputs))
         {
-            bool ok = in->useData();
-            Q_UNUSED(ok);
+            in->useData();
+            //bool ok = in->useData();
             //if(!ok) printf("dequeueing 1 element from %s, input %s failed\n",getName().toStdString().c_str(),in->getName().c_str());
         }
     }

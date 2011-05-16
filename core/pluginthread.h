@@ -11,6 +11,7 @@
 #include <iostream>
 #include <QMap>
 #include <QMetaType>
+#include <QAtomicInt>
 #include <vector>
 
 
@@ -64,17 +65,15 @@ private:
     PluginManager* pmgr;
     ModuleManager* mmgr;
     QMutex mutex;
-    int nofAcqsWaiting;
-    QSet<int> actChans;
+    QAtomicInt nofAcqsWaiting;
     QWaitCondition cond;
 
     QList<PluginConnector*> unconnectedList;
 
-    QMap<AbstractPlugin*, int> processList;
-    int maxDepth;
+    QList< QList<AbstractPlugin*> > levelList;
 
     void createProcessList();
-    void addChildrenToProcessList();
+    void addChildrenToProcessList(QMap<AbstractPlugin*, int>& processList, int& maxDepth);
     void execProcessList();
 };
 

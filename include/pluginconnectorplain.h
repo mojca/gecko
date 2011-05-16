@@ -12,31 +12,29 @@ public:
     PluginConnectorPlain (AbstractPlugin* _plugin, ScopeCommon::ConnectorType _type, QString _name, DataType _dt)
     : PluginConnector (_plugin, _type, _name, _dt)
     , data_ ()
+    , valid_ (false)
     {
     }
 
     void setData (QVariant d) {
         assert (getType () == ScopeCommon::out);
         data_ = d;
+        valid_ = !data_.isNull ();
     }
 
     QVariant getData () {
         if (getType() == ScopeCommon::in)
             return hasOtherSide () ? getOtherSide ()->getData () : QVariant ();
         else
-            return data_;
-    }
-
-    QVariant getDataDummy() {
-        return QVariant ();
+            return valid_ ? data_ : QVariant ();
     }
 
     bool useData () {
         if (getType () == ScopeCommon::in && hasOtherSide())
             return getOtherSide ()->useData ();
         else {
-            bool ret = (!data_.isNull ());
-            data_.clear ();
+            bool ret = valid_;
+            valid_ = false;
             return ret;
         }
     }
@@ -45,15 +43,17 @@ public:
         if (getType () == ScopeCommon::in)
             return hasOtherSide () ? getOtherSide ()->dataAvailable() : 0;
         else
-            return !data_.isNull () ? 1 : 0;
+            return valid_ ? 1 : 0;
     }
 
     void reset () {
         data_.clear();
+        valid_ = false;
     }
 
 private:
     QVariant data_;
+    bool valid_;
 };
 
 #endif // PLUGINCONNECTORPLAIN_H

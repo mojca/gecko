@@ -45,11 +45,6 @@ public:
         }
     }
 
-    QVariant getDataDummy()
-    {
-        return QVariant ();
-    }
-
     bool useData()
     {
         if(getType() == ScopeCommon::in)
