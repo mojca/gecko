@@ -28,7 +28,7 @@ struct ConfigDspCoinc {
     ConfigDspCoinc ()
     : delay (-5)
     , width (10)
-    , anyopener (true)
+    , anyopener (false)
     , trgtimestamps (false)
     {}
 };
@@ -85,6 +85,7 @@ void DspCoincPlugin::createSettings (QGridLayout *l) {
     boxGateOpener_ = new QComboBox ();
     boxGateOpener_->addItem (tr ("First"), QVariant::fromValue (false));
     boxGateOpener_->addItem (tr ("Any"), QVariant::fromValue (true));
+    boxGateOpener_->setCurrentIndex (0);
     l->addWidget (new QLabel (tr ("Gate opener:")), 2, 0, 1, 1);
     l->addWidget (boxGateOpener_, 2, 1, 1, 1);
 

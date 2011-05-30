@@ -139,7 +139,8 @@ static const confmap_t confmap [] = {
     confmap_t ("fraction", &DspCfdConfig::fraction),
     confmap_t ("negative", &DspCfdConfig::negative),
     confmap_t ("threshold", &DspCfdConfig::threshold),
-    confmap_t ("holdoff", &DspCfdConfig::holdoff)
+    confmap_t ("holdoff", &DspCfdConfig::holdoff),
+    confmap_t ("baseline", &DspCfdConfig::baseline)
 };
 
 void DspCfdPlugin::applySettings(QSettings *settings) {
