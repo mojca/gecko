@@ -28,7 +28,7 @@ public:
     void applySettings(QSettings*);
     void saveSettings(QSettings*);
 
-    uint getNofEvents() {return nofSuccessfulEvents;}
+    uint64_t getNofEvents() {return nofSuccessfulEvents;}
 
 public slots:
     bool acquire(AbstractModule*);
@@ -50,8 +50,8 @@ private:
     bool interruptBased;
     bool pollBased;
 
-    uint nofSuccessfulEvents;
-    uint nofPolls;
+    uint64_t nofSuccessfulEvents;
+    uint64_t nofPolls;
 
     QList<AbstractModule*> modules;
     QList<AbstractModule*> triggers;

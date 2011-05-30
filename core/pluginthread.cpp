@@ -7,6 +7,12 @@
 #include "runmanager.h"
 #include "eventbuffer.h"
 
+#ifdef GECKO_PROFILE_PLUGIN
+#include <time.h>
+static struct timespec starttime;
+static uint64_t timeinwait;
+#endif
+
 PluginThread::PluginThread(PluginManager* _pmgr, ModuleManager* _mmgr)
         : pmgr(_pmgr), mmgr(_mmgr), nofAcqsWaiting (0)
 {
@@ -91,6 +97,14 @@ PluginThread::~PluginThread()
         bool finished = wait(5000);
         if(!finished) terminate();
     }
+
+#ifdef GECKO_PROFILE_PLUGIN
+    struct timespec et;
+    clock_gettime(CLOCK_MONOTONIC, &et);
+    uint64_t rt = (et.tv_sec - starttime.tv_sec) * 1000000000 + (et.tv_nsec - starttime.tv_nsec);
+    std::cout << "Runtime: " << (rt * 1e-9) <<" s, Waiting: " << (100.* timeinwait / rt) << "%" << std::endl;
+#endif
+
     std::cout << "PluginThread stopped." << std::endl;
 }
 
@@ -99,6 +113,11 @@ void PluginThread::run()
     std::cout << "PluginThread started." << std::endl;
     if(levelList.empty())
         std::cout << "No plugins connected." << std::endl;
+
+#ifdef GECKO_PROFILE_PLUGIN
+    clock_gettime(CLOCK_MONOTONIC, &starttime);
+    timeinwait = 0;
+#endif
 
     for(;;)
     {
@@ -146,7 +165,15 @@ void PluginThread::process()
     else
     {
         QMutexLocker l (&mutex);
+#ifdef GECKO_PROFILE_PLUGIN
+        struct timespec st, et;
+        clock_gettime (CLOCK_MONOTONIC, &st);
+#endif
         cond.wait(&mutex);
+#ifdef GECKO_PROFILE_PLUGIN
+        clock_gettime (CLOCK_MONOTONIC, &et);
+        timeinwait += (et.tv_sec - st.tv_sec) * 1000000000 + (et.tv_nsec - st.tv_nsec);
+#endif
     }
 }
 
