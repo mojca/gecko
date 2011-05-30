@@ -324,3 +324,17 @@ void CacheHistogramPlugin::userProcess()
     outputs->at(0)->setData(QVariant::fromValue (cache));
     outputs->at(1)->setData(QVariant::fromValue (cache));
 }
+
+void CacheHistogramPlugin::runStartingEvent () {
+    // reset all timers and the histogram before starting anew
+    halfSecondTimer->stop();
+    writeToFileTimer->stop();
+    resetTimer->stop();
+
+    scheduleReset = true;
+    writeToFile = false;
+
+    halfSecondTimer->start(msecsToTimeout);
+    writeToFileTimer->start(conf.autosaveInt*1000);
+    resetTimer->start(conf.autoresetInt*60*1000);
+}

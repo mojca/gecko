@@ -931,6 +931,9 @@ bool ScopeMainWindow::saveAs()
     QString fileName = QFileDialog::getSaveFileName(this,"Save settings file as...","","Config files (*.ini)");
     if (fileName.isEmpty())
         return false;
+
+    if (!fileName.endsWith(".ini"))
+        fileName += ".ini";
     this->fileName = fileName;
 
     delete settings;

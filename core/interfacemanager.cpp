@@ -47,6 +47,7 @@ bool InterfaceManager::remove(AbstractInterface* rmIf)
     {
         if((*it) == rmIf)
         {
+            rmIf->close ();
             items_->erase(it);
             emit interfaceRemoved (rmIf);
             rmIf->deleteLater ();

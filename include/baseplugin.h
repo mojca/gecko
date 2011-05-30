@@ -92,6 +92,11 @@ public:
     /*! enable or disable those UI elements that should not be accessible during a run. */
     void setConfigEnabled (bool enabled);
 
+    /*! perform actions prior to starting a run, eg. clearing statistics, resetting spectra.
+     *  The default implementation does nothing.
+     */
+    void runStartingEvent ();
+
 public slots:
     /*! Do processing.
      *  This function checks whether there is data available on all input connectors and then calls the userProcess function.

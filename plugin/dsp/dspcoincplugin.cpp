@@ -225,3 +225,8 @@ void DspCoincPlugin::updateCoincData () {
     if (nCoinc + nNoCoinc > 0)
         lblCoinc->setText (tr ("Coincidences: %1%").arg((100.0 * nCoinc)/(nCoinc + nNoCoinc), 4, 'f', 1));
 }
+
+void DspCoincPlugin::runStartingEvent () {
+    nCoinc = 0;
+    nNoCoinc = 0;
+}

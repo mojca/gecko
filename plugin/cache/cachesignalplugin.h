@@ -22,6 +22,7 @@ public:
     }
     
     virtual void userProcess();
+    virtual void runStartingEvent();
 };
 
 #endif // CACHESIGNALPLUGIN_H

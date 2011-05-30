@@ -114,6 +114,10 @@ void PluginThread::run()
     if(levelList.empty())
         std::cout << "No plugins connected." << std::endl;
 
+    foreach (AbstractPlugin *p, *PluginManager::ref().list()) {
+        p->runStartingEvent ();
+    }
+
 #ifdef GECKO_PROFILE_PLUGIN
     clock_gettime(CLOCK_MONOTONIC, &starttime);
     timeinwait = 0;

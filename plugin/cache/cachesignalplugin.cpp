@@ -91,3 +91,11 @@ void CacheSignalPlugin::userProcess()
     outputs->at(1)->setData(QVariant::fromValue (signal));
 }
 
+void CacheSignalPlugin::runStartingEvent () {
+    // reset all timers and the signal before starting anew
+    halfSecondTimer->stop();
+    scheduleReset = true;
+    halfSecondTimer->start(msecsToTimeout);
+}
+
+

@@ -69,6 +69,8 @@ public:
     virtual void saveSettings(QSettings*);
     virtual void userProcess();
 
+    virtual void runStartingEvent();
+
 public slots:
     void xminChanged(double);
     void xmaxChanged(double);

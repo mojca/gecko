@@ -25,6 +25,8 @@ public:
     void saveSettings (QSettings *s);
     void applySettings (QSettings *s);
 
+    void runStartingEvent();
+
 public slots:
     void userProcess ();
 

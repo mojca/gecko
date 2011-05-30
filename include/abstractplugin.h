@@ -72,6 +72,9 @@ public:
     /*! enable or disable those UI elements that should not be accessible during a run. */
     virtual void setConfigEnabled (bool enabled) = 0;
 
+    /*! perform actions prior to starting a run, eg. clearing statistics, resetting spectra... */
+    virtual void runStartingEvent () = 0;
+
     /*! Make the plugin initialise its UI. */
     virtual void createUI() = 0;
 

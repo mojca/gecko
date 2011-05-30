@@ -298,3 +298,7 @@ void BasePlugin::setConfigEnabled (bool enabled) {
     inputList->setEnabled (nofInputs && enabled);
     outputList->setEnabled (nofOutputs && enabled);
 }
+
+void BasePlugin::runStartingEvent () {
+
+}
