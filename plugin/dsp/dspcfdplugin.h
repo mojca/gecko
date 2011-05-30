@@ -5,6 +5,7 @@
 
 class DspCfdConfig;
 class QSpinBox;
+class QCheckBox;
 class QDoubleSpinBox;
 
 class DspCfdPlugin : public BasePlugin
@@ -26,7 +27,7 @@ protected slots:
 
 public slots:
     void fractionChanged (double);
-    void delayChanged (int);
+    void negativeChanged (bool);
     void thresholdChanged (int);
     void holdoffChanged (int);
     void baselineChanged (int);
@@ -34,7 +35,7 @@ public slots:
 private:
     DspCfdConfig *conf;
     QDoubleSpinBox *fractionSpinner_;
-    QSpinBox *delaySpinner_;
+    QCheckBox *negativeBox_;
     QSpinBox *thresholdSpinner_;
     QSpinBox *holdoffSpinner_;
     QSpinBox *baselineSpinner_;
