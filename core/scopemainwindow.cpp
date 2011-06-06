@@ -950,6 +950,9 @@ void ScopeMainWindow::exportDot () {
     if (filename.isEmpty())
         return;
 
+    if (!filename.endsWith(".gv"))
+        filename.append (".gv");
+
     QFile file (filename);
     if (!file.open (QIODevice::WriteOnly | QIODevice::Text)) {
         QMessageBox::warning (this, tr("GECKO"), tr("Cannot write to file \"%1\"!").arg(filename));
