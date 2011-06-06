@@ -18,18 +18,19 @@
 #include "baseplugin.h"
 
 class BasePlugin;
+class VectorOutputConfig;
 
 class VectorOutputPlugin : public virtual BasePlugin
 {
     Q_OBJECT
 
 protected:
-    QString filePath;
-    QString fileName;
-    QString prefix;
+    VectorOutputConfig *cfg;
 
-    QLineEdit* filePathLineEdit;
-    QPushButton* filePathButton;
+    QString fileName;
+
+    QLabel* pathLabel;
+    QLineEdit* prefixLineEdit;
 
     virtual void createSettings(QGridLayout*);
 
@@ -41,16 +42,14 @@ public:
         return new VectorOutputPlugin (id, name);
     }
 
-    QString getFilePath() { return filePath; }
-
-    void setFilePath(QString _filePath);
-
     virtual void userProcess();
-    virtual void applySettings(QSettings*) {}
-    virtual void saveSettings(QSettings*) {}
+    virtual void applySettings(QSettings*);
+    virtual void saveSettings(QSettings*);
+
+    virtual void runStartingEvent();
 
 public slots:
-    void filePathButtonClicked();
+    void prefixChanged();
 };
 
 #endif // VECTOROUTPUTPLUGIN_H
