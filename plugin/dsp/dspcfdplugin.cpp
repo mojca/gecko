@@ -39,8 +39,6 @@ DspCfdPlugin::DspCfdPlugin(int _id, QString _name)
     addConnector (new PluginConnectorQVDouble (this, ScopeCommon::in, "signal"));
     addConnector (new PluginConnectorQVDouble (this, ScopeCommon::out, "trigger"));
     addConnector (new PluginConnectorQVDouble (this, ScopeCommon::out, "times"));
-    addConnector (new PluginConnectorQVDouble (this, ScopeCommon::out, "cfdsig"));
-
 }
 
 void DspCfdPlugin::createSettings(QGridLayout *l) {
@@ -131,7 +129,6 @@ void DspCfdPlugin::userProcess () {
 
     outputs->at(0)->setData (QVariant::fromValue (cfd.at (TIME)));
     outputs->at(1)->setData (QVariant::fromValue (dsp.add (cfdtimes.at (0), cfdtimes.at (1)))); // precision timestamps
-    //outputs->at(2)->setData (QVariant::fromValue (cfd.at(2)));
 }
 
 typedef ConfMap::confmap_t<DspCfdConfig> confmap_t;
