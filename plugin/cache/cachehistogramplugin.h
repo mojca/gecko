@@ -8,6 +8,7 @@
 
 class QComboBox;
 class BasePlugin;
+class QLabel;
 
 struct CacheHistogramPluginConfig
 {
@@ -52,8 +53,12 @@ protected:
     QTimer* writeToFileTimer;
     QTimer* resetTimer;
 
+    QLabel* numCountsLabel;
+
     bool writeToFile;
     int fileCount;
+
+    uint64_t nofCounts;
 
     virtual void createSettings(QGridLayout*);
 
@@ -85,6 +90,7 @@ public slots:
 
     void scheduleWriteToFile();
     void scheduleResetHistogram();
+    void updateVisuals();
 };
 
 #endif // CACHEHISTOGRAMPLUGIN_H

@@ -25,7 +25,7 @@ CacheHistogramPlugin::CacheHistogramPlugin(int _id, QString _name)
 
     halfSecondTimer = new QTimer();
     halfSecondTimer->start(msecsToTimeout);
-    connect(halfSecondTimer,SIGNAL(timeout()),plot,SLOT(update()));
+    connect(halfSecondTimer,SIGNAL(timeout()),this,SLOT(updateVisuals()));
 
     writeToFileTimer = new QTimer();
     writeToFileTimer->start(conf.autosaveInt*1000);         // write To File
@@ -187,6 +187,8 @@ void CacheHistogramPlugin::createSettings(QGridLayout * l)
         nofBinsBox->addItem("16384",16384);
         nofBinsBox->setCurrentIndex(nofBinsBox->findData(conf.nofBins,Qt::UserRole));
 
+        numCountsLabel = new QLabel (tr ("0"));
+
         connect(previewButton,SIGNAL(clicked()),this,SLOT(previewButtonClicked()));
         connect(resetButton,SIGNAL(clicked()),this,SLOT(resetButtonClicked()));
         connect(updateSpeedSpinner,SIGNAL(valueChanged(int)),this,SLOT(setTimerTimeout(int)));
@@ -229,6 +231,9 @@ void CacheHistogramPlugin::createSettings(QGridLayout * l)
         cl->addWidget(autoresetIntLabel,6,2,1,1);
         cl->addWidget(autoresetSpinner, 6,3,1,1);
 
+        cl->addWidget(new QLabel ("Counts in histogram:"), 7, 0, 1, 1);
+        cl->addWidget(numCountsLabel, 7, 1, 1, 3);
+
         container->setLayout(cl);
     }
 
@@ -265,6 +270,12 @@ void CacheHistogramPlugin::scheduleResetHistogram()
         fileCount++;
         scheduleReset = true;
     }
+}
+
+void CacheHistogramPlugin::updateVisuals()
+{
+    plot->update ();
+    numCountsLabel->setText(tr("%1").arg(nofCounts));
 }
 
 /*!
@@ -310,6 +321,7 @@ void CacheHistogramPlugin::userProcess()
             if(bin > 0 && bin < conf.nofBins)
             {
                 cache [bin] += conf.inputWeight;
+                ++nofCounts;
             }
         }
     }
@@ -333,6 +345,7 @@ void CacheHistogramPlugin::runStartingEvent () {
 
     scheduleReset = true;
     writeToFile = false;
+    nofCounts = 0;
 
     halfSecondTimer->start(msecsToTimeout);
     writeToFileTimer->start(conf.autosaveInt*1000);
