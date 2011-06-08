@@ -56,7 +56,7 @@ void VectorOutputPlugin::prefixChanged ()
 
 void VectorOutputPlugin::userProcess()
 {
-    std::cout << "VectorOutputPlugin Processing" << std::endl;
+    //std::cout << "VectorOutputPlugin Processing" << std::endl;
 
     QFile file(fileName);
     file.open(QIODevice::WriteOnly|QIODevice::Append);
