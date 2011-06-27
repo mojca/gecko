@@ -15,12 +15,12 @@ struct DspCalFilterPluginConfig
 {
     int width;
     int shift;
-    double attenuation;
+    double gain;
 
     DspCalFilterPluginConfig() :
             width(1),
             shift(0),
-            attenuation(1.0)
+            gain(1.0)
     {}
 };
 
@@ -35,7 +35,7 @@ protected:
 
     QSpinBox* widthSpinner;
     QSpinBox* shiftSpinner;
-    QDoubleSpinBox* attenuationSpinner;
+    QDoubleSpinBox* gainSpinner;
 
 public:
     DspCalFilterPlugin(int _id, QString _name);

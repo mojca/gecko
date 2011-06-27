@@ -357,7 +357,7 @@ void CacheHistogramPlugin::runStartingEvent () {
 \li <b>Plugin names:</b> \c cachehistogramplugin
 \li <b>Group:</b> Cache
 
-\section desc Plugin Description
+\section pdesc Plugin Description
 The histogram cache plugin creates histograms from values fed to its input connector.
 The computed histogram may be stored to disk periodically.
 It is also possible to define a timespan after which the histogram is reset (increasing the index of the file the histogram is stored to).
@@ -383,8 +383,8 @@ None
 \li <b>Update Speed</b>: Interval between updates of the histogram plot and counter
 
 \section inputs Input Connectors
-\c in: Input for the data to be histogrammed
+\li \c in \c &lt;double>: Input for the data to be histogrammed
 
 \section outputs Output Connectors
-\c fileOut, out: Contains the current histogram
+\li \c fileOut, out \c &lt;double>: Contains the current histogram
 */

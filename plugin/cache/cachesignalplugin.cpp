@@ -98,4 +98,35 @@ void CacheSignalPlugin::runStartingEvent () {
     halfSecondTimer->start(msecsToTimeout);
 }
 
+/*!
+\page cachesignalplg Signal Cache Plugin
+\li <b>Plugin names:</b> \c cachesignalplugin
+\li <b>Group:</b> Cache
 
+\section pdesc Plugin Description
+The signal cache plugin stores the signal fed to its input connector.
+It can compute an (exponential) average over all signals or normalise it to its maximum.
+The result is passed to both output connectors.
+
+The cache may also load a signal from disk and make it available for further processing.
+
+A live preview of the stored data is available.
+
+\section attrs Attributes
+None
+
+\section conf Configuration
+\li <b>Input weight</b>: The weight with which new data is added
+\li <b>Use Input Weight</b>: Enable weighting the input data
+\li <b>Normalize</b>: Normalizes the signal to its maximum value
+\li <b>Preview</b>: Shows a live plot of the signal cache
+\li <b>Reset</b>: Manually reset the signal cache
+\li <b>Update Speed</b>: Interval between updates of the histogram plot and counter
+\li <b>Use File</b>: Enable use of the given file instead of the input data
+
+\section inputs Input Connectors
+\c in \c &lt;double>: Input for the data to be cached
+
+\section outputs Output Connectors
+\c fileOut, out \c &lt;double>: Contains the current cache contents
+*/

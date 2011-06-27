@@ -86,7 +86,7 @@ void DspCoincPlugin::createSettings (QGridLayout *l) {
     boxGateOpener_->addItem (tr ("First"), QVariant::fromValue (false));
     boxGateOpener_->addItem (tr ("Any"), QVariant::fromValue (true));
     boxGateOpener_->setCurrentIndex (0);
-    l->addWidget (new QLabel (tr ("Gate opener:")), 2, 0, 1, 1);
+    l->addWidget (new QLabel (tr ("Window opener:")), 2, 0, 1, 1);
     l->addWidget (boxGateOpener_, 2, 1, 1, 1);
 
     sbDelay_ = new QSpinBox ();
@@ -230,3 +230,32 @@ void DspCoincPlugin::runStartingEvent () {
     nCoinc = 0;
     nNoCoinc = 0;
 }
+
+/*!
+\page dspcoincplg Coincidence Plugin
+\li <b>Plugin names:</b> \c dspcoincplugin
+\li <b>Group:</b> DSP
+
+\section pdesc Plugin Description
+The coincidence plugin detects coincidences between two or more triggers.
+When either any or the first trigger input shows a trigger the other inputs are searched for triggers within a window of given width and offset to the first trigger.
+When all trigger inputs show at least one trigger inside the window data is passed from the data inputs to their respective outputs.
+If the coincidence condition is not met no data gets passed to the outputs, effectively inhibiting the processing of the plugins connected to them.
+
+\section attrs Attributes
+\li \c nofTriggers: Number of trigger inputs
+\li \c nofDataChannels: Number of data channels
+
+\section conf Configuration
+\li <b>Window Opener</b>: The opener of the coincidence window (either only the first trigger input or any of them)
+\li <b>Delay</b>: Start of the coincidence window relative to the opening trigger
+\li <b>Width</b>: Width of the coincidence window
+\li <b>Trigger inputs carry timestamps</b>: If enabled the trigger inputs are assumed not to be logic signals but trigger timestamps
+
+\section inputs Input Connectors
+\li \c trigger[1..n] \c &lt;double>: Trigger signals
+\li \c in[1..m] \c &lt;double>: Input signals
+
+\section outputs Output Connectors
+\li \c out[1..m] \c &lt;double>: Outputs for the inputs (only active when coincidence condition is met)
+*/

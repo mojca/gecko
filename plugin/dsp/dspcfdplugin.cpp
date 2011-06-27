@@ -156,3 +156,34 @@ void DspCfdPlugin::saveSettings(QSettings *settings) {
     ConfMap::save (settings, conf, confmap);
     settings->endGroup ();
 }
+
+/*!
+\page dspcfdplg Constant Fraction Discriminator Plugin
+\li <b>Plugin names:</b> \c dspcfdplugin
+\li <b>Group:</b> DSP
+
+\section pdesc Plugin Description
+The constant fraction discriminator generates a trigger signal from its input.
+It looks for peaks in the signal larger than a given threshold and searches backwards from the peak maximum to the point the signal rises above the given fraction of its maximum amplitude.
+At that point it generates a trigger. The crossing time is deduced by linearly interpolating between the last point below and the first point above the fraction so the trigger jitter is less than 0.5 samples.
+
+The plugin makes the trigger available as a logic signal and a list of timestamps with sub-sample precision.
+
+\section attrs Attributes
+None
+
+\section conf Configuration
+\li \b Fraction: The fraction at which the trigger should be generated
+\li \b Threshold: The signal threshold. Only peaks that exceed this threshold are considered
+\li <b>Negative Polarity</b>: If checked the discriminator searches for negative peaks
+\li \b Holdoff: Holdoff period after a trigger has been generated
+\li <b>Points for Baseline</b>: Number of points to average over for estimating the baseline.
+    These points are taken to be at the beginning of the input and no trigger search is performed on them.
+
+\section inputs Input Connectors
+\li \c signal \c &lt;double>: Signal to generate triggers from
+
+\section outputs Output Connectors
+\li \c trigger \c &lt;double>: The generated triggers as logic signal
+\li \c times \c &lt;double>: The generated triggers as timestamps with sub-sample precision
+*/
