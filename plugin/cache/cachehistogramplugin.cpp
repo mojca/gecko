@@ -370,3 +370,40 @@ void CacheHistogramPlugin::runStartingEvent () {
     writeToFileTimer->start(conf.autosaveInt*1000);
     resetTimer->start(conf.autoresetInt*60*1000);
 }
+
+/*!
+\page cachehistogramplg Histogram Cache Plugin
+\li <b>Plugin names:</b> \c cachehistogramplugin
+\li <b>Group:</b> Cache
+
+\section pdesc Plugin Description
+The histogram cache plugin creates histograms from values fed to its input connector.
+The computed histogram may be stored to disk periodically.
+It is also possible to define a timespan after which the histogram is reset (increasing the index of the file the histogram is stored to).
+That way, one can get a separate histogram for every timeslice.
+
+The plugin can also display a plot of the current histogram.
+
+\section attrs Attributes
+None
+
+\section conf Configuration
+\li <b>Auto reset</b>: Enable or disable automatic reset after given interval
+\li <b>Auto reset interval</b>: Interval after which the histogram is reset (in minutes)
+\li <b>Auto save</b>: Enable or disable automatic saving after given interval
+\li <b>Auto save interval</b>: Interval after which the current histogram is saved (in seconds)
+\li <b>From</b>: lower bound of the lowest histogram bin
+\li <b>Max Height</b>: Not yet implemented
+\li <b>Normalize</b>: Normalizes the histogram to its maximum value (\b Attention: This is still buggy)
+\li <b>Number of Bins</b>: Number of bins the range [From..To] is divided into
+\li <b>Preview</b>: Shows a live plot of the histogram
+\li <b>Reset</b>: Manually reset the histogram. \b Attention: This will NOT create a new file. The histogram will be saved to the current file.
+\li <b>To</b>: upper bound of the highest histogram bin
+\li <b>Update Speed</b>: Interval between updates of the histogram plot and counter
+
+\section inputs Input Connectors
+\li \c in \c &lt;double>: Input for the data to be histogrammed
+
+\section outputs Output Connectors
+\li \c fileOut, out \c &lt;double>: Contains the current histogram
+*/

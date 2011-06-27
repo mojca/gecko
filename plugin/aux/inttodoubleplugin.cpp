@@ -80,3 +80,28 @@ void IntToDoublePlugin::process () {
         }
     }
 }
+
+/*!
+\page inttodoubleplg IntToDouble Plugin
+\li <b>Plugin names:</b> \c inttodouble
+\li <b>Group:</b> Aux
+
+\section pdesc Plugin Description
+The IntToDouble plugin is an auxiliary plugin.
+It takes a uint32 input value on each of its inputs, converts it to a double and outputs the converted value to the respective output connector.
+
+Due to program limitations, it is not currently possible to create/delete connectors after the plugin has been created.
+Therefore the number of input/output connectors has to be set in the Add Plugin dialog.
+
+\section attrs Attributes
+\c nofChannels: Integer value describing the number of input/output pairs to create.
+
+\section conf Configuration
+None necessary.
+
+\section inputs Input Connectors
+\li \c in [0..n] \c &lt;uint32_t>: Input for the uint32 data to be converted
+
+\section outputs Output Connectors
+\li \c out [0..n] \c &lt;double>: Outputs for the double-converted data
+*/

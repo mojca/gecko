@@ -24,10 +24,10 @@ static PluginRegistrar registrarDouble ("fanoutDouble", FanOutPlugin<double>::cr
 
 /*!
 \page fanoutplg FanOut Plugin
-<b>Plugin names:</b> \c fanoutInt, \c fanoutDouble
-<b>Group:</b> Aux
+\li <b>Plugin names:</b> \c fanoutInt, \c fanoutDouble
+\li <b>Group:</b> Aux
 
-\section desc Plugin Description
+\section pdesc Plugin Description
 The fanout plugin is an auxiliary plugin.
 It takes a single input and makes it available on \c nofOutputs output connectors.
 It is available for int and double vector data.
@@ -42,8 +42,8 @@ Therefore the number of output connectors has to be set in the Add Plugin dialog
 None necessary.
 
 \section inputs Input Connectors
-\c in: Input for the data to be fanned out
+\li \c in \c &lt;uint32_t/double>: Input for the data to be fanned out
 
 \section outputs Output Connectors
-\c out[0..n]: Outputs for the fanned-out data
+\li \c out[0..n] \c &lt;uint32_t/double>: Outputs for the fanned-out data
 */
