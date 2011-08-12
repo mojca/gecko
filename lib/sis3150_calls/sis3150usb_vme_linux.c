@@ -64,7 +64,8 @@
 #define sis3150usb_error_code_usb_read_length_error     	0x113 
 
 
-#define INSTDIR "/usr/opt/sisusb"
+//#define INSTDIR "/usr/opt/sisusb"
+#define INSTDIR "/usr/local"
 
 static const int    sisVendorId = 0x1657;          /* Vendor ID taken by SIS */
 static const int    productId   = 0x3150;          /* Product ID we are looking for */
@@ -412,7 +413,7 @@ int
 Sis3150usb_OpenDriver_And_Download_FX2_Setup(PCHAR usbDeviceName, 
 					     HANDLE *usbDeviceHandle)
 {
-  char*  sis3150RootDir;	/* Where the software lives. */
+  char*  sis3150RootDir = INSTDIR;	/* Where the software lives. */
   char   firmwareFilename[PATH_MAX+1];
   char   usbDeviceFile[PATH_MAX+1];
   int    testFd;
@@ -423,7 +424,7 @@ Sis3150usb_OpenDriver_And_Download_FX2_Setup(PCHAR usbDeviceName,
   
   /* Figure out where the firmware file is supposed to live */
 
-  strcpy(sis3150RootDir,INSTDIR);
+  //strcpy(sis3150RootDir,INSTDIR);
   strncpy(firmwareFilename, sis3150RootDir, PATH_MAX);
   strncat(firmwareFilename, "/etc/", PATH_MAX);
   strncat(firmwareFilename, firmwareName, PATH_MAX);

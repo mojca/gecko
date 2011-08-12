@@ -49,7 +49,7 @@ void EventBuffer::setSize (size_t newsz) {
 }
 
 Event* EventBuffer::createEvent () {
-    std::vector<Event*> rd (1, NULL);
+    std::vector<Event*> rd (1);
     if (UnusedQ_->read (rd, 1) != 1) {
         return new Event (this);
     }
@@ -71,7 +71,7 @@ bool EventBuffer::queue (Event *ev) {
 }
 
 Event* EventBuffer::dequeue () {
-    std::vector<Event*> rd (1, NULL);
+    std::vector<Event*> rd (1);
     if (Buffer_->read(rd, 1) < 1)
         return NULL;
 
