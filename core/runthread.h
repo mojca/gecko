@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef RUNTHREAD_H
 #define RUNTHREAD_H
 
+#include <stdint.h>
 
 #include <QMutex>
 #include <QThread>

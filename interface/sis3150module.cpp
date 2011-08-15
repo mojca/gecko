@@ -28,6 +28,7 @@ Sis3150Module::Sis3150Module(int _id, QString _name)
     , id (getId ())
     , name (getName ())
 {
+    m_device = 0;
     deviceOpen = false;
 
     // Setup
@@ -100,9 +101,13 @@ int Sis3150Module::close()
     Sis3150UI* ui = dynamic_cast<Sis3150UI*>(getUI());
 
     //! Close the device
-    status = Sis3150usb_CloseDriver(m_device);
-    deviceOpen = false;
-    ui->outputText("Device closed\n");
+    if(m_device != 0) {
+        status = Sis3150usb_CloseDriver(m_device);
+        deviceOpen = false;
+        ui->outputText("Device closed\n");
+    } else {
+        ui->outputText("Device already closed.\n");
+    }
     ui->moduleClosed ();
 
     return 0;
