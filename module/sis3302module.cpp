@@ -664,11 +664,11 @@ int Sis3302Module::writeToBuffer(Event *ev)
 {
     for(unsigned int i = 0; i < 8; i++)
     {
-        printf("sis3302: ch %d: Trying to write to buffer (ev = 0x%x)\n",i,ev);
+        //printf("sis3302: ch %d: Trying to write to buffer (ev = 0x%x)\n",i,ev);
         if(conf.ch_enabled[i] == false) continue;
         if(conf.enable_page_wrap == true) dmx.setMetaData(conf.nof_events,eventDir[i],timestampDir);
         dmx.process (ev, readBuffer[i], readLength[i]);
-        printf("sis3302: ch %d: Success!\n",i);
+        //printf("sis3302: ch %d: Success!\n",i);
     }
     return 0;
 }
