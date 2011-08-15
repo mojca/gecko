@@ -199,8 +199,9 @@ public:
         if (groups.contains(identifier)) {
             QWidget* g = groups.value(identifier);
             QSpinBox* b = new QSpinBox(g);
-            b->setMinimum(min);
-            b->setMaximum(max);
+            b->setRange(min,max);
+            //b->setMinimum(min);
+            //b->setMaximum(max);
             QWidget* w = attachLabel(b,_name);
             g->layout()->addWidget(w);
             sm.setMapping(b,_cname);
@@ -216,8 +217,9 @@ public:
         if (groups.contains(identifier)) {
             QWidget* g = groups.value(identifier);
             QDoubleSpinBox* b = new QDoubleSpinBox(g);
-            b->setMinimum(min);
-            b->setMaximum(max);
+            b->setRange(min,max);
+            //b->setMinimum(min);
+            //b->setMaximum(max);
             QWidget* w = attachLabel(b,_name);
             g->layout()->addWidget(w);
             sm.setMapping(b,_cname);
@@ -234,8 +236,9 @@ public:
             QWidget* g = groups.value(identifier);
             HexSpinBox* b = new HexSpinBox(g);
             b->setPrefix ("0x");
-            b->setMinimum(min);
-            b->setMaximum(max);
+            b->setRange(min,max);
+            //b->setMinimum(min);
+            //b->setMaximum(max);
             QWidget* w = attachLabel(b,_name);
             g->layout()->addWidget(w);
             sm.setMapping(b,_cname);

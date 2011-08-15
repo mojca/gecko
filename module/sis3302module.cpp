@@ -187,7 +187,13 @@ int Sis3302Module::configure()
         addr += (i/2) * SIS3302_NEXT_ADC_OFFSET;
 
         data = 0;
-        data |= (conf.trigger_threshold[i] & 0x1ffff);
+        uint32_t triggervalue = 0;
+        if(conf.trgMode[i] == conf.firFalling || conf.trgMode[i] == conf.firRising) {
+            triggervalue = conf.trigger_threshold[i] + 0x10000;
+        } else {
+            triggervalue = conf.trigger_threshold[i];
+        }
+        data |= (triggervalue & 0x1ffff);
         if(conf.trgMode[i] == conf.ledFalling)      data |= (1<<24) | (1<<26);
         else if(conf.trgMode[i] == conf.ledRising)  data |= (1<<25) | (1<<26);
         else if(conf.trgMode[i] == conf.firFalling) data |= (1<<24);

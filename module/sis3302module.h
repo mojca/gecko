@@ -63,7 +63,7 @@ public:
     uint32_t trigger_pulse_length[8];
     uint32_t trigger_gap_length[8];
     uint32_t trigger_peak_length[8];
-    uint32_t trigger_threshold[8];
+    int32_t trigger_threshold[8];
 
     uint32_t dac_offset[8];
     bool ch_enabled[8];
@@ -97,7 +97,7 @@ public:
             trigger_pulse_length[i] = 10;
             trigger_gap_length[i]   = 8;
             trigger_peak_length[i]  = 4;
-            trigger_threshold[i]    = 65000; // 65536 is the "zero" threshold (FIXME: this should be done better)
+            trigger_threshold[i]    = -50;
             dac_offset[i]           = 37000; // About the middle of the input range
             ch_enabled[i]           = true;
         }

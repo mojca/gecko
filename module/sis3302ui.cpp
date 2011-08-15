@@ -49,7 +49,7 @@ void Sis3302UI::createUI()
     uif.addButtonToGroup(tn[nt],gn[ng]+"b3_","Single Shot","singleshot_button");
     uif.getWidgets()->find("singleshot_button").value()->setEnabled(false);
 
-    // TAB TRIGGER
+    // TAB TRIGGER 0-3
     tn.append("Ch 0-3"); nt++; uif.addTab(tn[nt]);
 
     int ch = 0;
@@ -61,7 +61,7 @@ void Sis3302UI::createUI()
         {
             gn.append(tr("Channel %1").arg(ch)); ng++; uif.addGroupToGroup(tn[nt],un,gn[ng],tr("ch_enabled%1").arg(ch));
             uif.addPopupToGroup(tn[nt],un+gn[ng],"Mode",tr("trgMode_%1").arg(ch),(QStringList() << "LED, rising" << "LED, falling" << "FIR, rising" << "FIR, falling"));
-            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),0,0x1ffff); // 17 bits
+            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),-65536,65535); // 17 bits
             uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Sum time",tr("trigger_gap_length_%1").arg(ch),1,16);
             uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Peak time",tr("trigger_peak_length_%1").arg(ch),1,16);
             uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Pulse Length",tr("trigger_pulse_length_%1").arg(ch),0,0xff);  // 8 bits
@@ -69,6 +69,7 @@ void Sis3302UI::createUI()
         }
     }
 
+    // TAB TRIGGER 4-7
     tn.append("Ch 4-7"); nt++; uif.addTab(tn[nt]);
 
     ch = 4;
@@ -80,7 +81,7 @@ void Sis3302UI::createUI()
         {
             gn.append(tr("Channel %1").arg(ch)); ng++; uif.addGroupToGroup(tn[nt],un,gn[ng],tr("ch_enabled%1").arg(ch));
             uif.addPopupToGroup(tn[nt],un+gn[ng],"Mode",tr("trgMode_%1").arg(ch),(QStringList() << "LED, rising" << "LED, falling" << "FIR, rising" << "FIR, falling"));
-            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),0,0xffff); // 16 bits
+            uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Threshold",tr("trigger_threshold_%1").arg(ch),-65536,65535); // 17 bits
             uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Sum time",tr("trigger_gap_length_%1").arg(ch),1,16);
             uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Peak time",tr("trigger_peak_length_%1").arg(ch),1,16);
             uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Pulse Length",tr("trigger_pulse_length_%1").arg(ch),0,0xff);  // 8 bits
@@ -100,7 +101,7 @@ void Sis3302UI::createUI()
 
     gn.append("Advanced"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addCheckBoxToGroup(tn[nt],gn[ng],"Page Wrap","enable_page_wrap");
-    uif.addPopupToGroup(tn[nt],gn[ng],"Page Wrap Size","wrapSize",(QStringList() << "64" << "128" << "256" << "512" << "1k" << "4k" << "16k" << "64" << "256k" << "1M" << "4M" << "16M"));
+    uif.addPopupToGroup(tn[nt],gn[ng],"Page Wrap Size","wrapSize",(QStringList() << "64" << "128" << "256" << "512" << "1k" << "4k" << "16k" << "64k" << "256k" << "1M" << "4M" << "16M"));
     uif.addPopupToGroup(tn[nt],gn[ng],"Averaging Mode","avgMode",(QStringList() << "1" << "2" << "4" << "8" << "16" << "32" << "64" << "128"));
 
     // TAB DAC SETUP

@@ -618,7 +618,7 @@ int Sis3350Module::acquireRingBufferASync()
 
     uint32_t i = 0,j = 0;
     uint32_t stop_next_sample_addr[4];
-    uintptr_t read_data_block_ptr = NULL;
+    uintptr_t read_data_block_ptr = 0;
     uint32_t got_nof_lwords = 0;
     uint32_t sample_length = 0;
     uint32_t event_length = 0;
@@ -703,7 +703,7 @@ int Sis3350Module::acquireRingBufferSync()
 {
     uint32_t i = 0,j = 0;
     uint32_t stop_next_sample_addr[4];
-    uintptr_t read_data_block_ptr = NULL;
+    uintptr_t read_data_block_ptr = 0;
     uint32_t got_nof_lwords = 0;
     uint32_t sample_length = 0;
     uint32_t event_length = 0;
