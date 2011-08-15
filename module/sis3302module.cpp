@@ -245,8 +245,9 @@ int Sis3302Module::checkConfig()
     {
         if(conf.autostart_acq == false)
             printf("sis3302: Config warning: Autostart acquisition should be used in multi event mode.\n");
-        if(conf.internal_trg_as_stop == false)
-            printf("sis3302: Config warning: Internal trigger as stop should be used in multi event mode.\n");
+        if(conf.internal_trg_as_stop == false &&
+           conf.enable_external_trg == false)
+            printf("sis3302: Config warning: Internal trigger or external trigger as stop should be used in multi event mode.\n");
         if(conf.event_length_as_stop == true)
             printf("sis3302: Config warning: Event length stop mode should not be used in multi event mode.\n");
         if(conf.stop_delay < 2)
@@ -531,6 +532,7 @@ int Sis3302Module::acquire(Event *ev)
        conf.enable_page_wrap == true) {
         ret = acquisitionStartMulti(); }
     if(ret == 0) writeToBuffer(ev);
+    else printf("sis3302: Failed acquiring event %p, ret = 0x%x\n", ev,ret);
 
     return ret;
 }
@@ -662,9 +664,11 @@ int Sis3302Module::writeToBuffer(Event *ev)
 {
     for(unsigned int i = 0; i < 8; i++)
     {
+        printf("sis3302: ch %d: Trying to write to buffer (ev = 0x%x)\n",i,ev);
         if(conf.ch_enabled[i] == false) continue;
         if(conf.enable_page_wrap == true) dmx.setMetaData(conf.nof_events,eventDir[i],timestampDir);
         dmx.process (ev, readBuffer[i], readLength[i]);
+        printf("sis3302: ch %d: Success!\n",i);
     }
     return 0;
 }
@@ -767,6 +771,9 @@ int Sis3302Module::readAdcChannel(int ch, uint32_t _reqNofWords)
             startPos += gotNofLwords*4;
             readLength[ch] += gotNofLwords;
         }
+
+	// Store channel info
+	readLength[ch] |= ((ch & 0x7) << 29);
 
         //printf("\nsis3302 After read Ch %d: StartPos: %d byte, ReadLength: %d lwords\n",ch,startPos,readLength[ch]);
 
