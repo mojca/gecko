@@ -1,3 +1,22 @@
+/*
+Copyright 2011 Bastian Loeher, Roland Wirth
+
+This file is part of GECKO.
+
+GECKO is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GECKO is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "dspcoincplugin.h"
 #include "pluginconnectorqueued.h"
 #include "pluginconnectorplain.h"
@@ -28,7 +47,7 @@ struct ConfigDspCoinc {
     ConfigDspCoinc ()
     : delay (-5)
     , width (10)
-    , anyopener (true)
+    , anyopener (false)
     , trgtimestamps (false)
     {}
 };
@@ -85,7 +104,8 @@ void DspCoincPlugin::createSettings (QGridLayout *l) {
     boxGateOpener_ = new QComboBox ();
     boxGateOpener_->addItem (tr ("First"), QVariant::fromValue (false));
     boxGateOpener_->addItem (tr ("Any"), QVariant::fromValue (true));
-    l->addWidget (new QLabel (tr ("Gate opener:")), 2, 0, 1, 1);
+    boxGateOpener_->setCurrentIndex (0);
+    l->addWidget (new QLabel (tr ("Window opener:")), 2, 0, 1, 1);
     l->addWidget (boxGateOpener_, 2, 1, 1, 1);
 
     sbDelay_ = new QSpinBox ();
@@ -224,3 +244,37 @@ void DspCoincPlugin::updateCoincData () {
     if (nCoinc + nNoCoinc > 0)
         lblCoinc->setText (tr ("Coincidences: %1%").arg((100.0 * nCoinc)/(nCoinc + nNoCoinc), 4, 'f', 1));
 }
+
+void DspCoincPlugin::runStartingEvent () {
+    nCoinc = 0;
+    nNoCoinc = 0;
+}
+
+/*!
+\page dspcoincplg Coincidence Plugin
+\li <b>Plugin names:</b> \c dspcoincplugin
+\li <b>Group:</b> DSP
+
+\section pdesc Plugin Description
+The coincidence plugin detects coincidences between two or more triggers.
+When either any or the first trigger input shows a trigger the other inputs are searched for triggers within a window of given width and offset to the first trigger.
+When all trigger inputs show at least one trigger inside the window data is passed from the data inputs to their respective outputs.
+If the coincidence condition is not met no data gets passed to the outputs, effectively inhibiting the processing of the plugins connected to them.
+
+\section attrs Attributes
+\li \c nofTriggers: Number of trigger inputs
+\li \c nofDataChannels: Number of data channels
+
+\section conf Configuration
+\li <b>Window Opener</b>: The opener of the coincidence window (either only the first trigger input or any of them)
+\li <b>Delay</b>: Start of the coincidence window relative to the opening trigger
+\li <b>Width</b>: Width of the coincidence window
+\li <b>Trigger inputs carry timestamps</b>: If enabled the trigger inputs are assumed not to be logic signals but trigger timestamps
+
+\section inputs Input Connectors
+\li \c trigger[1..n] \c &lt;double>: Trigger signals
+\li \c in[1..m] \c &lt;double>: Input signals
+
+\section outputs Output Connectors
+\li \c out[1..m] \c &lt;double>: Outputs for the inputs (only active when coincidence condition is met)
+*/

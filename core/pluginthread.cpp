@@ -1,3 +1,22 @@
+/*
+Copyright 2011 Bastian Loeher, Roland Wirth
+
+This file is part of GECKO.
+
+GECKO is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GECKO is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <QtConcurrentRun>
 #include <QFutureSynchronizer>
 
@@ -6,6 +25,12 @@
 #include "outputplugin.h"
 #include "runmanager.h"
 #include "eventbuffer.h"
+
+#ifdef GECKO_PROFILE_PLUGIN
+#include <time.h>
+static struct timespec starttime;
+static uint64_t timeinwait;
+#endif
 
 PluginThread::PluginThread(PluginManager* _pmgr, ModuleManager* _mmgr)
         : pmgr(_pmgr), mmgr(_mmgr), nofAcqsWaiting (0)
@@ -91,6 +116,14 @@ PluginThread::~PluginThread()
         bool finished = wait(5000);
         if(!finished) terminate();
     }
+
+#ifdef GECKO_PROFILE_PLUGIN
+    struct timespec et;
+    clock_gettime(CLOCK_MONOTONIC, &et);
+    uint64_t rt = (et.tv_sec - starttime.tv_sec) * 1000000000 + (et.tv_nsec - starttime.tv_nsec);
+    std::cout << "Runtime: " << (rt * 1e-9) <<" s, Waiting: " << (100.* timeinwait / rt) << "%" << std::endl;
+#endif
+
     std::cout << "PluginThread stopped." << std::endl;
 }
 
@@ -99,6 +132,15 @@ void PluginThread::run()
     std::cout << "PluginThread started." << std::endl;
     if(levelList.empty())
         std::cout << "No plugins connected." << std::endl;
+
+    foreach (AbstractPlugin *p, *PluginManager::ref().list()) {
+        p->runStartingEvent ();
+    }
+
+#ifdef GECKO_PROFILE_PLUGIN
+    clock_gettime(CLOCK_MONOTONIC, &starttime);
+    timeinwait = 0;
+#endif
 
     for(;;)
     {
@@ -146,7 +188,15 @@ void PluginThread::process()
     else
     {
         QMutexLocker l (&mutex);
+#ifdef GECKO_PROFILE_PLUGIN
+        struct timespec st, et;
+        clock_gettime (CLOCK_MONOTONIC, &st);
+#endif
         cond.wait(&mutex);
+#ifdef GECKO_PROFILE_PLUGIN
+        clock_gettime (CLOCK_MONOTONIC, &et);
+        timeinwait += (et.tv_sec - st.tv_sec) * 1000000000 + (et.tv_nsec - st.tv_nsec);
+#endif
     }
 }
 

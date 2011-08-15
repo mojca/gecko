@@ -1,3 +1,22 @@
+/*
+Copyright 2011 Bastian Loeher, Roland Wirth
+
+This file is part of GECKO.
+
+GECKO is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GECKO is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef SAMDSP_H
 #define SAMDSP_H
 
@@ -1001,10 +1020,11 @@ public:
     }
 
     // Returns a vector with trigger timestamps, triggered on local maximum
-    std::vector<double> triggerLMT(const std::vector<double> & v, double threshold, int holdoff, int* nofTriggers=NULL)
+    template<typename T>
+    T triggerLMT(const T & v, double threshold, int holdoff, int* nofTriggers=NULL)
     {
         unsigned int vsize = v.size();
-        std::vector<double> result(vsize,0);
+        T result(vsize,0);
         unsigned int i = 3;
         unsigned int triggerCount = 0;
         while(i < vsize-2)
@@ -1491,9 +1511,10 @@ public:
     //
     // This will mark precise timings in a trace and calculate the phase to achieve sub-integer precision
     // Fraction is the Constant fraction threshold
-    std::vector<std::vector<double> > triggerCFD(const std::vector<double> & v, const std::vector<double> & vtz, double fraction, int holdoff)
+    template<typename T>
+    typename Sam::vector_traits<T>::vecvec_type triggerCFD(const T & v, const T & vtz, double fraction, int holdoff)
     {
-        std::vector<std::vector<double> > result(2,std::vector<double>(v.size(),0));
+        typename Sam::vector_traits<T>::vecvec_type result(2,T (v.size(),0));
 
         if(v.size() != vtz.size())
         {
@@ -1503,7 +1524,7 @@ public:
 
         unsigned int i = 2, tz = 0;
         double phase = 0;
-        while(i < vtz.size()-1)
+        while(i < static_cast<unsigned> (vtz.size())-1)
         {
             if(vtz.at(i) == 1)  // This is the amplitude of each triggered signal
             {
@@ -1530,9 +1551,10 @@ public:
     }
 
     // Same as above, but without a holdoff setting
-    std::vector<std::vector<double> > triggerCFD(const std::vector<double> & v, const std::vector<double> & vtz, double fraction)
+    template<typename T>
+    typename Sam::vector_traits<T>::vecvec_type triggerCFD(const T & v, const T & vtz, double fraction)
     {
-        std::vector<std::vector<double> > result(2,std::vector<double>(v.size(),0));
+        typename Sam::vector_traits<T>::vecvec_type result(2,T (v.size(),0));
 
         if(v.size() != vtz.size())
         {
@@ -1629,11 +1651,27 @@ public:
             double z2 = v [i] - fraction * v [i+delay];
             result [2][i-1] = z1; // cfd difference signal for testing
             // zero-crossing found and peak height sufficient
-            if (sign (z1) * sign (z2) <= 0 && fabs (v [i-1] / fraction) >= thr) {
+            if (sign (z1) * sign (z2) <= 0) {
                 if (z1 == 0 && z2 == 0) // zero-crossing is detected when the signal becomes non-zero
                     continue;
+
                 double phase = -z1 / (z2 - z1);
                 int nearest = rint (i-1 + phase);
+
+                if (fabs (v[nearest] / fraction) < thr)
+                    continue;
+
+                // find a value above the threshold (if it is not there the trigger was spurious)
+                bool found = false;
+                for (int j = i; j < i+holdoff && j < static_cast<int> (v.size()); ++j)
+                    if (fabs (v [j]) >= thr) {
+                        found = true;
+                        break;
+                    }
+
+                if (!found)
+                    continue;
+
                 result [TIME][nearest] = 1;
                 result [AMP][nearest] = i-1 + phase - nearest; // adjust phase
 

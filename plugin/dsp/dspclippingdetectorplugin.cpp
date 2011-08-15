@@ -1,3 +1,22 @@
+/*
+Copyright 2011 Bastian Loeher, Roland Wirth
+
+This file is part of GECKO.
+
+GECKO is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GECKO is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "dspclippingdetectorplugin.h"
 #include "pluginmanager.h"
 #include "pluginconnectorqueued.h"
@@ -27,7 +46,7 @@ void DspClippingDetectorPlugin::createSettings(QGridLayout * l)
     {
         QGridLayout* cl = new QGridLayout;
 
-        QLabel* label = new QLabel(tr("This plugin does a box filter convolution of the input data."));
+        QLabel* label = new QLabel(tr("This plugin detects clipping in the input signal."));
         QLabel* hlabel = new QLabel(tr("High Thr"));
         QLabel* llabel = new QLabel(tr("Low Thr"));
 
@@ -129,3 +148,27 @@ void DspClippingDetectorPlugin::userProcess()
 
     outputs->first()->setData(QVariant::fromValue (clip));
 }
+
+/*!
+\page dspclippingdetectorplg Clipping Detector Plugin
+\li <b>Plugin names:</b> \c dspclippingdetectorplugin
+\li <b>Group:</b> DSP
+
+\section dspclippingdetectorplg_pdesc Plugin Description
+The clipping detector plugin detects clipping in its input signal.
+Whenever the input signal exceeds the given \c high or \c low thresholds the clipping detector sets its output for that sample to +/-1 respectively.
+If it stays between the thresholds 0 is put into the output vector.
+
+\section attrs Attributes
+None
+
+\section conf Configuration
+\li <b>High Thr</b>: The high threshold
+\li <b>Low Thr</b>: The low threshold
+
+\section inputs Input Connectors
+\li \c in \c &lt;uint32_t>: Input signal
+
+\section outputs Output Connectors
+\li \c clipping \c veto \c &lt;double>: A signal containing information about the signal clipping (see \ref dspclippingdetectorplg_pdesc for details)
+*/

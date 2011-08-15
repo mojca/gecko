@@ -1,17 +1,40 @@
+/*
+Copyright 2011 Bastian Loeher, Roland Wirth
+
+This file is part of GECKO.
+
+GECKO is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GECKO is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "vectoroutputplugin.h"
 #include "pluginmanager.h"
 #include "runmanager.h"
 #include "pluginconnectorqueued.h"
+#include "confmap.h"
 
 static PluginRegistrar registrar ("vectoroutput", VectorOutputPlugin::create, AbstractPlugin::GroupOutput);
 
+struct VectorOutputConfig {
+    QString prefix;
+};
+
 VectorOutputPlugin::VectorOutputPlugin(int _id, QString _name)
     : BasePlugin(_id, _name)
+    , cfg (new VectorOutputConfig)
 {
     createSettings(settingsLayout);
-    setFilePath("/tmp");
-
-    prefix = tr("vector");
+    cfg->prefix = tr("vector");
 
     addConnector(new PluginConnectorQVDouble(this,ScopeCommon::in,"in"));
 
@@ -26,16 +49,18 @@ void VectorOutputPlugin::createSettings(QGridLayout * l)
     {
         QGridLayout* cl = new QGridLayout;
 
-        QLabel* fileoutputLabel = new QLabel(tr("Output to:"));
-        filePathLineEdit = new QLineEdit();
-        filePathButton = new QPushButton(tr("..."));
-        connect(filePathButton,SIGNAL(clicked()),this,SLOT(filePathButtonClicked()));
 
-        cl->addWidget(fileoutputLabel,0,0,1,1);
-        cl->addWidget(filePathLineEdit,0,1,1,1);
-        cl->addWidget(filePathButton,0,2,1,1);
+        prefixLineEdit = new QLineEdit ();
+        cl->addWidget(new QLabel(tr("File Prefix:")), 0, 0, 1, 1);
+        cl->addWidget(prefixLineEdit, 0, 1, 1, 1);
+
+        pathLabel = new QLabel (tr ("<none>"));
+        cl->addWidget (new QLabel (tr ("Last file:")), 1, 0, 1, 1);
+        cl->addWidget (pathLabel, 1, 1, 1, 1);
 
         container->setLayout(cl);
+
+        connect (prefixLineEdit, SIGNAL(textChanged(QString)), SLOT(prefixChanged()));
     }
 
     // End
@@ -43,22 +68,14 @@ void VectorOutputPlugin::createSettings(QGridLayout * l)
     l->addWidget(container,0,0,1,1);
 }
 
-void VectorOutputPlugin::setFilePath(QString _filePath)
+void VectorOutputPlugin::prefixChanged ()
 {
-    filePath = _filePath;
-    fileName = filePath + tr("/%1%2.dat").arg(prefix).arg(QDateTime::currentDateTime().toString("_yyMMdd_hhmm"));
-    filePathLineEdit->setText(fileName);
-}
-
-void VectorOutputPlugin::filePathButtonClicked()
-{
-    setFilePath(QFileDialog::getExistingDirectory(this,tr("Choose filename"),
-                                                  "/tmp",QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks));
+    cfg->prefix = prefixLineEdit->text ();
 }
 
 void VectorOutputPlugin::userProcess()
 {
-    std::cout << "VectorOutputPlugin Processing" << std::endl;
+    //std::cout << "VectorOutputPlugin Processing" << std::endl;
 
     QFile file(fileName);
     file.open(QIODevice::WriteOnly|QIODevice::Append);
@@ -83,4 +100,31 @@ void VectorOutputPlugin::userProcess()
         std::cout << "File not writeable." << std::endl;
     }
     file.close();
+}
+
+void VectorOutputPlugin::runStartingEvent () {
+    fileName = QDir::cleanPath (RunManager::ref().getRunName() + "/" +
+            cfg->prefix +
+            QDateTime::currentDateTime().toString("_yyMMdd_hhmm") + ".dat");
+
+    pathLabel->setText (fileName);
+}
+
+typedef ConfMap::confmap_t<VectorOutputConfig> confmap_t;
+static const confmap_t confmap [] = {
+    confmap_t ("prefix", &VectorOutputConfig::prefix)
+};
+
+void VectorOutputPlugin::applySettings(QSettings *s) {
+    s->beginGroup (getName());
+    ConfMap::apply (s, cfg, confmap);
+    s->endGroup ();
+
+    prefixLineEdit->setText (cfg->prefix);
+}
+
+void VectorOutputPlugin::saveSettings(QSettings *s) {
+    s->beginGroup (getName());
+    ConfMap::save (s, cfg, confmap);
+    s->endGroup ();
 }

@@ -21,16 +21,26 @@
 
 *******************************************************************************
 \page lofplug List of Plugins
-\section dspplg Signal Processing Plugins
+\section cacheplgs Cache Plugins
+\li \ref cachehistogramplg
+\li \ref cachesignalplg
 
-\section anaplg Data Analysis Plugins
+\section dspplgs Signal Processing Plugins
+\li \ref dspadcplg
+\li \ref dspcalfilterplg
+\li \ref dspcfdplg
+\li \ref dspclippingdetectorplg
+\li \ref dspcoincplg
+
+\section packplgs Data Packing Plugins
 
 \section visplg Visualization Plugins
 
-\section outplg Data Output Plugins
+\section outplgs Data Output Plugins
 
 \section auxplg Auxiliary Plugins
 \li \ref fanoutplg
+\li \ref inttodoubleplg
 
 *******************************************************************************
 \page umanual GECKO User's Manual

@@ -1,3 +1,22 @@
+/*
+Copyright 2011 Bastian Loeher, Roland Wirth
+
+This file is part of GECKO.
+
+GECKO is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GECKO is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef ABSTRACTPLUGIN_H
 #define ABSTRACTPLUGIN_H
 
@@ -71,6 +90,9 @@ public:
 
     /*! enable or disable those UI elements that should not be accessible during a run. */
     virtual void setConfigEnabled (bool enabled) = 0;
+
+    /*! perform actions prior to starting a run, eg. clearing statistics, resetting spectra... */
+    virtual void runStartingEvent () = 0;
 
     /*! Make the plugin initialise its UI. */
     virtual void createUI() = 0;

@@ -1,3 +1,22 @@
+/*
+Copyright 2011 Bastian Loeher, Roland Wirth
+
+This file is part of GECKO.
+
+GECKO is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GECKO is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef CONFMAP_H
 #define CONFMAP_H
 
@@ -35,7 +54,7 @@ namespace ConfMap {
 template <typename T>
 struct confmap_t {
     QString name; /*!< name of the configuration option. */
-    enum {uint8, uint16, uint32, boolean, integer, dble} type; /*!< type of the configuration option. */
+    enum {uint8, uint16, uint32, boolean, integer, dble, string} type; /*!< type of the configuration option. */
     union {
         uint8_t T::* uint8_val;
         uint16_t T::* uint16_val;
@@ -43,6 +62,7 @@ struct confmap_t {
         double T::* double_val;
         bool T::* boolean_val;
         int T::* integer_val;
+        QString T::* string_val;
     };
 
     /*! Creates a configuration mapping for a uint8 member. */
@@ -63,6 +83,9 @@ struct confmap_t {
     /*! Creates a configuration mapping for a double member. */
     confmap_t (const QString &n, double T::* pm)
         : name (n), type (dble), double_val (pm) {}
+    /*! Creates a configuration mapping for a QString member. */
+    confmap_t (const QString &n, QString T::* pm)
+        : name (n), type (string), string_val (pm) {}
 };
 
 /*! Loads settings into the configuration structure.
@@ -93,6 +116,9 @@ void apply (QSettings *settings, T *conf_, const confmap_t<T> (&confmap) [confma
                 break;
             case confmap_t<T>::dble:
                 conf_->*(confmap [i].double_val) = settings->value (confmap [i].name).toDouble ();
+                break;
+            case confmap_t<T>::string:
+                conf_->*(confmap [i].string_val) = settings->value (confmap [i].name).toString ();
                 break;
             }
         }
@@ -125,6 +151,9 @@ void save (QSettings *settings, T* conf_, const confmap_t<T> (&confmap) [confmap
             break;
         case confmap_t<T>::dble:
             settings->setValue (confmap [i].name, conf_->*(confmap [i].double_val));
+            break;
+        case confmap_t<T>::string:
+            settings->setValue (confmap [i].name, conf_->*(confmap [i].string_val));
             break;
         }
     }

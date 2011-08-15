@@ -1,3 +1,22 @@
+/*
+Copyright 2011 Bastian Loeher, Roland Wirth
+
+This file is part of GECKO.
+
+GECKO is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GECKO is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "runthread.h"
 
 #include "abstractmodule.h"
@@ -6,6 +25,12 @@
 #include "runmanager.h"
 #include "abstractinterface.h"
 #include "eventbuffer.h"
+
+#ifdef GECKO_PROFILE_RUN
+#include <time.h>
+static struct timespec starttime;
+static uint64_t timeinacq;
+#endif
 
 RunThread::RunThread () {
 
@@ -28,6 +53,16 @@ RunThread::~RunThread()
 {
     bool finished = wait(5000);
     if(!finished) terminate();
+
+#ifdef GECKO_PROFILE_RUN
+    struct timespec et;
+    clock_gettime(CLOCK_MONOTONIC, &et);
+    uint64_t rt = (et.tv_sec - starttime.tv_sec) * 1000000000 + (et.tv_nsec - starttime.tv_nsec);
+    std::cout << "Runtime: " << (rt * 1e-9) <<" s, Acq%: " << (100.* timeinacq / rt) << ", Unsuccessful%: "
+              << (100. * (nofPolls - nofSuccessfulEvents) / nofPolls)
+              << std::endl;
+#endif
+
     std::cout << "Run thread stopped." << std::endl;
 }
 
@@ -47,6 +82,10 @@ void RunThread::run()
 
     std::cout << "Run thread started." << std::endl;
 
+#ifdef GECKO_PROFILE_RUN
+    clock_gettime (CLOCK_MONOTONIC, &starttime);
+    timeinacq = 0;
+#endif
     if(interruptBased)
     {
         exec();
@@ -72,19 +111,15 @@ void RunThread::createConnections()
 
 bool RunThread::acquire(AbstractModule* _trg)
 {
-    Q_UNUSED(_trg)
-
     //std::cout << currentThreadId() << ": Run thread acquiring." << std::endl;
 
-    QList<AbstractModule*>::iterator m(modules.begin());
-
     Event *ev = RunManager::ref ().getEventBuffer ()->createEvent ();
-    while(m != modules.end())
+    int modulesz = modules.size ();
+    for (int i = 0; i < modulesz; ++i)
     {
-        AbstractModule* curM = (*m);
-        if (curM->dataReady ())
+        AbstractModule* curM = modules [i];
+        if (curM == _trg || curM->dataReady ())
             curM->acquire(ev);
-        m++;
     }
 
     if (QSet<const EventSlot*>::fromList (mandatories).subtract(ev->getOccupiedSlots ()).empty()) {
@@ -118,8 +153,16 @@ void RunThread::pollLoop()
             if(trg->dataReady())
             {
                 imgr->getMainInterface()->setOutput1(true);
+#ifdef GECKO_PROFILE_RUN
+                struct timespec st, et;
+                clock_gettime (CLOCK_MONOTONIC, &st);
+#endif
                 if (acquire(trg))
                     nofSuccessfulEvents++;
+#ifdef GECKO_PROFILE_RUN
+                clock_gettime (CLOCK_MONOTONIC, &et);
+                timeinacq += (et.tv_sec - st.tv_sec) * 1000000000 + (et.tv_nsec - st.tv_nsec);
+#endif
                 imgr->getMainInterface()->setOutput1(false);
             }
         }

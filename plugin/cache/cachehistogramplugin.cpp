@@ -1,3 +1,22 @@
+/*
+Copyright 2011 Bastian Loeher, Roland Wirth
+
+This file is part of GECKO.
+
+GECKO is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GECKO is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <limits>
 #include <QComboBox>
 #include "baseplugin.h"
@@ -25,7 +44,7 @@ CacheHistogramPlugin::CacheHistogramPlugin(int _id, QString _name)
 
     halfSecondTimer = new QTimer();
     halfSecondTimer->start(msecsToTimeout);
-    connect(halfSecondTimer,SIGNAL(timeout()),plot,SLOT(update()));
+    connect(halfSecondTimer,SIGNAL(timeout()),this,SLOT(updateVisuals()));
 
     writeToFileTimer = new QTimer();
     writeToFileTimer->start(conf.autosaveInt*1000);         // write To File
@@ -187,6 +206,8 @@ void CacheHistogramPlugin::createSettings(QGridLayout * l)
         nofBinsBox->addItem("16384",16384);
         nofBinsBox->setCurrentIndex(nofBinsBox->findData(conf.nofBins,Qt::UserRole));
 
+        numCountsLabel = new QLabel (tr ("0"));
+
         connect(previewButton,SIGNAL(clicked()),this,SLOT(previewButtonClicked()));
         connect(resetButton,SIGNAL(clicked()),this,SLOT(resetButtonClicked()));
         connect(updateSpeedSpinner,SIGNAL(valueChanged(int)),this,SLOT(setTimerTimeout(int)));
@@ -229,6 +250,9 @@ void CacheHistogramPlugin::createSettings(QGridLayout * l)
         cl->addWidget(autoresetIntLabel,6,2,1,1);
         cl->addWidget(autoresetSpinner, 6,3,1,1);
 
+        cl->addWidget(new QLabel ("Counts in histogram:"), 7, 0, 1, 1);
+        cl->addWidget(numCountsLabel, 7, 1, 1, 3);
+
         container->setLayout(cl);
     }
 
@@ -265,6 +289,12 @@ void CacheHistogramPlugin::scheduleResetHistogram()
         fileCount++;
         scheduleReset = true;
     }
+}
+
+void CacheHistogramPlugin::updateVisuals()
+{
+    plot->update ();
+    numCountsLabel->setText(tr("%1").arg(nofCounts));
 }
 
 /*!
@@ -310,6 +340,7 @@ void CacheHistogramPlugin::userProcess()
             if(bin > 0 && bin < conf.nofBins)
             {
                 cache [bin] += conf.inputWeight;
+                ++nofCounts;
             }
         }
     }
@@ -324,3 +355,55 @@ void CacheHistogramPlugin::userProcess()
     outputs->at(0)->setData(QVariant::fromValue (cache));
     outputs->at(1)->setData(QVariant::fromValue (cache));
 }
+
+void CacheHistogramPlugin::runStartingEvent () {
+    // reset all timers and the histogram before starting anew
+    halfSecondTimer->stop();
+    writeToFileTimer->stop();
+    resetTimer->stop();
+
+    scheduleReset = true;
+    writeToFile = false;
+    nofCounts = 0;
+
+    halfSecondTimer->start(msecsToTimeout);
+    writeToFileTimer->start(conf.autosaveInt*1000);
+    resetTimer->start(conf.autoresetInt*60*1000);
+}
+
+/*!
+\page cachehistogramplg Histogram Cache Plugin
+\li <b>Plugin names:</b> \c cachehistogramplugin
+\li <b>Group:</b> Cache
+
+\section pdesc Plugin Description
+The histogram cache plugin creates histograms from values fed to its input connector.
+The computed histogram may be stored to disk periodically.
+It is also possible to define a timespan after which the histogram is reset (increasing the index of the file the histogram is stored to).
+That way, one can get a separate histogram for every timeslice.
+
+The plugin can also display a plot of the current histogram.
+
+\section attrs Attributes
+None
+
+\section conf Configuration
+\li <b>Auto reset</b>: Enable or disable automatic reset after given interval
+\li <b>Auto reset interval</b>: Interval after which the histogram is reset (in minutes)
+\li <b>Auto save</b>: Enable or disable automatic saving after given interval
+\li <b>Auto save interval</b>: Interval after which the current histogram is saved (in seconds)
+\li <b>From</b>: lower bound of the lowest histogram bin
+\li <b>Max Height</b>: Not yet implemented
+\li <b>Normalize</b>: Normalizes the histogram to its maximum value (\b Attention: This is still buggy)
+\li <b>Number of Bins</b>: Number of bins the range [From..To] is divided into
+\li <b>Preview</b>: Shows a live plot of the histogram
+\li <b>Reset</b>: Manually reset the histogram. \b Attention: This will NOT create a new file. The histogram will be saved to the current file.
+\li <b>To</b>: upper bound of the highest histogram bin
+\li <b>Update Speed</b>: Interval between updates of the histogram plot and counter
+
+\section inputs Input Connectors
+\li \c in \c &lt;double>: Input for the data to be histogrammed
+
+\section outputs Output Connectors
+\li \c fileOut, out \c &lt;double>: Contains the current histogram
+*/
