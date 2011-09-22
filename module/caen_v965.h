@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 typedef struct {
 	uint8_t unused1;
 	uint8_t cnt		:6;
-	uint8_t unused2	:2;
+        uint8_t unused2		:2;
 	uint8_t crate;
 	uint8_t id		:3; // should be 0b010
 	uint8_t geo		:5;
@@ -41,13 +41,13 @@ typedef struct {
 	uint8_t  ch		: 4;
 	uint8_t  dummy2		: 3;
 	uint8_t  id		: 3; // should be 0b000
-	uint8_t  geo	: 5;
+        uint8_t  geo		: 5;
 } t_v965_data;
 
 typedef struct {
-	uint32_t ev_cnt	:24;
+        uint32_t ev_cnt		:24;
 	uint8_t  id		: 3; // should be0b100
-	uint8_t  geo	: 5;
+        uint8_t  geo		: 5;
 } t_v965_eob;
 
 // v965 register macros

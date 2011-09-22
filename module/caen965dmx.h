@@ -19,7 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /*
   This plugin will demux the data from any CAEN v965 Dual Range QDC
-  The usual channel count of this module is 16
+  The usual channel count of this module is 16.
+  The output is still send to 32 channels. 16 for the low and 16 for the
+  high range.
 */
 
 #ifndef DEMUXCAEN965PLUGIN_H

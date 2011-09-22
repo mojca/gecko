@@ -17,26 +17,25 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "caen792ui.h"
-#include "caen792module.h"
+#include "caen965ui.h"
+#include "caen965module.h"
 
-Caen792UI::Caen792UI(Caen792Module* _module, bool _isqdc)
+Caen965UI::Caen965UI(Caen965Module* _module)
     : BaseUI()
     , module (_module)
-    , isqdc (_isqdc)
 {
     blockSlots = false;
     createUI();
 
-    std::cout << "Instantiated Caen792 UI" << std::endl;
+    std::cout << "Instantiated Caen965 UI" << std::endl;
 }
 
-Caen792UI::~Caen792UI()
+Caen965UI::~Caen965UI()
 {
 
 }
 
-void Caen792UI::createUI()
+void Caen965UI::createUI()
 {
     QGridLayout* l = new QGridLayout;
     QGridLayout* boxL = new QGridLayout;
@@ -59,7 +58,7 @@ void Caen792UI::createUI()
     this->setLayout(l);
 }
 
-QWidget* Caen792UI::createButtons()
+QWidget* Caen965UI::createButtons()
 {
     QWidget* box = new QWidget();
     QGridLayout* l = new QGridLayout();
@@ -100,7 +99,7 @@ QWidget* Caen792UI::createButtons()
     return box;
 }
 
-QWidget* Caen792UI::createTabs()
+QWidget* Caen965UI::createTabs()
 {
     QTabWidget* tabs = new QTabWidget();
 
@@ -113,7 +112,7 @@ QWidget* Caen792UI::createTabs()
     return tabs;
 }
 
-QWidget* Caen792UI::createDevCtrlTab()
+QWidget* Caen965UI::createDevCtrlTab()
 {
     QWidget* box = new QWidget();
     QGridLayout* l = new QGridLayout;
@@ -124,7 +123,7 @@ QWidget* Caen792UI::createDevCtrlTab()
     return box;
 }
 
-QWidget* Caen792UI::createSettingsTab()
+QWidget* Caen965UI::createSettingsTab()
 {
     QWidget* box = new QWidget();
     QGridLayout* l = new QGridLayout;
@@ -137,7 +136,7 @@ QWidget* Caen792UI::createSettingsTab()
     return box;
 }
 
-QWidget* Caen792UI::createInfoTab()
+QWidget* Caen965UI::createInfoTab()
 {
     QWidget* box = new QWidget();
     QGridLayout* l = new QGridLayout;
@@ -148,7 +147,7 @@ QWidget* Caen792UI::createInfoTab()
     return box;
 }
 
-QWidget* Caen792UI::createIrqTab()
+QWidget* Caen965UI::createIrqTab()
 {
     QWidget* box = new QWidget();
     QGridLayout* l = new QGridLayout;
@@ -159,7 +158,7 @@ QWidget* Caen792UI::createIrqTab()
     return box;
 }
 
-QWidget* Caen792UI::createDeviceControls()
+QWidget* Caen965UI::createDeviceControls()
 {
     QWidget *box = new QWidget(this);
     QGridLayout *l = new QGridLayout();
@@ -198,7 +197,7 @@ QWidget* Caen792UI::createDeviceControls()
     return box;
 }
 
-QWidget* Caen792UI::createInterruptControls()
+QWidget* Caen965UI::createInterruptControls()
 {
     QWidget *box = new QWidget(this);
     QGridLayout *l = new QGridLayout();
@@ -228,7 +227,7 @@ QWidget* Caen792UI::createInterruptControls()
     return box;
 }
 
-QWidget* Caen792UI::createInfoControls()
+QWidget* Caen965UI::createInfoControls()
 {
     QWidget *box = new QWidget(this);
     QVBoxLayout *l = new QVBoxLayout();
@@ -256,7 +255,7 @@ QWidget* Caen792UI::createInfoControls()
     return box;
 }
 
-QWidget* Caen792UI::createThresholdsControls()
+QWidget* Caen965UI::createThresholdsControls()
 {
     QWidget *box = new QWidget(this);
     QGridLayout *l = new QGridLayout();
@@ -266,7 +265,7 @@ QWidget* Caen792UI::createThresholdsControls()
     return box;
 }
 
-QWidget* Caen792UI::createSettings1Controls()
+QWidget* Caen965UI::createSettings1Controls()
 {
     QWidget *box = new QWidget(this);
     QGridLayout *l = new QGridLayout();
@@ -291,7 +290,7 @@ QWidget* Caen792UI::createSettings1Controls()
     return box;
 }
 
-QWidget* Caen792UI::createSettings2Controls()
+QWidget* Caen965UI::createSettings2Controls()
 {
     QWidget *box = new QWidget(this);
     QGridLayout *l = new QGridLayout();
@@ -327,17 +326,11 @@ QWidget* Caen792UI::createSettings2Controls()
     l->addWidget(sldSubEnableBox,2,1,1,1);
     l->addWidget(hiresThrBox,    2,2,1,1);
 
-    if (!isqdc) {
-        stopModeBox = new QCheckBox (tr ("Common Stop"));
-        connect (stopModeBox, SIGNAL(toggled(bool)), SLOT(settings2Changed()));
-        l->addWidget(stopModeBox, 3,0,1,1);
-    }
-
     box->setLayout(l);
     return box;
 }
 
-QWidget* Caen792UI::createSettings3Controls()
+QWidget* Caen965UI::createSettings3Controls()
 {
     QWidget *box = new QWidget(this);
     QGridLayout *l = new QGridLayout();
@@ -348,10 +341,10 @@ QWidget* Caen792UI::createSettings3Controls()
     crateNumberSpinner->setMaximum(255);
     crateNumberSpinner->setValue(module->getConfig ()->cratenumber);
 
-    QLabel *ipedLabel = new QLabel (tr (isqdc ? "Pedestal Current:" : "Full Scale Range:"));
+    QLabel *ipedLabel = new QLabel (tr ("Pedestal Current:"));
     ipedSpinner = new QSpinBox ();
     ipedSpinner->setMaximum (255);
-    ipedSpinner->setValue (isqdc ? module->getConfig ()->i_ped : module->getConfig ()->fsr);
+    ipedSpinner->setValue (module->getConfig ()->i_ped);
 
     QLabel *fclrLabel = new QLabel (tr ("Fastclear Window:"));
     fclrSpinner = new QSpinBox ();
@@ -381,7 +374,7 @@ QWidget* Caen792UI::createSettings3Controls()
     return box;
 }
 
-void Caen792UI::settings1Changed()
+void Caen965UI::settings1Changed()
 {
     if (blockSlots) return;
     module->getConfig ()->block_end     = blockEndBox->isChecked();
@@ -390,64 +383,58 @@ void Caen792UI::settings1Changed()
     module->getConfig ()->program_reset = progResetBox->isChecked();
 }
 
-void Caen792UI::settings2Changed()
+void Caen965UI::settings2Changed()
 {
     if (blockSlots) return;
     module->getConfig ()->overRangeSuppressionEnabled = ovRangeBox->isChecked();
     module->getConfig ()->zeroSuppressionEnabled      = lowThrBox->isChecked();
-    module->getConfig ()->zeroSuppressionThr	  = hiresThrBox->isChecked();
+    module->getConfig ()->zeroSuppressionThr          = hiresThrBox->isChecked();
     module->getConfig ()->slidingScaleEnabled         = sldEnableBox->isChecked();
     module->getConfig ()->autoIncrementEnabled        = autoIncrBox->isChecked();
     module->getConfig ()->slideSubEnabled             = sldSubEnableBox->isChecked();
     module->getConfig ()->alwaysIncrementEventCounter = allTriggerBox->isChecked();
     module->getConfig ()->emptyEventWriteEnabled      = emptyProgBox->isChecked();
     module->getConfig ()->offline                     = offlineBox->isChecked();
-
-    if (!isqdc)
-        module->getConfig()->stop_mode                = stopModeBox->isChecked ();
 }
 
-void Caen792UI::crateNoChanged()
+void Caen965UI::crateNoChanged()
 {
     module->getConfig ()->cratenumber = crateNumberSpinner->value();
 }
 
-void Caen792UI::nofEventsChanged()
+void Caen965UI::nofEventsChanged()
 {
     module->getConfig ()->ev_trg = nofEventSpinner->value();
 }
 
-void Caen792UI::ipedChanged () {
-    if (isqdc)
-        module->getConfig ()->i_ped = ipedSpinner->value ();
-    else
-        module->getConfig ()->fsr = ipedSpinner->value ();
+void Caen965UI::ipedChanged () {
+    module->getConfig ()->i_ped = ipedSpinner->value ();
 }
 
-void Caen792UI::fclrChanged () {
+void Caen965UI::fclrChanged () {
     module->getConfig ()->fastclear = fclrSpinner->value ();
 }
 
-void Caen792UI::slideconstChanged () {
+void Caen965UI::slideconstChanged () {
     module->getConfig ()->slideconst = slideconstSpinner->value ();
 }
 
-void Caen792UI::irqLevelChanged()
+void Caen965UI::irqLevelChanged()
 {
     module->getConfig ()->irq_level = irqLevelSpinner->value();
 }
 
-void Caen792UI::irqVectorChanged()
+void Caen965UI::irqVectorChanged()
 {
     module->getConfig ()->irq_vector = irqVectorEdit->text().toShort();
 }
 
-void Caen792UI::infoUpdateClicked() {
+void Caen965UI::infoUpdateClicked() {
     uint16_t fw = module->getInfo ();
     firmwareEdit->setText (QString ("%1.%2").arg ((fw >> 8) & 0xFF, 2, 16, QChar ('0')).arg (fw & 0xFF, 2, 16, QChar ('0')));
 }
 
-void Caen792UI::applySettings()
+void Caen965UI::applySettings()
 {
     blockSlots = true;
     baseAddressEdit->setText(tr("%1").arg(module->getConfig ()->base_addr,8,16,QChar('0')));
@@ -467,14 +454,8 @@ void Caen792UI::applySettings()
     emptyProgBox->setChecked(module->getConfig ()->emptyEventWriteEnabled);
     offlineBox->setChecked(module->getConfig ()->offline);
 
-    if (!isqdc)
-        stopModeBox->setChecked(module->getConfig ()->stop_mode);
-
     crateNumberSpinner->setValue(module->getConfig ()->cratenumber);
-    if (isqdc)
-        ipedSpinner->setValue(module->getConfig ()->i_ped);
-    else
-        ipedSpinner->setValue(module->getConfig ()->fsr);
+    ipedSpinner->setValue(module->getConfig ()->i_ped);
     fclrSpinner->setValue(module->getConfig ()->fastclear);
     slideconstSpinner->setValue(module->getConfig ()->slideconst);
     irqLevelSpinner->setValue(module->getConfig ()->irq_level);
@@ -484,7 +465,7 @@ void Caen792UI::applySettings()
     blockSlots = false;
 }
 
-void Caen792UI::statusUpdateClicked()
+void Caen965UI::statusUpdateClicked()
 {
     module->readStatus ();
     status1Edit->setText(tr("0x%1").arg(module->getStatus1 (),8,16,QChar('0')));
@@ -492,12 +473,12 @@ void Caen792UI::statusUpdateClicked()
     evCntrEdit->setText(tr("%1").arg(module->getEventCount (),16,10,QChar('0')));
 }
 
-void Caen792UI::configureClicked()
+void Caen965UI::configureClicked()
 {
     module->configure();
 }
 
-void Caen792UI::testConversionClicked()
+void Caen965UI::testConversionClicked()
 {
     for(int i = 0; i < nofTestConversionBox->value(); i++)
     {
@@ -505,4 +486,4 @@ void Caen792UI::testConversionClicked()
     }
 }
 
-void Caen792UI::dataResetClicked() { module->dataReset ();}
+void Caen965UI::dataResetClicked() { module->dataReset ();}

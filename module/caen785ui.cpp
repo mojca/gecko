@@ -244,6 +244,7 @@ QWidget* Caen785UI::createInfoControls()
     connect(infoUpdateButton,SIGNAL(clicked()),this,SLOT(infoUpdateClicked()));
 
     l->addWidget(fwLabel);
+    l->addWidget(firmwareEdit);
     l->addWidget(romLabel);
     l->addWidget(romInfoEdit);
 

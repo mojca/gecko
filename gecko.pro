@@ -50,6 +50,7 @@ SOURCES += core/baseplugin.cpp \
     module/caen820module.cpp \
     module/caen820dmx.cpp \
     module/caen820ui.cpp \
+    module/caen965dmx.cpp \
     module/caenadcdmx.cpp \
     module/sis3302dmx.cpp \
     module/sis3302module.cpp \
@@ -82,7 +83,9 @@ SOURCES += core/baseplugin.cpp \
     plugin/output/vectoroutputplugin.cpp \
     plugin/pack/eventbuilderplugin.cpp \
     plugin/pack/packsis3350plugin.cpp \
-    plugin/plot/plot2dplugin.cpp
+    plugin/plot/plot2dplugin.cpp \
+    module/caen965module.cpp \
+    module/caen965ui.cpp
 HEADERS += core/addeditdlgs.h \
     core/geckoremote.h \
     core/pluginthread.h \
@@ -128,11 +131,13 @@ HEADERS += core/addeditdlgs.h \
     module/caen820dmx.h \
     module/caen820module.h \
     module/caen820ui.h \
+    module/caen965dmx.h \
     module/caenadcdmx.h \
     module/caen_v1290.h \
     module/caen_v785.h \
     module/caen_v792.h \
     module/caen_v820.h \
+    module/caen_v965.h \
     module/sis3302dmx.h \
     module/sis3302.h \
     module/sis3302module.h \
@@ -166,5 +171,7 @@ HEADERS += core/addeditdlgs.h \
     plugin/output/vectoroutputplugin.h \
     plugin/pack/eventbuilderplugin.h \
     plugin/pack/packsis3350plugin.h \
-    plugin/plot/plot2dplugin.h
+    plugin/plot/plot2dplugin.h \
+    module/caen965module.h \
+    module/caen965ui.h
 OTHER_FILES +=
