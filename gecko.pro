@@ -85,7 +85,8 @@ SOURCES += core/baseplugin.cpp \
     plugin/pack/packsis3350plugin.cpp \
     plugin/plot/plot2dplugin.cpp \
     module/caen965module.cpp \
-    module/caen965ui.cpp
+    module/caen965ui.cpp \
+    module/sis3302module_gamma_v1410.cpp
 HEADERS += core/addeditdlgs.h \
     core/geckoremote.h \
     core/pluginthread.h \
@@ -173,5 +174,7 @@ HEADERS += core/addeditdlgs.h \
     plugin/pack/packsis3350plugin.h \
     plugin/plot/plot2dplugin.h \
     module/caen965module.h \
-    module/caen965ui.h
+    module/caen965ui.h \
+    module/sis3302_gamma_v1410.h \
+    module/sis3302module_gamma_v1410.h
 OTHER_FILES +=
