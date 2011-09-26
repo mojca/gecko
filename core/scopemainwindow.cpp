@@ -57,9 +57,10 @@ ScopeMainWindow::ScopeMainWindow(QWidget *parent) :
     createUI();
     createConnections();
 
+    setGeometry(QRect(QPoint(0,0),QSize(640,480)));
+
     applySettings();
 
-    setGeometry(QRect(QPoint(0,0),QSize(640,480)));
     setStatusText(tr("Idle"));
 
     configEditAllowed = true;
@@ -1070,6 +1071,9 @@ void ScopeMainWindow::saveConfig (QSettings *s) {
     }
     s->endArray ();
 
+    s->setValue("MainPos",this->frameGeometry().topLeft());
+    s->setValue("MainSize",this->size());
+
     i = 0;
     s->beginWriteArray ("DAqModules");
     foreach (AbstractModule *daq, *ModuleManager::ref().list()) {
@@ -1147,6 +1151,14 @@ void ScopeMainWindow::loadConfig (QSettings *s) {
             fail << tr ("Module type not found: %1").arg (type);
     }
     s->endArray ();
+
+    QPoint geomPos = s->value("MainPos",QPoint(0,0)).toPoint();
+    QSize geomSize = s->value("MainSize",QSize(640,480)).toSize();
+    std::cout << "Setting geometry to pos (" << geomPos.x() << "," << geomPos.y()
+            << ") and size (" << geomSize.width() << "," << geomSize.height() << ")"
+            << std::endl;
+    this->resize(geomSize);
+    this->move(geomPos);
 
     size = s->beginReadArray ("DAqModules");
     for (int i = 0; i < size; ++i) {
