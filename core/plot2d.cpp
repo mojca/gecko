@@ -244,6 +244,7 @@ void plot2d::channelUpdate () {
 
 void plot2d::paintEvent(QPaintEvent *)
 {
+    //printf("paintEvent\n"); fflush(stdout);
     if (!backbuffer || !backbuffervalid) {
         if (!backbuffer) {
             backbuffer = new QPixmap (size ());

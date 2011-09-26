@@ -719,7 +719,7 @@ void Sis3350UI::singleShotClicked()
     {
         if (!module->getInterface()->isOpen())
             if (0 != module->getInterface()->open ()) {
-                QMessageBox::warning (this, tr ("<%1> SIS3350 ADC").arg (name), tr ("Could not open interface"), QMessageBox::Ok);
+
                 return;
             }
 

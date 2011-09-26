@@ -36,7 +36,7 @@ void Sis3302V1410Demux::setMetaData(uint32_t _nofTraces, EventDirEntry_t* _evDir
 
 void Sis3302V1410Demux::process (Event *ev, uint32_t *_data, uint32_t _len)
 {
-#if 0
+
     //printf("DemuxSis3302V1410Plugin processing...\n");
     data = (DataStruct_t*)_data;
     len = _len;
@@ -46,42 +46,26 @@ void Sis3302V1410Demux::process (Event *ev, uint32_t *_data, uint32_t _len)
     // Revover length
     uint32_t length = (len & 0x1ffffff); // lWords
 
-    //printf("sis3302dmx: Current channel: %d with %d data points.\n",curCh,length*2);
+    // Header
+    uint16_t header = _data[0] & 0xffff;
 
-    // In case of page wrap mode, untangle data
-    if(pageWrap == true)
-    {
-        uint32_t traceLength = length/nofTraces; // lwords
-        for(unsigned int tr = 0; tr < nofTraces; tr++)
-        {
-            DataStruct_t tmp[traceLength];
-            uint32_t off = evDir[tr].addr/2 - tr*traceLength; // Offset wrt to page border in Lwords
+    // Recover number of raw samples from header
+    uint16_t length_raw = header/2; // 16-bit samples
 
-            // Fill temporary vector
-            for(unsigned int s = off; s < traceLength; s++)
-            {
-                tmp[s-off] = data[tr*traceLength+s];
-            }
-            for(unsigned int s = 0; s < off; s++)
-            {
-                tmp[traceLength-off+s] = data[tr*traceLength+s];
-            }
+    // Compute other lengths
+    uint16_t length_energy = length - length_raw/2 - 6;
 
-            // Fill rearranged data vector
-            for(unsigned int s = 0; s < traceLength; s++)
-            {
-                data[tr*traceLength+s] = tmp[s];
-            }
-        }
-    }
+    //printf("sis3302dmx: Current channel: %d with %d lwords of data.\n",curCh,length);
+    //printf("sis3302dmx: raw: %d samples, energy: %d samples.\n",length_raw,length_energy);
 
     // Publish event data
-    QVector<uint32_t> outData(length*2,0);
+    QVector<uint32_t> outData(length_raw,0);
     int cnt = 0;
-    for(uint32_t i = 0; i < length; i++)
+    int rawOffset = 2;
+    for(uint32_t i = 0; i < length_raw/2; i++)
     {
-        outData[cnt++] = data[i].low;
-        outData[cnt++] = data[i].high;
+        outData[cnt++] = data[rawOffset+i].low;
+        outData[cnt++] = data[rawOffset+i].high;
     }
     ev->put (evslots.at(curCh), QVariant::fromValue (outData));
 
@@ -91,5 +75,5 @@ void Sis3302V1410Demux::process (Event *ev, uint32_t *_data, uint32_t _len)
         printf("<%d> %u  ",i,outData[i]);
     }
     printf("\n");*/
-#endif
+
 }

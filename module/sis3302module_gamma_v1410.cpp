@@ -103,6 +103,8 @@ int Sis3302V1410Module::configure()
 
     ret = checkConfig();
 
+    updateEndAddrThresholds();
+
     // Set Control Status register
     addr = conf.base_addr + SIS3302_V1410_CONTROL_STATUS;
     data = 0;
@@ -158,8 +160,8 @@ int Sis3302V1410Module::configure()
     for(int i=0; i<NOF_ADC_GROUPS; ++i) {
         addr = conf.base_addr + SIS3302_V1410_EVENT_CONFIG(i);
         data = 0;
-        int even_i = i*2;
-        int odd_i = i*2+1;
+        int even_i = i*2+1;
+        int odd_i = i*2;
         // Odd channels
         if(conf.enable_input_invert[odd_i])     data |= SIS3302_V1410_MSK_EVENT_CFG_ODD_INVERT;
         if(conf.enable_int_trg[odd_i])          data |= SIS3302_V1410_MSK_EVENT_CFG_ODD_INT_TRG_ENAB;
@@ -186,8 +188,8 @@ int Sis3302V1410Module::configure()
     for(int i=0; i<NOF_ADC_GROUPS; ++i) {
         addr = conf.base_addr + SIS3302_V1410_EVENT_CFG_EXTENDED(i);
         data = 0;
-        int even_i = i*2;
-        int odd_i = i*2+1;
+        int even_i = i*2+1;
+        int odd_i = i*2;
         // Odd channels
 #if defined(SIS3302_V1410_MCA_MODE)
         if(conf.enable_50kHz_trigger[odd_i]) data |= SIS3302_V1410_MSK_EVENT_CFG_EXT_ODD_TRG_50KHZ;
@@ -238,9 +240,9 @@ int Sis3302V1410Module::configure()
 
     // Setup trigger and energy registers
     for (int i=0; i<NOF_ADC_GROUPS; ++i) {
-        int odd_i = i*2+1;
-        int even_i = i*2;
-        uint16_t thr;
+        int odd_i = i*2;
+        int even_i = i*2+1;
+        uint32_t thr;
 
         // Odd trigger channels setup
         addr = conf.base_addr + SIS3302_V1410_TRG_SETUP_ODD(i);
@@ -375,6 +377,21 @@ int Sis3302V1410Module::checkConfig()
     }
 
     return 0;
+}
+
+int Sis3302V1410Module::updateModuleInfo()
+{
+    int ret = 0;
+
+    uint32_t modId;
+    ret = getModuleId(&modId);
+
+    conf.module_id = (modId >> SIS3302_V1410_OFF_FIRMWARE_MODID);
+    conf.firmware_major_rev = ((modId & SIS3302_V1410_MSK_FIRMWARE_REV_MAJ) >> SIS3302_V1410_OFF_FIRMWARE_REV_MAJ);
+    conf.firmware_minor_rev = ((modId & SIS3302_V1410_MSK_FIRMWARE_REV_MIN) >> SIS3302_V1410_OFF_FIRMWARE_REV_MIN);
+    conf.module_id = (modId >> SIS3302_V1410_OFF_FIRMWARE_MODID);
+
+    return ret;
 }
 
 int Sis3302V1410Module::getModuleId(uint32_t* _modId)
@@ -568,7 +585,7 @@ int Sis3302V1410Module::singleShot()
     if(ret != 0) {
         ERROR("singleShot: reset failed.",ret);
     }
-    ret = timestamp_clear();
+    //ret = timestamp_clear();
     if(ret != 0) {
         ERROR("singleShot: timestamp clear failed.",ret);
     }
@@ -581,8 +598,65 @@ int Sis3302V1410Module::singleShot()
         ERROR("singleShot: acquisition failed.",ret);
     }
 
-    // Use the data for module display
+    // Store the data in local values
+    for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
+        if(conf.enable_ch[ch]) {
+            uint32_t bufIdx = 0;
+            uint32_t raw_sample_length_samples = conf.raw_sample_length[ch/2];
+            uint32_t energy_sample_length_words = conf.raw_sample_length[ch/2];
 
+            //INFO("raw_sample_length_words",raw_sample_length_samples);
+            //INFO("energy_sample_length_words",energy_sample_length_words);
+
+            currentTimestamp[ch] =
+                    (((uint64_t)(readBuffer[ch][0] & SIS3302_V1410_MSK_EVENT_BUF_TS_HI)) << 16) + (readBuffer[ch][1]);
+            currentHeader[ch] = (readBuffer[ch][0] & SIS3302_V1410_MSK_EVENT_BUF_HEADER);
+            currentRawLengthFromHeader[ch] = currentHeader[ch]/2;
+            bufIdx = 2;
+            for(uint32_t i = 0; i < raw_sample_length_samples;) {
+                currentRawBuffer[ch][i++] = (readBuffer[ch][bufIdx] & SIS3302_V1410_MSK_EVENT_BUF_RAW_LOW);
+                currentRawBuffer[ch][i++] = ((readBuffer[ch][bufIdx] & SIS3302_V1410_MSK_EVENT_BUF_RAW_HIGH) >> SIS3302_V1410_OFF_EVENT_BUF_RAW_HIGH);
+                //INFO_i("raw data",i-2, currentRawBuffer[ch][i-2]);
+                //INFO_i("raw data",i-1, currentRawBuffer[ch][i-1]);
+                bufIdx++;
+            }
+            for(uint32_t i = 0; i < energy_sample_length_words; ++i) {
+                currentEnergyBuffer[ch][i] = (readBuffer[ch][bufIdx++]);
+                //INFO_i("energy data",i, currentEnergyBuffer[ch][i]);
+            }
+            currentEnergyMaxValue[ch] = (readBuffer[ch][bufIdx++]);
+            currentEnergyFirstValue[ch] = (readBuffer[ch][bufIdx++]);
+            uint32_t flags = (readBuffer[ch][bufIdx++]);
+            currentTriggerCounter[ch] = ((flags & SIS3302_V1410_MSK_EVENT_BUF_FAST_TRG_CNT) >> SIS3302_V1410_OFF_EVENT_BUF_FAST_TRG_CNT);
+            currentPileupFlag[ch] = ((flags & SIS3302_V1410_MSK_EVENT_BUF_PILEUP_FLAG) >> SIS3302_V1410_OFF_EVENT_BUF_PILEUP_FLAG);
+            currentRetriggerFlag[ch] = ((flags & SIS3302_V1410_MSK_EVENT_BUF_RETRIG_FLAG) >> SIS3302_V1410_OFF_EVENT_BUF_RETRIG_FLAG);
+        }
+    }
+
+    // Use the data for module display
+    for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
+        if(conf.enable_ch[ch]) {
+            printf("\n\n<%s><%d> Start Event Dump #################\n",MODULE_NAME,ch);
+            printf("<%s><%d> Timestamp:\t %llu \n",MODULE_NAME,ch,(long long unsigned int)(currentTimestamp[ch]));
+            printf("<%s><%d> Header:\t %d \n",MODULE_NAME,ch,currentHeader[ch]);
+            printf("<%s><%d> Energy min:\t %d \n",MODULE_NAME,ch,currentEnergyFirstValue[ch]);
+            printf("<%s><%d> Energy max:\t %d \n",MODULE_NAME,ch,currentEnergyMaxValue[ch]);
+            if(currentTriggerCounter[ch]) {
+                printf("<%s><%d> Fast trigger counter: \t %d \n",MODULE_NAME,ch,currentTriggerCounter[ch]);
+            }
+            if(currentPileupFlag[ch]) {
+                printf("<%s><%d> Pileup Flag detected.\n",MODULE_NAME,ch);
+            }
+            if(currentRetriggerFlag[ch]) {
+                printf("<%s><%d> Retrigger Flag detected.\n",MODULE_NAME,ch);
+            }
+        }
+    }
+
+    emit singleShotDataUpdated();
+
+    // Flush output buffer
+    fflush(stdout);
 
     return ret;
 }
@@ -591,7 +665,7 @@ int Sis3302V1410Module::acquire(Event *ev)
 {
     int ret = 0;
 
-    printf("sis3302: Acquiring event %p\n", ev);
+    //printf("sis3302: Acquiring event %p\n", ev);
 
     if(conf.acMode == Sis3302V1410config::singleEvent) {
         ret = acquisitionStartSingle(); }
@@ -606,36 +680,35 @@ int Sis3302V1410Module::acquire(Event *ev)
 int Sis3302V1410Module::acquisitionStartSingle()
 {
     int ret = 0;
-    /*uint32_t nextSampleAddrExp = 0; // Expected next sample address after sampling
-    uint32_t startAddr = conf.raw_data_sample_start_idx[0]; // Sampling start address
 
-    uint32_t energyStartAddr = 0;
-    uint32_t energyStopAddr = 0;
-    uint32_t eventLengthWords = 0;*/
-
+    //INFO("Arming bank 1");
     ret = this->arm(1);
+    //INFO("Waiting for Addr Threshold");
     ret = this->waitForAddrThreshold();
     if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
 
+    //INFO("Disarming bank 1");
     ret = this->disarm();
 
+    //INFO("Reading channel data");
     for(int i=0; i<NOF_CHANNELS; ++i) {
         readLength[i] = 0;
         currentTriggerCounter[i] = 0;
 
         if(conf.enable_ch[i]) {
+            //INFO_i("Start reading on channel.",i);
             uint32_t nofSamplesRead = 0;
             this->getNextSampleAddr(i,&nofSamplesRead);
+            //INFO_i("nofSamplesRead",i,nofSamplesRead);
             endSampleAddr[i] = nofSamplesRead/2;
 
             uint32_t reqNofWords = (endSampleAddr[i] & SIS3302_V1410_MSK_NEXT_SAMPLE_ADDR);
+            //INFO_i("reqNofWords",i,reqNofWords);
             this->readAdcChannelSinglePage(i,reqNofWords);
-            for(uint32_t s = 0; s < readLength[i]; s++) {
-                printf("Data: %d: 0x%x\n",s,readBuffer[i][s]);
-            }
+            //INFO_i("readLength[i]",i,readLength[i]);
 
             // Check event trailer
-            if(readBuffer[i][readLength[i]-1] != SIS3302_V1410_MSK_EVENT_BUF_TRAILER) {
+            if(readLength[i] > 1 && readBuffer[i][readLength[i]-1] != SIS3302_V1410_MSK_EVENT_BUF_TRAILER) {
                 ERROR_i("Event trailer does not match",i,readBuffer[i][readLength[i]-1]);
             }
             // Store channel information in highest 3 bits of readLength[i];
@@ -702,7 +775,7 @@ int Sis3302V1410Module::acquisitionStartMulti()
 
 int Sis3302V1410Module::writeToBuffer(Event *ev)
 {
-    for(unsigned int i = 0; i < 8; i++)
+    for(unsigned int i = 0; i < NOF_CHANNELS; i++)
     {
         //printf("sis3302: ch %d: Trying to write to buffer (ev = 0x%x)\n",i,ev);
         if(conf.enable_ch[i] == false) continue;
@@ -742,19 +815,26 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
         ERROR("Too many words required for single page!",_reqNofWords);
     }
 
-    uint32_t addr = SIS3302_V1410_ADC_MEM(ch);
+    uint32_t addr = conf.base_addr + SIS3302_V1410_ADC_MEM(ch);
 
     switch(conf.vmeMode) {
 
     case Sis3302V1410config::vmeSingle: {
+        //INFO("vmeMode = vmeSingle");
         uint32_t words  = _reqNofWords;
         uint32_t bufIdx = 0;
+        //INFO("ch",ch);
+        //INFO("words",words);
         while(words--) {
+            //INFO_i("address",words,addr);
             ret = iface->readA32D32(addr,&readBuffer[ch][bufIdx++]);
             if(ret != 0) {
                 ERROR_i("readAdcChannelSinglePage with vmeSingle"
                         "read error in ch = a, ret = b",words,ch,ret);
-            }
+            } /*else {
+                INFO_i("data",words,readBuffer[ch][bufIdx-1]);
+            }*/
+            addr+=4;
         }
         readLength[ch] = _reqNofWords;
         break;}
@@ -891,6 +971,25 @@ int Sis3302V1410Module::readAdcChannel(int ch, uint32_t _reqNofWords)
     return ret;
 }
 
+void Sis3302V1410Module::INFO_i(const char *msg, int i) {
+    printf("<%s> INFO in loop at (%d): %s\n",MODULE_NAME,i,msg);
+}
+void Sis3302V1410Module::INFO_i(const char *msg, int i, uint32_t v) {
+    printf("<%s> INFO in loop at (%d): %s (0x%08x)\n",MODULE_NAME,i,msg,v);
+}
+void Sis3302V1410Module::INFO_i(const char *msg, int i, uint32_t a, uint32_t b) {
+    printf("<%s> INFO in loop at (%d): %s (a = 0x%08x, b = 0x%08x)\n",MODULE_NAME,i,msg,a,b);
+}
+void Sis3302V1410Module::INFO(const char *msg) {
+    printf("<%s> INFO: %s\n",MODULE_NAME,msg);
+}
+void Sis3302V1410Module::INFO(const char *msg, uint32_t v) {
+    printf("<%s> INFO: %s (0x%08x)\n",MODULE_NAME,msg,v);
+}
+void Sis3302V1410Module::INFO(const char *msg, uint32_t a, uint32_t b) {
+    printf("<%s> INFO: %s (a = 0x%08x, b= 0x%08x)\n",MODULE_NAME,msg,a,b);
+}
+
 void Sis3302V1410Module::ERROR_i(const char *e, int i, uint32_t v) {
     printf("<%s> ERROR in loop at (%d): %s (0x%08x)\n",MODULE_NAME,i,e,v);
 }
@@ -983,14 +1082,27 @@ int Sis3302V1410Module::write_dac_offset(uint32_t *offset_value_array)
 typedef ConfMap::confmap_t<Sis3302V1410config> confmap_t;
 static const confmap_t confmap [] = {
     confmap_t ("base_addr", &Sis3302V1410config::base_addr),
+    confmap_t ("poll_count", &Sis3302V1410config::poll_count),
     confmap_t ("irq_level", &Sis3302V1410config::irq_level),
     confmap_t ("irq_vector", &Sis3302V1410config::irq_vector),
+    confmap_t ("module_id", &Sis3302V1410config::module_id),
+    confmap_t ("firmware_major_rev", &Sis3302V1410config::firmware_major_rev),
+    confmap_t ("firmware_minor_rev", &Sis3302V1410config::firmware_minor_rev),
     confmap_t ("enable_irq", &Sis3302V1410config::enable_irq),
-    confmap_t ("enable_external_trg", &Sis3302V1410config::enable_external_trg),
+    confmap_t ("update_irq", &Sis3302V1410config::update_irq),
+    confmap_t ("enable_user_led", &Sis3302V1410config::enable_user_led),
+    confmap_t ("enable_vipa", &Sis3302V1410config::enable_vipa),
+    confmap_t ("enable_geo_addressing", &Sis3302V1410config::enable_geo_addressing),
+    confmap_t ("enable_reduced_addressing", &Sis3302V1410config::enable_reduced_addressing),
+    confmap_t ("enable_a32_addressing", &Sis3302V1410config::enable_a32_addressing),
+    confmap_t ("send_int_trg_to_ext_as_or", &Sis3302V1410config::send_int_trg_to_ext_as_or),
     confmap_t ("acMode", (uint32_t Sis3302V1410config::*) &Sis3302V1410config::acMode),
+    confmap_t ("vmeMode", (uint32_t Sis3302V1410config::*) &Sis3302V1410config::vmeMode),
     confmap_t ("clockSource", (uint32_t Sis3302V1410config::*) &Sis3302V1410config::clockSource),
     confmap_t ("irqSource", (uint32_t Sis3302V1410config::*) &Sis3302V1410config::irqSource),
     confmap_t ("irqMode", (uint32_t Sis3302V1410config::*) &Sis3302V1410config::irqMode),
+    confmap_t ("lemo_in_mode", (uint32_t Sis3302V1410config::*) &Sis3302V1410config::lemo_in_mode),
+    confmap_t ("lemo_out_mode", (uint32_t Sis3302V1410config::*) &Sis3302V1410config::lemo_out_mode),
 };
 
 void Sis3302V1410Module::applySettings (QSettings *s) {
@@ -1001,9 +1113,49 @@ void Sis3302V1410Module::applySettings (QSettings *s) {
     ConfMap::apply (s, &conf, confmap);
 
     QString key;
-    for (int i = 0; i < 8; ++i) {
-        //key = QString ("trgMode%1").arg (i);
-        //if (s->contains (key)) conf.trgMode [i] = (Sis3302V1410config::TrgMode)s->value (key).toUInt ();
+    for (int i = 0; i < 3; ++i) {
+        key = QString ("enable_lemo_in%1").arg (i);
+        if (s->contains (key)) conf.enable_lemo_in[i] = s->value (key).toBool ();
+    }
+
+    for (int i = 0; i < NOF_ADC_GROUPS; ++i) {
+        key = QString ("header_id%1").arg (i);
+        if (s->contains (key)) conf.header_id [i] = s->value (key).toUInt ();
+        key = QString ("raw_sample_length%1").arg (i);
+        if (s->contains (key)) conf.raw_sample_length [i] = s->value (key).toUInt ();
+        key = QString ("raw_data_sample_start_idx%1").arg (i);
+        if (s->contains (key)) conf.raw_data_sample_start_idx [i] = s->value (key).toUInt ();
+        key = QString ("end_addr_thr_in_samples%1").arg (i);
+        if (s->contains (key)) conf.end_addr_thr_in_samples [i] = s->value (key).toUInt ();
+        key = QString ("trigger_gate_length%1").arg (i);
+        if (s->contains (key)) conf.trigger_gate_length [i] = s->value (key).toUInt ();
+        key = QString ("trigger_pretrigger_delay%1").arg (i);
+        if (s->contains (key)) conf.trigger_pretrigger_delay [i] = s->value (key).toUInt ();
+        key = QString ("energy_peak_length%1").arg (i);
+        if (s->contains (key)) conf.energy_peak_length [i] = s->value (key).toUInt ();
+        key = QString ("energy_sumg_length%1").arg (i);
+        if (s->contains (key)) conf.energy_sumg_length [i] = s->value (key).toUInt ();
+        key = QString ("energy_gate_length%1").arg (i);
+        if (s->contains (key)) conf.energy_gate_length [i] = s->value (key).toUInt ();
+        key = QString ("energy_sample_length%1").arg (i);
+        if (s->contains (key)) conf.energy_sample_length [i] = s->value (key).toUInt ();
+        key = QString ("energy_sample_start_idx_1_%1").arg (i);
+        if (s->contains (key)) conf.energy_sample_start_idx[i][0] = s->value (key).toUInt ();
+        key = QString ("energy_sample_start_idx_2_%1").arg (i);
+        if (s->contains (key)) conf.energy_sample_start_idx[i][1] = s->value (key).toUInt ();
+        key = QString ("energy_sample_start_idx_3_%1").arg (i);
+        if (s->contains (key)) conf.energy_sample_start_idx[i][2] = s->value (key).toUInt ();
+        key = QString ("energy_tau%1").arg (i);
+        if (s->contains (key)) conf.energy_tau [i] = s->value (key).toUInt ();
+        key = QString ("enable_energy_extra_filter%1").arg (i);
+        if (s->contains (key)) conf.enable_energy_extra_filter [i] = s->value (key).toBool ();
+        key = QString ("energy_decim_mode%1").arg (i);
+        if (s->contains (key)) conf.energy_decim_mode[i] = (Sis3302V1410config::EnDecimMode)s->value (key).toUInt ();
+        key = QString ("energy_test_mode%1").arg (i);
+        if (s->contains (key)) conf.energy_test_mode[i] = (Sis3302V1410config::EnTestMode)s->value (key).toUInt ();
+    }
+
+    for (int i = 0; i < NOF_CHANNELS; ++i) {
         key = QString ("trigger_pulse_length%1").arg (i);
         if (s->contains (key)) conf.trigger_pulse_length [i] = s->value (key).toUInt ();
         key = QString ("trigger_sumg_length%1").arg (i);
@@ -1011,12 +1163,41 @@ void Sis3302V1410Module::applySettings (QSettings *s) {
         key = QString ("trigger_peak_length%1").arg (i);
         if (s->contains (key)) conf.trigger_peak_length [i] = s->value (key).toUInt ();
         key = QString ("trigger_threshold%1").arg (i);
-        if (s->contains (key)) conf.trigger_threshold [i] = s->value (key).toUInt ();
+        if (s->contains (key)) conf.trigger_threshold [i] = s->value (key).toInt ();
+        key = QString ("trigger_int_gate_length%1").arg (i);
+        if (s->contains (key)) conf.trigger_int_gate_length [i] = s->value (key).toUInt ();
+        key = QString ("trigger_int_trg_delay%1").arg (i);
+        if (s->contains (key)) conf.trigger_int_trg_delay [i] = s->value (key).toUInt ();
         key = QString ("dac_offset%1").arg (i);
         if (s->contains (key)) conf.dac_offset [i] = s->value (key).toUInt ();
+        key = QString ("enable_input_invert%1").arg (i);
+        if (s->contains (key)) conf.enable_input_invert [i] = s->value (key).toBool();
         key = QString ("enable_ch%1").arg (i);
         if (s->contains (key)) conf.enable_ch [i] = s->value (key).toBool ();
+        key = QString ("enable_next_adc_gate%1").arg (i);
+        if (s->contains (key)) conf.enable_next_adc_gate [i] = s->value (key).toBool ();
+        key = QString ("enable_prev_adc_gate%1").arg (i);
+        if (s->contains (key)) conf.enable_prev_adc_gate [i] = s->value (key).toBool ();
+        key = QString ("enable_next_adc_trg%1").arg (i);
+        if (s->contains (key)) conf.enable_next_adc_trg [i] = s->value (key).toBool ();
+        key = QString ("enable_prev_adc_trg%1").arg (i);
+        if (s->contains (key)) conf.enable_prev_adc_trg [i] = s->value (key).toBool ();
+        key = QString ("enable_ext_gate%1").arg (i);
+        if (s->contains (key)) conf.enable_ext_gate [i] = s->value (key).toBool ();
+        key = QString ("enable_ext_trg%1").arg (i);
+        if (s->contains (key)) conf.enable_ext_trg [i] = s->value (key).toBool ();
+        key = QString ("enable_int_gate%1").arg (i);
+        if (s->contains (key)) conf.enable_int_gate [i] = s->value (key).toBool ();
+        key = QString ("enable_int_trg%1").arg (i);
+        if (s->contains (key)) conf.enable_int_trg [i] = s->value (key).toBool ();
+        key = QString ("disable_trg_out%1").arg (i);
+        if (s->contains (key)) conf.disable_trg_out [i] = s->value (key).toBool ();
+        key = QString ("trigger_decim_mode%1").arg (i);
+        if (s->contains (key)) conf.trigger_decim_mode[i] = (Sis3302V1410config::TrgDecimMode)s->value (key).toUInt ();
+
     }
+
+    updateEndAddrThresholds();
 
     s->endGroup ();
 
@@ -1032,9 +1213,52 @@ void Sis3302V1410Module::saveSettings (QSettings *s) {
     ConfMap::save (s, &conf, confmap);
 
     QString key;
-    for (int i = 0; i < 8; ++i) {
-        //key = QString ("trgMode%1").arg(i);
-        //s->setValue (key, static_cast<uint32_t> (conf.trgMode[i]));
+    for (int i = 0; i < 3; ++i) {
+        key = QString ("enable_lemo_in%1").arg (i);
+        s->setValue (key, static_cast<bool> (conf.enable_lemo_in[i]));
+    }
+
+    for (int i = 0; i < NOF_ADC_GROUPS; ++i) {
+        key = QString ("header_id%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.header_id[i]));
+        key = QString ("raw_sample_length%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.raw_sample_length[i]));
+        key = QString ("raw_data_sample_start_idx%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.raw_data_sample_start_idx[i]));
+        key = QString ("end_addr_thr_in_samples%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.end_addr_thr_in_samples[i]));
+        key = QString ("trigger_gate_length%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.trigger_gate_length[i]));
+        key = QString ("trigger_pretrigger_delay%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.trigger_pretrigger_delay[i]));
+        key = QString ("header_id%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.header_id[i]));
+        key = QString ("energy_peak_length%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_peak_length[i]));
+        key = QString ("energy_sumg_length%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_sumg_length[i]));
+        key = QString ("energy_gate_length%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_gate_length[i]));
+        key = QString ("energy_sample_length%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_sample_length[i]));
+        key = QString ("energy_sample_start_idx_1_%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_sample_start_idx[i][0]));
+        key = QString ("energy_sample_start_idx_2_%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_sample_start_idx[i][1]));
+        key = QString ("energy_sample_start_idx_3_%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_sample_start_idx[i][2]));
+        key = QString ("energy_tau%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_tau[i]));
+        key = QString ("enable_energy_extra_filter%1").arg(i);
+        s->setValue (key, static_cast<bool> (conf.enable_energy_extra_filter[i]));
+        key = QString ("energy_decim_mode%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_decim_mode[i]));
+        key = QString ("energy_test_mode%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_test_mode[i]));
+
+    }
+
+    for (int i = 0; i < NOF_CHANNELS; ++i) {
         key = QString ("trigger_pulse_length%1").arg(i);
         s->setValue (key, static_cast<uint32_t> (conf.trigger_pulse_length[i]));
         key = QString ("trigger_sumg_length%1").arg(i);
@@ -1042,23 +1266,60 @@ void Sis3302V1410Module::saveSettings (QSettings *s) {
         key = QString ("trigger_peak_length%1").arg(i);
         s->setValue (key, static_cast<uint32_t> (conf.trigger_peak_length[i]));
         key = QString ("trigger_threshold%1").arg(i);
-        s->setValue (key, static_cast<uint32_t> (conf.trigger_threshold[i]));
+        s->setValue (key, static_cast<int32_t> (conf.trigger_threshold[i]));
         key = QString ("dac_offset%1").arg(i);
         s->setValue (key, static_cast<uint32_t> (conf.dac_offset[i]));
         key = QString ("enable_ch%1").arg(i);
         s->setValue (key, static_cast<bool> (conf.enable_ch[i]));
+        key = QString ("trigger_int_gate_length%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.trigger_int_gate_length[i]));
+        key = QString ("trigger_int_trg_delay%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.trigger_int_trg_delay[i]));
+        key = QString ("enable_input_invert%1").arg(i);
+        s->setValue (key, static_cast<bool> (conf.enable_input_invert[i]));
+        key = QString ("enable_next_adc_gate%1").arg(i);
+        s->setValue (key, static_cast<bool> (conf.enable_next_adc_gate[i]));
+        key = QString ("enable_prev_adc_gate%1").arg(i);
+        s->setValue (key, static_cast<bool> (conf.enable_prev_adc_gate[i]));
+        key = QString ("enable_next_adc_trg%1").arg(i);
+        s->setValue (key, static_cast<bool> (conf.enable_next_adc_trg[i]));
+        key = QString ("enable_prev_adc_trg%1").arg(i);
+        s->setValue (key, static_cast<bool> (conf.enable_prev_adc_trg[i]));
+        key = QString ("enable_ext_gate%1").arg(i);
+        s->setValue (key, static_cast<bool> (conf.enable_ext_gate[i]));
+        key = QString ("enable_ext_trg%1").arg(i);
+        s->setValue (key, static_cast<bool> (conf.enable_ext_trg[i]));
+        key = QString ("enable_int_gate%1").arg(i);
+        s->setValue (key, static_cast<bool> (conf.enable_int_gate[i]));
+        key = QString ("enable_int_trg%1").arg(i);
+        s->setValue (key, static_cast<bool> (conf.enable_int_trg[i]));
+        key = QString ("disable_trg_out%1").arg(i);
+        s->setValue (key, static_cast<bool> (conf.disable_trg_out[i]));
+        key = QString ("trigger_decim_mode%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.trigger_decim_mode[i]));
     }
 
     s->endGroup ();
     std::cout << "done" << std::endl;
 }
 
+void Sis3302V1410Module::updateEndAddrThresholds(){
+    for (int i = 0; i < NOF_ADC_GROUPS; ++i) {
+        conf.end_addr_thr_in_samples[i] = 6*2
+                + conf.raw_sample_length[i]
+                + conf.energy_sample_length[i]*2;
+    }
+}
+
+
 /*!
-\page sis3302mod SIS 3302 Flash ADC
+\page sis3302mod SIS 3302 Flash ADC (gamma)
 <b>Module name:</b> \c sis3302
 
 \section desc Module Description
 The SIS 3302 is a fast multi-channel ADC.
+The gamma firmware enables fast energy estimation
+for detector signals.
 
 \section Configuration Panel
 DO DOCUMENTATION

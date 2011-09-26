@@ -79,7 +79,10 @@ protected:
     QPushButton* startStopPreviewButton;
     QWidget previewWindow;
     plot2d* previewCh[NOF_CHANNELS];
+    plot2d* previewEnergy[NOF_CHANNELS];
     QVector<double> previewData[NOF_CHANNELS];
+    QVector<double> previewEnergyData[NOF_CHANNELS];
+    QTimer* previewTimer;
 
 public slots:
     void uiInput(QString _name);
@@ -91,6 +94,10 @@ public slots:
     void clicked_configure_button();
     void clicked_previewButton();
     void clicked_startStopPreviewButton();
+    void clicked_singleshot_button();
+    void clicked_update_firmware_button();
+    void timeout_previewTimer();
+    void updatePreview();
 };
 
 #endif // SIS3302UI_GAMMA_V1410_H

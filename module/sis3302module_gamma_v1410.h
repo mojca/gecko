@@ -310,10 +310,20 @@ public:
     int checkConfig();
     int writeToBuffer(Event *);
     int getMcaTrgStartCounter(uint8_t ch, uint32_t* _evCnt);
+    int updateModuleInfo();
+    void updateEndAddrThresholds();
     bool isArmedNotBusy(uint8_t bank);
     bool isNotArmedNotBusy();
 
     int write_dac_offset(unsigned int *offset_value_array);
+
+    // Info reporting
+    void INFO(const char* msg);
+    void INFO(const char* msg, uint32_t a);
+    void INFO(const char* msg, uint32_t a, uint32_t b);
+    void INFO_i(const char* msg, int i);
+    void INFO_i(const char* msg, int i, uint32_t a);
+    void INFO_i(const char* msg, int i, uint32_t a, uint32_t b);
 
     // Error reporting
     void ERROR_i(const char* e, int i, uint32_t v);
@@ -331,10 +341,12 @@ private:
     uint32_t readLength[NOF_CHANNELS];
     uint32_t endSampleAddr[NOF_CHANNELS];
 
+public:
     // Values for display in the module
     uint64_t currentTimestamp[NOF_CHANNELS];
     uint16_t currentRawBuffer[NOF_CHANNELS][SIS3302_V1410_MAX_NOF_RAW_SAMPLES];
     uint16_t currentHeader[NOF_CHANNELS];
+    uint16_t currentRawLengthFromHeader[NOF_CHANNELS];
     uint8_t currentTriggerCounter[NOF_CHANNELS];
     int32_t currentEnergyBuffer[NOF_CHANNELS][SIS3302_V1410_MAX_NOF_ENERGY_SAMPLES];
     int32_t currentEnergyMaxValue[NOF_CHANNELS];
@@ -342,8 +354,12 @@ private:
     bool currentPileupFlag[NOF_CHANNELS];
     bool currentRetriggerFlag[NOF_CHANNELS];
 
+private:
     QList<EventSlot*> evslots;
     Sis3302V1410Demux dmx;
+
+signals:
+    void singleShotDataUpdated();
 };
 
 #endif // SIS3302MODULE_GAMMA_V1410_H
