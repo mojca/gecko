@@ -302,6 +302,37 @@ public:
         }
     }
 
+    void addLineEditReadOnlyToGroup(QString _tname, QString _gname, QString _name, QString _cname, QString _defaultText)
+    {
+        QString identifier = _tname+_gname;
+        if (groups.contains(identifier)) {
+            QWidget* g = groups.value(identifier);
+            QLineEdit* b = new QLineEdit(g);
+            b->setText(_defaultText);
+            b->setReadOnly(true);
+            QWidget* w = attachLabel(b,_name);
+            g->layout()->addWidget(w);
+            sm.setMapping(b,_cname);
+            widgets.insert(_cname,b);
+            b->setObjectName(_cname);
+        }
+    }
+
+    void addLineEditToGroup(QString _tname, QString _gname, QString _name, QString _cname, QString _defaultText)
+    {
+        QString identifier = _tname+_gname;
+        if (groups.contains(identifier)) {
+            QWidget* g = groups.value(identifier);
+            QLineEdit* b = new QLineEdit(g);
+            b->setText(_defaultText);
+            QWidget* w = attachLabel(b,_name);
+            g->layout()->addWidget(w);
+            sm.setMapping(b,_cname);
+            widgets.insert(_cname,b);
+            b->setObjectName(_cname);
+        }
+    }
+
     QWidget* attachLabel(QWidget* w,QString _label)
     {
         QLabel* lbl = new QLabel(_label);

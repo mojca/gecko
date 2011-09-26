@@ -314,7 +314,6 @@ void Sis3302UI::clicked_configure_button()
 }
 
 
-
 // Settings handling
 
 void Sis3302UI::applySettings()

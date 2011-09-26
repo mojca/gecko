@@ -39,9 +39,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "basemodule.h"
 #include "confmap.h"
-#include "sis3302_gamma_v1410ui.h"
+#include "sis3302ui_gamma_v1410.h"
 #include "sis3302_gamma_v1410.h"
-#include "sis3302_gamma_v1410dmx.h"
+#include "sis3302dmx_gamma_v1410.h"
 
 using namespace std;
 
@@ -67,8 +67,8 @@ public:
     uint32_t base_addr;
     uint32_t poll_count;
     AcMode acMode;
-    ClockSource clockSource;
     VmeMode vmeMode;
+    ClockSource clockSource;
     bool enable_user_led;
 
     // Addressing setup values
@@ -213,8 +213,8 @@ public:
             energy_sample_start_idx[i][0]   = 0;
             energy_sample_start_idx[i][1]   = 0;
             energy_sample_start_idx[i][2]   = 0;
-            energy_tau                      = 0;
-            enable_energy_extra_filter      = false;
+            energy_tau[i]                   = 0;
+            enable_energy_extra_filter[i]   = false;
 #if defined(SIS3302_V1410_MCA_MODE)
             mca_histogram_size[i]           = hist8k;
             enable_mem_write_test_mode[i]   = false;
@@ -257,6 +257,10 @@ class Sis3302V1410Module : public BaseModule
 {
     Q_OBJECT
 
+public	:
+    static const uint8_t NOF_CHANNELS = 8;
+    static const uint8_t NOF_ADC_GROUPS = 4;
+    static const char*	 MODULE_NAME;
 
 public:
 
@@ -270,9 +274,6 @@ public:
     static AbstractModule *create (int id, const QString &name) {
         return new Sis3302V1410Module (id, name);
     }
-    const uint8_t NOF_CHANNELS = 8;
-    const uint8_t NOF_ADC_GROUPS = 4;
-    const char* MODULE_NAME = "sis3302_gamma_v1410";
 
     // Mandatory to implement
     virtual void saveSettings(QSettings*);
@@ -294,6 +295,7 @@ public:
     int getEventDir(int ch);
     int arm(uint8_t bank);
     int disarm();
+    int trigger();
     int start_sampling();
     int stop_sampling();
     int reset_DDR2_logic();
@@ -302,20 +304,22 @@ public:
     int waitForAddrThreshold();
     int readAdcChannelSinglePage(int ch, uint32_t _reqNofWords);
     int readAdcChannel(int ch, uint32_t _reqNofWords);
+    int singleShot();
     int acquisitionStartSingle();
     int acquisitionStartMulti();
     int checkConfig();
     int writeToBuffer(Event *);
-    bool isArmedNotBusy();
+    int getMcaTrgStartCounter(uint8_t ch, uint32_t* _evCnt);
+    bool isArmedNotBusy(uint8_t bank);
     bool isNotArmedNotBusy();
 
-    int Sis3302V1410_write_dac_offset(unsigned int *offset_value_array);
+    int write_dac_offset(unsigned int *offset_value_array);
 
     // Error reporting
-    const ERROR_i(char* e, int i, uint32_t v);
-    const ERROR_i(char* e, int i, uint32_t a, uint32_t b); /*! Overload */
-    const ERROR(char* e, uint32_t v);
-    const ERROR(char* e, uint32_t a, uint32_t b); /*! Overload */
+    void ERROR_i(const char* e, int i, uint32_t v);
+    void ERROR_i(const char* e, int i, uint32_t a, uint32_t b); /*! Overload */
+    void ERROR(const char* e, uint32_t v);
+    void ERROR(const char* e, uint32_t a, uint32_t b); /*! Overload */
 
 public slots:
     virtual void prepareForNextAcquisition() {}
