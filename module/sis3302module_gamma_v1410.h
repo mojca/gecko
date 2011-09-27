@@ -60,7 +60,8 @@ public:
 #if defined(SIS3302_V1410_MCA_MODE)
     enum LemoOutMode{lemoOutTrg,lemoOutMscan,lemoOutScan};
 #else
-    enum LemoOutMode{lemoOutArmBsyTrg,lemoOutArmVetoTrg,lemoOutNpTrgNm,lemoOutNpVetoNm};
+    // With respect to output 1,2,3 ... 4 is always clock out
+    enum LemoOutMode{lemoOutTrgBsyArm,lemoOutTrgVetoArm,lemoOutNmTrgNp,lemoOutNmVetoNp};
 #endif
 
     // Generic setup parameters
@@ -175,7 +176,7 @@ public:
         firmware_major_rev(0x14),
         firmware_minor_rev(0x10),
         lemo_in_mode(lemoInVeto),
-        lemo_out_mode(lemoOutArmBsyTrg),
+        lemo_out_mode(lemoOutTrgBsyArm),
         send_int_trg_to_ext_as_or(false),
 #if defined(SIS3302_V1410_MCA_MODE)
         load_next_source(lneExternalPulse),
@@ -331,6 +332,9 @@ public:
     void ERROR(const char* e, uint32_t v);
     void ERROR(const char* e, uint32_t a, uint32_t b); /*! Overload */
 
+    // Data dumping
+    void DUMP(const char* name, uint32_t* buf, uint32_t len);
+
 public slots:
     virtual void prepareForNextAcquisition() {}
 
@@ -339,7 +343,7 @@ private:
 
     uint32_t readBuffer[NOF_CHANNELS][SIS3302_V1410_MAX_NOF_LWORDS]; // 8 MB total
     uint32_t readLength[NOF_CHANNELS];
-    uint32_t endSampleAddr[NOF_CHANNELS];
+    uint32_t endSampleAddr_words[NOF_CHANNELS];
 
 public:
     // Values for display in the module
@@ -358,8 +362,6 @@ private:
     QList<EventSlot*> evslots;
     Sis3302V1410Demux dmx;
 
-signals:
-    void singleShotDataUpdated();
 };
 
 #endif // SIS3302MODULE_GAMMA_V1410_H

@@ -146,27 +146,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     ((SIS3302_V1410_FIRST_ADC_MEM_OFFSET)+ \
     (i)*(SIS3302_V1410_NEXT_ADC_MEM_OFFSET))
 
-/* Event information per ADC group */
-
-#define _GROUP(addr,i) (SIS3302_V1410_FIRST_ADC_GROUP_OFFSET+(addr)+(i)*SIS3302_V1410_NEXT_ADC_GROUP_OFFSET)
+/* Event information per ADC group              */
+/* addr is the address offset for each register */
+/* ch is the channel number from 0 to 7         */
+/* spacing is the offset to the next address    */
+/* grp is the adc channel group from 0 to 4     */
+#define _GROUP_3(addr,ch,spacing) (SIS3302_V1410_FIRST_ADC_GROUP_OFFSET \
+            + ((ch)/2)*SIS3302_V1410_NEXT_ADC_GROUP_OFFSET \
+            + (addr) \
+            + ((ch)%2)*(spacing))
+#define _GROUP(addr,grp) (SIS3302_V1410_FIRST_ADC_GROUP_OFFSET \
+            + ((grp))*SIS3302_V1410_NEXT_ADC_GROUP_OFFSET \
+            + (addr))
 
 #define SIS3302_V1410_EVENT_CONFIG(i)           _GROUP(0x00,(i))
 #define SIS3302_V1410_END_ADDRESS_THR(i)        _GROUP(0x04,(i))
 #define SIS3302_V1410_PRETRIGGER_AND_GATE(i)    _GROUP(0x08,(i))
 #define SIS3302_V1410_RAW_BUFFER_CONFIG(i)      _GROUP(0x0C,(i))
 
-#define SIS3302_V1410_NEXT_SAMPLE_ADDR_ODD(i)     _GROUP(0x10,(i))
-#define SIS3302_V1410_NEXT_SAMPLE_ADDR_EVEN(i)    _GROUP(0x14,(i))
-#define SIS3302_V1410_PRV_BNK_SAMPLE_ADDR_ODD(i)  _GROUP(0x18,(i))
-#define SIS3302_V1410_PRV_BNK_SAMPLE_ADDR_EVEN(i) _GROUP(0x1C,(i))
+#define SIS3302_V1410_NEXT_SAMPLE_ADDR(i)     _GROUP_3(0x10,(i),0x4)
+#define SIS3302_V1410_PRV_BNK_SAMPLE_ADDR(i)  _GROUP_3(0x18,(i),0x4)
 #define SIS3302_V1410_ACTUAL_SAMPLE_VALUE(i)      _GROUP(0x20,(i))
 #define SIS3302_V1410_INTERNAL_TEST(i)            _GROUP(0x24,(i))
 #define SIS3302_V1410_DDR2_MEM_LOGIC_TEST(i)      _GROUP(0x28,(i))
 
-#define SIS3302_V1410_TRG_SETUP_ODD(i)          _GROUP(0x30,(i))
-#define SIS3302_V1410_TRG_THR_ODD(i)            _GROUP(0x34,(i))
-#define SIS3302_V1410_TRG_SETUP_EVEN(i)         _GROUP(0x38,(i))
-#define SIS3302_V1410_TRG_THR_EVEN(i)           _GROUP(0x3C,(i))
+#define SIS3302_V1410_TRG_SETUP(i)            _GROUP_3(0x30,(i),0x8)
+#define SIS3302_V1410_TRG_THR(i)              _GROUP_3(0x34,(i),0x8)
 
 #define SIS3302_V1410_ENERGY_SETUP_GP(i)        _GROUP(0x40,(i))
 #define SIS3302_V1410_ENERGY_GATE_LEN(i)        _GROUP(0x44,(i))
@@ -174,26 +179,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SIS3302_V1410_ENERGY_START_IDX1(i)      _GROUP(0x4C,(i))
 #define SIS3302_V1410_ENERGY_START_IDX2(i)      _GROUP(0x50,(i))
 #define SIS3302_V1410_ENERGY_START_IDX3(i)      _GROUP(0x54,(i))
-#define SIS3302_V1410_ENERGY_TAU_ODD(i)         _GROUP(0x58,(i))
-#define SIS3302_V1410_ENERGY_TAU_EVEN(i)        _GROUP(0x5C,(i))
+#define SIS3302_V1410_ENERGY_TAU(i)           _GROUP_3(0x58,(i),0x4)
 
-#define SIS3302_V1410_MCA_CALIB_PAR_ODD(i)      _GROUP(0x60,(i))
-#define SIS3302_V1410_MCA_CALIB_PAR_EVEN(i)     _GROUP(0x64,(i))
-#define SIS3302_V1410_MCA_HISTOGRAM_PARAM(i)    _GROUP(0x68,(i))
+#define SIS3302_V1410_MCA_CALIB_PAR(i)        _GROUP_3(0x60,(i),0x4)
+#define SIS3302_V1410_MCA_HISTOGRAM_PARAM(i)  _GROUP(0x68,(i))
 
 #define SIS3302_V1410_EVENT_CFG_EXTENDED(i)  _GROUP(0x70,(i))
-#define SIS3302_V1410_TRG_EXTENDED_ODD(i)    _GROUP(0x78,(i))
-#define SIS3302_V1410_TRG_EXTENDED_EVEN(i)   _GROUP(0x7C,(i))
+#define SIS3302_V1410_TRG_EXTENDED(i)        _GROUP_3(0x78,(i),0x4)
 
-#define SIS3302_V1410_MCA_TRG_START_COUNTER_ODD(i)  _GROUP(0x80,(i))
-#define SIS3302_V1410_MCA_PILEUP_COUNTER_ODD(i)     _GROUP(0x84,(i))
-#define SIS3302_V1410_MCA_OVERRANGE_COUNTER_ODD(i)  _GROUP(0x88,(i))
-#define SIS3302_V1410_MCA_UNDERRANGE_COUNDER_ODD(i) _GROUP(0x8C,(i))
-
-#define SIS3302_V1410_MCA_TRG_START_COUNTER_EVEN(i)  _GROUP(0x90,(i))
-#define SIS3302_V1410_MCA_PILEUP_COUNTER_EVEN(i)     _GROUP(0x94,(i))
-#define SIS3302_V1410_MCA_OVERRANGE_COUNTER_EVEN(i)  _GROUP(0x98,(i))
-#define SIS3302_V1410_MCA_UNDERRANGE_COUNDER_EVEN(i) _GROUP(0x9C,(i))
+#define SIS3302_V1410_MCA_TRG_START_COUNTER(i)  _GROUP_3(0x80,(i),0x10)
+#define SIS3302_V1410_MCA_PILEUP_COUNTER(i)     _GROUP_3(0x84,(i),0x10)
+#define SIS3302_V1410_MCA_OVERRANGE_COUNTER(i)  _GROUP_3(0x88,(i),0x10)
+#define SIS3302_V1410_MCA_UNDERRANGE_COUNDER(i) _GROUP_3(0x8C,(i),0x10)
 
 #define SIS3302_V1410_(i) _GROUP(0x0,(i))
 

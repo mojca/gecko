@@ -96,10 +96,10 @@ void Sis3302V1410UI::createUI()
     }
     gn.append("LEMO Output"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addPopupToGroup(tn[nt],gn[ng],"Mode","lemo_out_mode",(QStringList()
-                               << "Arm, Busy, Trigger"
-                               << "Arm, Veto, Trigger"
-                               << "Neighbor+, Trigger, Neighbor-"
-                               << "Neighbor+, Veto, Neighbor-"));
+                               << "Trigger, Busy, Arm"
+                               << "Trigger, Veto, Arm"
+                               << "Neighbor-, Trigger, Neighbor+"
+                               << "Neighbor-, Veto, Neighbor+"));
     gn.append("Feedback"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addCheckBoxToGroup(tn[nt],gn[ng],"Send internal trigger to external input","send_int_trg_to_ext_as_or");
 
@@ -303,6 +303,7 @@ void Sis3302V1410UI::createPreviewUI()
         ew->setLayout(l);
     }
 
+    ew->setEnabled(false);
     t->addTab(rw,"RAW signals");
     t->addTab(ew,"Energy");
     l->addWidget(t);
@@ -310,8 +311,6 @@ void Sis3302V1410UI::createPreviewUI()
     previewWindow.setLayout(l);
     previewWindow.setWindowTitle("Signal preview");
     previewWindow.resize(640,480);
-
-    connect(module,SIGNAL(singleShotDataUpdated()),this,SLOT(updatePreview()));
 }
 
 // Slot handling
@@ -541,6 +540,8 @@ void Sis3302V1410UI::clicked_singleshot_button()
     }
     module->singleShot();
 
+    updatePreview();
+
     if(previewRunning) {
         previewTimer->start();
     }
@@ -601,7 +602,9 @@ void Sis3302V1410UI::updatePreview()
             previewCh[ch]->update();
 
             previewEnergyData[ch].resize(module->conf.energy_sample_length[ch/2]);
-            //printf("Channel size: %d\n",previewData[ch].size());
+            if(previewEnergyData[ch].size() > 510) previewEnergyData[ch].resize(510);
+
+            //printf("Channel size: %d\n",previewEnergyData[ch].size());
             for(int i = 0; i < previewEnergyData[ch].size(); ++i) {
                 previewEnergyData[ch][i] = module->currentEnergyBuffer[ch][i]
                         - module->currentEnergyFirstValue[ch];

@@ -333,7 +333,7 @@ void CacheHistogramPlugin::userProcess()
     // Add data to histogram
     foreach(double datum, idata)
     {
-        //std::cout << "CacheHistogramPlugin: adding " << std::dec << datum << endl;
+        //std::cout << "CacheHistogramPlugin: adding " << std::dec << datum << std::endl;
         if(datum < conf.xmax && datum >= conf.xmin)
         {
             int bin = (int)((datum - conf.xmin) / binWidth);

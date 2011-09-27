@@ -87,8 +87,18 @@ void Sis3302V1410Module::setChannels()
     // Setup channels
     for (int ch=0; ch<NOF_CHANNELS; ch++)
     {
-        evslots << evb->registerSlot (this, tr("Raw %1").arg(ch),
+        evslots << evb->registerSlot (this, tr("Raw trace %1").arg(ch),
                                       PluginConnector::VectorUint32);
+    }
+    for (int ch=0; ch<NOF_CHANNELS; ch++)
+    {
+        evslots << evb->registerSlot (this, tr("Energy trace %1").arg(ch),
+                                      PluginConnector::VectorUint32);
+    }
+    for (int ch=0; ch<NOF_CHANNELS; ch++)
+    {
+        evslots << evb->registerSlot (this, tr("Energy value %1").arg(ch),
+                                      PluginConnector::VectorDouble);
     }
 
     evslots << evb->registerSlot (this, tr("Meta"),
@@ -239,69 +249,40 @@ int Sis3302V1410Module::configure()
     }
 
     // Setup trigger and energy registers
-    for (int i=0; i<NOF_ADC_GROUPS; ++i) {
-        int odd_i = i*2;
-        int even_i = i*2+1;
+    for (int i=0; i<NOF_CHANNELS; ++i) {
         uint32_t thr;
 
-        // Odd trigger channels setup
-        addr = conf.base_addr + SIS3302_V1410_TRG_SETUP_ODD(i);
+        // Trigger setup
+        addr = conf.base_addr + SIS3302_V1410_TRG_SETUP(i);
         data = 0;
-        data |= ((conf.trigger_peak_length[odd_i]) & SIS3302_V1410_MSK_TRG_SETUP_PEAK_TIME);
-        data |= ((conf.trigger_sumg_length[odd_i] << SIS3302_V1410_OFF_TRG_SETUP_SUMG_TIME) & SIS3302_V1410_MSK_TRG_SETUP_SUMG_TIME);
-        data |= ((conf.trigger_pulse_length[odd_i] << SIS3302_V1410_OFF_TRG_SETUP_PULSE_LEN) & SIS3302_V1410_MSK_TRG_SETUP_PULSE_LEN);
-        data |= ((conf.trigger_int_gate_length[odd_i] << SIS3302_V1410_OFF_TRG_SETUP_GATE_LEN) & SIS3302_V1410_MSK_TRG_SETUP_GATE_LEN);
+        data |= ((conf.trigger_peak_length[i]) & SIS3302_V1410_MSK_TRG_SETUP_PEAK_TIME);
+        data |= ((conf.trigger_sumg_length[i] << SIS3302_V1410_OFF_TRG_SETUP_SUMG_TIME) & SIS3302_V1410_MSK_TRG_SETUP_SUMG_TIME);
+        data |= ((conf.trigger_pulse_length[i] << SIS3302_V1410_OFF_TRG_SETUP_PULSE_LEN) & SIS3302_V1410_MSK_TRG_SETUP_PULSE_LEN);
+        data |= ((conf.trigger_int_gate_length[i] << SIS3302_V1410_OFF_TRG_SETUP_GATE_LEN) & SIS3302_V1410_MSK_TRG_SETUP_GATE_LEN);
         ret = iface->writeA32D32(addr,data);
-        if(ret != 0) printf("Error %d at SIS3302_V1410_TRG_SETUP_ODD(%d)",ret,i);
-        // Even trigger channels setup
-        addr = conf.base_addr + SIS3302_V1410_TRG_SETUP_EVEN(i);
-        data = 0;
-        data |= ((conf.trigger_peak_length[even_i]) & SIS3302_V1410_MSK_TRG_SETUP_PEAK_TIME);
-        data |= ((conf.trigger_sumg_length[even_i] << SIS3302_V1410_OFF_TRG_SETUP_SUMG_TIME) & SIS3302_V1410_MSK_TRG_SETUP_SUMG_TIME);
-        data |= ((conf.trigger_pulse_length[even_i] << SIS3302_V1410_OFF_TRG_SETUP_PULSE_LEN) & SIS3302_V1410_MSK_TRG_SETUP_PULSE_LEN);
-        data |= ((conf.trigger_int_gate_length[even_i] << SIS3302_V1410_OFF_TRG_SETUP_GATE_LEN) & SIS3302_V1410_MSK_TRG_SETUP_GATE_LEN);
-        ret = iface->writeA32D32(addr,data);
-        if(ret != 0) printf("Error %d at SIS3302_V1410_TRG_SETUP_EVEN(%d)",ret,i);
+        if(ret != 0) printf("Error %d at SIS3302_V1410_TRG_SETUP(%d)",ret,i);
 
-        // Odd trigger channels extended setup
-        addr = conf.base_addr + SIS3302_V1410_TRG_EXTENDED_ODD(i);
+        // Trigger extended setup
+        addr = conf.base_addr + SIS3302_V1410_TRG_EXTENDED(i);
         data = 0;
-        data |= ( conf.trigger_peak_length[odd_i] >> 8) & SIS3302_V1410_MSK_TRG_EXT_SETUP_PEAK_89;
-        data |= (((conf.trigger_sumg_length[odd_i] >> 8) << SIS3302_V1410_OFF_TRG_EXT_SETUP_SUMG_89) & SIS3302_V1410_MSK_TRG_EXT_SETUP_SUMG_89);
-        data |= ((conf.trigger_decim_mode[odd_i] << SIS3302_V1410_OFF_TRG_EXT_SETUP_TRG_DECIM) & SIS3302_V1410_MSK_TRG_EXT_SETUP_TRG_DECIM);
-        data |= ((conf.trigger_int_trg_delay[odd_i] << SIS3302_V1410_OFF_TRG_EXT_SETUP_TRG_DELAY) & SIS3302_V1410_MSK_TRG_EXT_SETUP_TRG_DELAY);
+        data |= ( conf.trigger_peak_length[i] >> 8) & SIS3302_V1410_MSK_TRG_EXT_SETUP_PEAK_89;
+        data |= (((conf.trigger_sumg_length[i] >> 8) << SIS3302_V1410_OFF_TRG_EXT_SETUP_SUMG_89) & SIS3302_V1410_MSK_TRG_EXT_SETUP_SUMG_89);
+        data |= ((conf.trigger_decim_mode[i] << SIS3302_V1410_OFF_TRG_EXT_SETUP_TRG_DECIM) & SIS3302_V1410_MSK_TRG_EXT_SETUP_TRG_DECIM);
+        data |= ((conf.trigger_int_trg_delay[i] << SIS3302_V1410_OFF_TRG_EXT_SETUP_TRG_DELAY) & SIS3302_V1410_MSK_TRG_EXT_SETUP_TRG_DELAY);
         ret = iface->writeA32D32(addr,data);
-        if(ret != 0) printf("Error %d at SIS3302_V1410_TRG_EXTENDED_ODD(%d)",ret,i);
-        // Even trigger channels extended setup
-        addr = conf.base_addr + SIS3302_V1410_TRG_EXTENDED_EVEN(i);
-        data = 0;
-        data |= ( conf.trigger_peak_length[even_i] >> 8) & SIS3302_V1410_MSK_TRG_EXT_SETUP_PEAK_89;
-        data |= (((conf.trigger_sumg_length[even_i] >> 8) << SIS3302_V1410_OFF_TRG_EXT_SETUP_SUMG_89) & SIS3302_V1410_MSK_TRG_EXT_SETUP_SUMG_89);
-        data |= ((conf.trigger_decim_mode[even_i] << SIS3302_V1410_OFF_TRG_EXT_SETUP_TRG_DECIM) & SIS3302_V1410_MSK_TRG_EXT_SETUP_TRG_DECIM);
-        data |= ((conf.trigger_int_trg_delay[even_i] << SIS3302_V1410_OFF_TRG_EXT_SETUP_TRG_DELAY) & SIS3302_V1410_MSK_TRG_EXT_SETUP_TRG_DELAY);
-        ret = iface->writeA32D32(addr,data);
-        if(ret != 0) printf("Error %d at SIS3302_V1410_TRG_EXTENDED_EVEN(%d)",ret,i);
+        if(ret != 0) printf("Error %d at SIS3302_V1410_TRG_EXTENDED(%d)",ret,i);
 
-        // Odd channels threshold
-        thr = conf.trigger_threshold[odd_i] + SIS3302_V1410_TRG_THR_ADDED_CONST;
-        addr = conf.base_addr + SIS3302_V1410_TRG_THR_ODD(i);
+        // Trigger threshold
+        thr = conf.trigger_threshold[i] + SIS3302_V1410_TRG_THR_ADDED_CONST;
+        addr = conf.base_addr + SIS3302_V1410_TRG_THR(i);
         data = 0;
         data |= ((thr) & SIS3302_V1410_MSK_TRG_THR_VALUE);
-        if(conf.enable_ch[odd_i]) data |= (1 << SIS3302_V1410_OFF_TRG_ENABLE);
-        if(conf.disable_trg_out[odd_i]) data |= (1 << SIS3302_V1410_OFF_TRG_THR_DISABLE_OUT);
+        if(conf.enable_ch[i]) data |= (1 << SIS3302_V1410_OFF_TRG_ENABLE);
+        if(conf.disable_trg_out[i]) data |= (1 << SIS3302_V1410_OFF_TRG_THR_DISABLE_OUT);
         ret = iface->writeA32D32(addr,data);
-        if(ret != 0) printf("Error %d at SIS3302_V1410_TRG_THR_ODD(%d)",ret,i);
-        // Even channels threshold
-        thr = conf.trigger_threshold[even_i] + SIS3302_V1410_TRG_THR_ADDED_CONST;
-        addr = conf.base_addr + SIS3302_V1410_TRG_THR_EVEN(i);
-        data = 0;
-        data |= ((thr) & SIS3302_V1410_MSK_TRG_THR_VALUE);
-        if(conf.enable_ch[even_i]) data |= (1 << SIS3302_V1410_OFF_TRG_ENABLE);
-        if(conf.disable_trg_out[even_i]) data |= (1 << SIS3302_V1410_OFF_TRG_THR_DISABLE_OUT);
-        ret = iface->writeA32D32(addr,data);
-        if(ret != 0) printf("Error %d at SIS3302_V1410_TRG_THR_ODD(%d)",ret,i);
+        if(ret != 0) printf("Error %d at SIS3302_V1410_TRG_THR(%d)",ret,i);
 
-        // Energy channels setup
+        // Energy setup
         addr = conf.base_addr + SIS3302_V1410_ENERGY_SETUP_GP(i);
         data = 0;
         data |= ((conf.energy_peak_length[i]) & SIS3302_V1410_MSK_ENERGY_SETUP_PEAK);
@@ -341,27 +322,19 @@ int Sis3302V1410Module::configure()
         ret = iface->writeA32D32(addr,data);
         if(ret != 0) printf("Error %d at SIS3302_V1410_ENERGY_START_IDX2(%d)",ret,i);
 
-        // Energy sample start idx1 setup
+        // Energy sample start idx3 setup
         addr = conf.base_addr + SIS3302_V1410_ENERGY_START_IDX3(i);
         data = 0;
         data |= ((conf.energy_sample_start_idx[i][2]) & SIS3302_V1410_MSK_ENERGY_SAMPLE_START_IDX);
         ret = iface->writeA32D32(addr,data);
         if(ret != 0) printf("Error %d at SIS3302_V1410_ENERGY_START_IDX3(%d)",ret,i);
 
-        // Odd Energy tau setup
-        addr = conf.base_addr + SIS3302_V1410_ENERGY_TAU_ODD(i);
+        // Energy tau setup
+        addr = conf.base_addr + SIS3302_V1410_ENERGY_TAU(i);
         data = 0;
-        data |= ((conf.energy_tau[odd_i]) & SIS3302_V1410_MSK_ENERGY_TAU);
+        data |= ((conf.energy_tau[i]) & SIS3302_V1410_MSK_ENERGY_TAU);
         ret = iface->writeA32D32(addr,data);
-        if(ret != 0) printf("Error %d at SIS3302_V1410_ENERGY_TAU_ODD(%d)",ret,i);
-
-        // Even Energy tau setup
-        addr = conf.base_addr + SIS3302_V1410_ENERGY_TAU_EVEN(i);
-        data = 0;
-        data |= ((conf.energy_tau[even_i]) & SIS3302_V1410_MSK_ENERGY_TAU);
-        ret = iface->writeA32D32(addr,data);
-        if(ret != 0) printf("Error %d at SIS3302_V1410_ENERGY_TAU_EVEN(%d)",ret,i);
-
+        if(ret != 0) printf("Error %d at SIS3302_V1410_ENERGY_TAU(%d)",ret,i);
     }
 
     return ret;
@@ -408,10 +381,7 @@ int Sis3302V1410Module::getModuleId(uint32_t* _modId)
 int Sis3302V1410Module::getMcaTrgStartCounter(uint8_t ch, uint32_t* _evCnt)
 {
     int ret = 0x0;
-    if(ch | 0x1)
-        addr = conf.base_addr + SIS3302_V1410_MCA_TRG_START_COUNTER_EVEN(ch);
-    else
-        addr = conf.base_addr + SIS3302_V1410_MCA_TRG_START_COUNTER_ODD(ch);
+    addr = conf.base_addr + SIS3302_V1410_MCA_TRG_START_COUNTER(ch);
     data = 0;
     ret = getInterface()->readA32D32(addr,&data);
     if(ret != 0) {
@@ -422,13 +392,13 @@ int Sis3302V1410Module::getMcaTrgStartCounter(uint8_t ch, uint32_t* _evCnt)
     return ret;
 }
 
+// This function returns the next sampling address from each adc
+// adc: Range 0..7 denotes the adc channel
+// _addr: Placeholder to store the value
 int Sis3302V1410Module::getNextSampleAddr(int adc, uint32_t* _addr)
 {
     int ret = 0x0;
-    if(adc | 0x1)
-        addr = conf.base_addr + SIS3302_V1410_NEXT_SAMPLE_ADDR_ODD(adc);
-    else
-        addr = conf.base_addr + SIS3302_V1410_NEXT_SAMPLE_ADDR_EVEN(adc);
+    addr = conf.base_addr + SIS3302_V1410_NEXT_SAMPLE_ADDR(adc);
     data = 0;
     ret = getInterface ()->readA32D32(addr,&data);
     //printf("sis3302: ch %d, nextsampleaddr: 0x%x from addr 0x%x\n",adc,data,addr);
@@ -603,7 +573,7 @@ int Sis3302V1410Module::singleShot()
         if(conf.enable_ch[ch]) {
             uint32_t bufIdx = 0;
             uint32_t raw_sample_length_samples = conf.raw_sample_length[ch/2];
-            uint32_t energy_sample_length_words = conf.raw_sample_length[ch/2];
+            uint32_t energy_sample_length_words = conf.energy_sample_length[ch/2];
 
             //INFO("raw_sample_length_words",raw_sample_length_samples);
             //INFO("energy_sample_length_words",energy_sample_length_words);
@@ -611,7 +581,7 @@ int Sis3302V1410Module::singleShot()
             currentTimestamp[ch] =
                     (((uint64_t)(readBuffer[ch][0] & SIS3302_V1410_MSK_EVENT_BUF_TS_HI)) << 16) + (readBuffer[ch][1]);
             currentHeader[ch] = (readBuffer[ch][0] & SIS3302_V1410_MSK_EVENT_BUF_HEADER);
-            currentRawLengthFromHeader[ch] = currentHeader[ch]/2;
+            currentRawLengthFromHeader[ch] = ((currentHeader[ch]-ch)/2);
             bufIdx = 2;
             for(uint32_t i = 0; i < raw_sample_length_samples;) {
                 currentRawBuffer[ch][i++] = (readBuffer[ch][bufIdx] & SIS3302_V1410_MSK_EVENT_BUF_RAW_LOW);
@@ -639,6 +609,7 @@ int Sis3302V1410Module::singleShot()
             printf("\n\n<%s><%d> Start Event Dump #################\n",MODULE_NAME,ch);
             printf("<%s><%d> Timestamp:\t %llu \n",MODULE_NAME,ch,(long long unsigned int)(currentTimestamp[ch]));
             printf("<%s><%d> Header:\t %d \n",MODULE_NAME,ch,currentHeader[ch]);
+            printf("<%s><%d> Raw length:\t %d \n",MODULE_NAME,ch,currentRawLengthFromHeader[ch]);
             printf("<%s><%d> Energy min:\t %d \n",MODULE_NAME,ch,currentEnergyFirstValue[ch]);
             printf("<%s><%d> Energy max:\t %d \n",MODULE_NAME,ch,currentEnergyMaxValue[ch]);
             if(currentTriggerCounter[ch]) {
@@ -652,8 +623,6 @@ int Sis3302V1410Module::singleShot()
             }
         }
     }
-
-    emit singleShotDataUpdated();
 
     // Flush output buffer
     fflush(stdout);
@@ -696,13 +665,24 @@ int Sis3302V1410Module::acquisitionStartSingle()
         currentTriggerCounter[i] = 0;
 
         if(conf.enable_ch[i]) {
+            uint32_t expectedNextSamplingAddr_words = 2
+                    + conf.raw_sample_length[i/2] / 2
+                    + conf.energy_sample_length[i/2]
+                    + 4;
+
             //INFO_i("Start reading on channel.",i);
             uint32_t nofSamplesRead = 0;
             this->getNextSampleAddr(i,&nofSamplesRead);
             //INFO_i("nofSamplesRead",i,nofSamplesRead);
-            endSampleAddr[i] = nofSamplesRead/2;
+            endSampleAddr_words[i] = nofSamplesRead/2;
 
-            uint32_t reqNofWords = (endSampleAddr[i] & SIS3302_V1410_MSK_NEXT_SAMPLE_ADDR);
+            /*if(expectedNextSamplingAddr_words != endSampleAddr_words[i]) {
+                ERROR_i("Expected next sample addr does not match",i,
+                        expectedNextSamplingAddr_words,endSampleAddr_words[i]);
+            }*/
+
+            //uint32_t reqNofWords = endSampleAddr_words[i];
+            uint32_t reqNofWords = expectedNextSamplingAddr_words;
             //INFO_i("reqNofWords",i,reqNofWords);
             this->readAdcChannelSinglePage(i,reqNofWords);
             //INFO_i("readLength[i]",i,readLength[i]);
@@ -710,6 +690,8 @@ int Sis3302V1410Module::acquisitionStartSingle()
             // Check event trailer
             if(readLength[i] > 1 && readBuffer[i][readLength[i]-1] != SIS3302_V1410_MSK_EVENT_BUF_TRAILER) {
                 ERROR_i("Event trailer does not match",i,readBuffer[i][readLength[i]-1]);
+                ERROR_i("reqNofWords, readLength[ch]",i,reqNofWords,readLength[i]);
+                //DUMP("readBuffer[i]",readBuffer[i],readLength[i]);
             }
             // Store channel information in highest 3 bits of readLength[i];
             readLength[i] |= (i << 29);
@@ -837,6 +819,20 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
             addr+=4;
         }
         readLength[ch] = _reqNofWords;
+        break;}
+
+    case Sis3302V1410config::vme2E: {
+        uint32_t words = 0;
+        ret = iface->readA322E(addr,&readBuffer[ch][0],_reqNofWords,&words);
+        if(ret != 0) {
+            ERROR("readAdcChannelSinglePage with vme2E"
+                   "read error in ch = a, ret = b",ch,ret);
+        }
+        if(_reqNofWords != words) {
+            ERROR("readAdcChannelSinglePage with vme2E"
+                  "mismatch of a:_reqNofWords and b:words",_reqNofWords,words);
+        }
+        readLength[ch] = words;
         break;}
 
     case Sis3302V1410config::vmeBLT32: {
@@ -1003,7 +999,22 @@ void Sis3302V1410Module::ERROR(const char *e, uint32_t a, uint32_t b) {
     printf("<%s> ERROR: %s (a = 0x%08x, b= 0x%08x)\n",MODULE_NAME,e,a,b);
 }
 
-
+void Sis3302V1410Module::DUMP(const char* name, uint32_t* buf, uint32_t len) {
+    uint8_t cnt = 1;
+    printf("<%s> Dumping %s\n",MODULE_NAME,name);
+    printf("0x%04x:  ",0);
+    for(uint32_t i = 0; i < len; ++i) {
+        printf("\t 0x%08x",buf[i]);
+        if(cnt == 4) {
+            cnt = 0;
+            printf("\n");
+            printf("0x%04x:  ",i);
+        }
+        ++cnt;
+    }
+    printf("\n");
+    fflush(stdout);
+}
 
 // STRUCK legacy methods
 
@@ -1308,6 +1319,7 @@ void Sis3302V1410Module::updateEndAddrThresholds(){
         conf.end_addr_thr_in_samples[i] = 6*2
                 + conf.raw_sample_length[i]
                 + conf.energy_sample_length[i]*2;
+        INFO_i("Setting end_addr_thr_in_samples",i,conf.end_addr_thr_in_samples[i]);
     }
 }
 
