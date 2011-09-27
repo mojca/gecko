@@ -170,8 +170,9 @@ void RawWriteSis3302v1410Plugin::userProcess()
             nof_enabled_channels++;
             data_length[i] = data[i].size();
             total_data_length += data_length[i];
+        } else {
+            data_length[i] = 0;
         }
-        data_length[i] = 0;
     }
 
     if(settings_changed) {
