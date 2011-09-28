@@ -703,10 +703,10 @@ int Sis3302V1410Module::acquisitionStartSingle()
             //INFO_i("nofSamplesRead",i,nofSamplesRead);
             endSampleAddr_words[i] = nofSamplesRead/2;
 
-            /*if(expectedNextSamplingAddr_words != endSampleAddr_words[i]) {
+            if(expectedNextSamplingAddr_words != endSampleAddr_words[i]) {
                 ERROR_i("Expected next sample addr does not match",i,
                         expectedNextSamplingAddr_words,endSampleAddr_words[i]);
-            }*/
+            }
 
             //uint32_t reqNofWords = endSampleAddr_words[i];
             uint32_t reqNofWords = expectedNextSamplingAddr_words;
