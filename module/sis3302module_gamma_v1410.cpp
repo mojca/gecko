@@ -493,6 +493,27 @@ bool Sis3302V1410Module::isArmedNotBusy(uint8_t bank)
     return ret;
 }
 
+bool Sis3302V1410Module::isArmed(uint8_t bank)
+{
+    bool ret = false;
+    int test = 0;
+    uint32_t msk = 0;
+    if(bank == 1) {
+        msk = SIS3302_V1410_MSK_ACQ_CTRL_ARMED_BNK_1;
+    } else {
+        msk = SIS3302_V1410_MSK_ACQ_CTRL_ARMED_BNK_2;
+    }
+    addr = conf.base_addr + SIS3302_V1410_ACQUISITION_CONTROL;
+    data = 0;
+    test = getInterface()->readA32D32(addr,&data);
+    if(test != 0) {
+        printf("Error %d at VME READ SIS3302_V1410_ACQUISITION_CONTROL\n",ret);
+    } else {
+        ret = ((data & msk) == msk);
+    }
+    return ret;
+}
+
 bool Sis3302V1410Module::isNotArmedNotBusy()
 {
     bool ret = false;
@@ -649,6 +670,7 @@ int Sis3302V1410Module::acquire(Event *ev)
 int Sis3302V1410Module::acquisitionStartSingle()
 {
     int ret = 0;
+    int waitCounter = 0;
 
     //INFO("Arming bank 1");
     ret = this->arm(1);
@@ -658,6 +680,11 @@ int Sis3302V1410Module::acquisitionStartSingle()
 
     //INFO("Disarming bank 1");
     ret = this->disarm();
+
+    // Wait until sampling complete
+    while(ret = isArmed(1)) {
+        ++waitCounter;
+    }
 
     //INFO("Reading channel data");
     for(int i=0; i<NOF_CHANNELS; ++i) {

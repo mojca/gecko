@@ -313,6 +313,7 @@ public:
     int getMcaTrgStartCounter(uint8_t ch, uint32_t* _evCnt);
     int updateModuleInfo();
     void updateEndAddrThresholds();
+    bool isArmed(uint8_t bank);
     bool isArmedNotBusy(uint8_t bank);
     bool isNotArmedNotBusy();
 
