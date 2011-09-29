@@ -664,7 +664,11 @@ void Sis3302V1410UI::updatePreview()
                 previewData[ch][i] = module->currentRawBuffer[ch][i];
                 //printf("%d,%d: %f\n",ch,i,previewData[ch][i]);
             }
-            previewCh[ch]->getChannelById(0)->setData(previewData[ch]);
+
+            {
+                QWriteLocker lck(previewCh[ch]->getChanLock());
+                previewCh[ch]->getChannelById(0)->setData(previewData[ch]);
+            }
             previewCh[ch]->update();
 
             // Energy data, only if there was no pileup
@@ -682,7 +686,10 @@ void Sis3302V1410UI::updatePreview()
                 previewEnergyData[ch].clear();
             }
             previewEnergy[ch]->resetBoundaries(0);
-            previewEnergy[ch]->getChannelById(0)->setData(previewEnergyData[ch]);
+            {
+                QWriteLocker lck(previewCh[ch]->getChanLock());
+                previewEnergy[ch]->getChannelById(0)->setData(previewEnergyData[ch]);
+            }
             previewEnergy[ch]->update();
         }
     }
