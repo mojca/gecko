@@ -40,12 +40,18 @@ public:
     virtual void process(Event *ev, uint32_t* _data, uint32_t _len);
     void setMetaData(uint32_t, EventDirEntry_t*, TimestampDir_t*);
 
+    void setMultiEvent(bool _isMultiEvent);
+    void setNofEvents(uint32_t _nofEvents);
+
 protected:
     DataStruct_t* data;
     uint32_t len;
 
     uint32_t* curEvent[8];
     uint32_t nofTraces;
+    uint32_t nofEvents;
+    bool isMultiEvent;
+
     const QList<EventSlot*> &evslots;
 
     bool pageWrap;

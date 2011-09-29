@@ -121,6 +121,7 @@ public:
     IrqSource irqSource;
     uint8_t irq_level;
     uint8_t irq_vector;
+    uint16_t nof_events;
     bool enable_irq;
     bool enable_external_trg;
     bool update_irq;
@@ -190,6 +191,7 @@ public:
         irqSource(endOfAddrThrEdge),
         irq_level(7),
         irq_vector(0xff),
+        nof_events(1),
         enable_irq(false),
         enable_external_trg(false),
         update_irq(false)
@@ -299,6 +301,7 @@ public:
     int trigger();
     int start_sampling();
     int stop_sampling();
+    int resetSampleLogic();
     int reset_DDR2_logic();
     int timestamp_clear();
     int waitForNotBusy();
@@ -314,6 +317,7 @@ public:
     int updateModuleInfo();
     void updateEndAddrThresholds();
     bool isArmed(uint8_t bank);
+    bool isArmedOrBusy();
     bool isArmedNotBusy(uint8_t bank);
     bool isNotArmedNotBusy();
 
@@ -335,6 +339,7 @@ public:
 
     // Data dumping
     void DUMP(const char* name, uint32_t* buf, uint32_t len);
+    void DUMP(const char* name, int32_t* buf, uint32_t len); /*! Overload */
 
 public slots:
     virtual void prepareForNextAcquisition() {}

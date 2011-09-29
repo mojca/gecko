@@ -77,9 +77,16 @@ protected:
     // Preview window
     void createPreviewUI();
     QPushButton* startStopPreviewButton;
+    QPushButton* singleShotPreviewButton;
     QWidget previewWindow;
     plot2d* previewCh[NOF_CHANNELS];
     plot2d* previewEnergy[NOF_CHANNELS];
+    QLabel* energyMinValueDisplay[NOF_CHANNELS];
+    QLabel* energyMaxValueDisplay[NOF_CHANNELS];
+    QLabel* timestampDisplay[NOF_CHANNELS];
+    QLabel* fastTriggerCounterDisplay[NOF_CHANNELS];
+    QLabel* flagDisplay[NOF_CHANNELS];
+    QLabel* headerIdDisplay[NOF_CHANNELS];
     QVector<double> previewData[NOF_CHANNELS];
     QVector<double> previewEnergyData[NOF_CHANNELS];
     QTimer* previewTimer;

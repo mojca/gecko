@@ -148,11 +148,11 @@ int Sis3302V1410Module::configure()
     data = 0;
     data |= (conf.lemo_in_mode << SIS3302_V1410_OFF_ACQ_CTRL_LEMO_IN_MODE);
     data |= (conf.lemo_out_mode << SIS3302_V1410_OFF_ACQ_CTRL_LEMO_OUT_MODE);
-    for(int i=0; i<2; i++) {
+    for(int i=0; i<3; i++) {
         if(conf.enable_lemo_in[i])
-            data |= (1 << (SIS3302_V1410_OFF_ACQ_CTRL_LEMO_IN_ENABLE + i));
+            data |= (1 << (SIS3302_V1410_OFF_ACQ_CTRL_LEMO_IN_ENABLE + (2-i)));
         else
-            data |= (1 << (SIS3302_V1410_OFF_ACQ_CTRL_LEMO_IN_DISABLE + i));
+            data |= (1 << (SIS3302_V1410_OFF_ACQ_CTRL_LEMO_IN_DISABLE + (2-i)));
     }
     if(conf.send_int_trg_to_ext_as_or) data |= SIS3302_V1410_MSK_ACQ_CTRL_TRG_OR_STAT;
     else data &= (~SIS3302_V1410_MSK_ACQ_CTRL_TRG_OR_STAT);
@@ -337,6 +337,8 @@ int Sis3302V1410Module::configure()
         if(ret != 0) printf("Error %d at SIS3302_V1410_ENERGY_TAU(%d)",ret,i);
     }
 
+    resetSampleLogic();
+
     return ret;
 }
 
@@ -417,6 +419,16 @@ int Sis3302V1410Module::reset()
     addr = conf.base_addr + SIS3302_V1410_RESET; data = 0;
     ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SIS3302_V1410_RESET",ret);
+    return ret;
+}
+
+int Sis3302V1410Module::resetSampleLogic()
+{
+    printf("sis3302::reset\n");
+    int ret = 0x0;
+    addr = conf.base_addr + SIS3302_V1410_SAMPLE_LOGIC_RESET; data = 0;
+    ret = getInterface()->writeA32D32(addr,data);
+    if(ret != 0) printf("Error %d at SIS3302_V1410_SAMPLE_LOGIC_RESET",ret);
     return ret;
 }
 
@@ -509,7 +521,27 @@ bool Sis3302V1410Module::isArmed(uint8_t bank)
     if(test != 0) {
         printf("Error %d at VME READ SIS3302_V1410_ACQUISITION_CONTROL\n",ret);
     } else {
+        //INFO("acquisitionControlRegister",data);
         ret = ((data & msk) == msk);
+    }
+    return ret;
+}
+
+bool Sis3302V1410Module::isArmedOrBusy()
+{
+    bool ret = false;
+    int test = 0;
+    uint32_t msk = SIS3302_V1410_MSK_ACQ_CTRL_BUSY |
+                   SIS3302_V1410_MSK_ACQ_CTRL_ARMED_BNK_1 |
+                   SIS3302_V1410_MSK_ACQ_CTRL_ARMED_BNK_2;
+    addr = conf.base_addr + SIS3302_V1410_ACQUISITION_CONTROL;
+    data = 0;
+    test = getInterface()->readA32D32(addr,&data);
+    if(test != 0) {
+        printf("Error %d at VME READ SIS3302_V1410_ACQUISITION_CONTROL\n",ret);
+    } else {
+        //INFO("acquisitionControlRegister",data);
+        ret = ((data & msk) != 0x0);
     }
     return ret;
 }
@@ -584,65 +616,85 @@ int Sis3302V1410Module::singleShot()
     if(ret != 0) {
         ERROR("singleShot: configure failed.",ret);
     }
-    ret = acquisitionStartSingle();
+
+    int nof_events = 1;
+    if(conf.acMode == Sis3302V1410config::singleEvent) {
+        ret = acquisitionStartSingle();
+        nof_events = 1;
+    } else if(conf.acMode == Sis3302V1410config::multiEvent) {
+        ret = acquisitionStartMulti();
+        nof_events = conf.nof_events;
+    }
     if(ret != 0) {
         ERROR("singleShot: acquisition failed.",ret);
     }
 
-    // Store the data in local values
-    for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
-        if(conf.enable_ch[ch]) {
-            uint32_t bufIdx = 0;
-            uint32_t raw_sample_length_samples = conf.raw_sample_length[ch/2];
-            uint32_t energy_sample_length_words = conf.energy_sample_length[ch/2];
+    for(int n = 0; n < nof_events; ++n) {
+        // Store the data in local values
+        for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
+            if(conf.enable_ch[ch]) {
+                uint32_t raw_sample_length_samples = conf.raw_sample_length[ch/2];
+                uint32_t energy_sample_length_words = conf.energy_sample_length[ch/2];
+                uint32_t event_length_words = 6 + conf.raw_sample_length[ch/2]/2
+                                                + conf.energy_sample_length[ch/2];
+                uint32_t bufIdx = n * event_length_words;
 
-            //INFO("raw_sample_length_words",raw_sample_length_samples);
-            //INFO("energy_sample_length_words",energy_sample_length_words);
+                //INFO("raw_sample_length_words",raw_sample_length_samples);
+                //INFO("energy_sample_length_words",energy_sample_length_words);
 
-            currentTimestamp[ch] =
-                    (((uint64_t)(readBuffer[ch][0] & SIS3302_V1410_MSK_EVENT_BUF_TS_HI)) << 16) + (readBuffer[ch][1]);
-            currentHeader[ch] = (readBuffer[ch][0] & SIS3302_V1410_MSK_EVENT_BUF_HEADER);
-            currentRawLengthFromHeader[ch] = ((currentHeader[ch]-ch)/2);
-            bufIdx = 2;
-            for(uint32_t i = 0; i < raw_sample_length_samples;) {
-                currentRawBuffer[ch][i++] = (readBuffer[ch][bufIdx] & SIS3302_V1410_MSK_EVENT_BUF_RAW_LOW);
-                currentRawBuffer[ch][i++] = ((readBuffer[ch][bufIdx] & SIS3302_V1410_MSK_EVENT_BUF_RAW_HIGH) >> SIS3302_V1410_OFF_EVENT_BUF_RAW_HIGH);
-                //INFO_i("raw data",i-2, currentRawBuffer[ch][i-2]);
-                //INFO_i("raw data",i-1, currentRawBuffer[ch][i-1]);
-                bufIdx++;
-            }
-            for(uint32_t i = 0; i < energy_sample_length_words; ++i) {
-                currentEnergyBuffer[ch][i] = (readBuffer[ch][bufIdx++]);
-                //INFO_i("energy data",i, currentEnergyBuffer[ch][i]);
-            }
-            currentEnergyMaxValue[ch] = (readBuffer[ch][bufIdx++]);
-            currentEnergyFirstValue[ch] = (readBuffer[ch][bufIdx++]);
-            uint32_t flags = (readBuffer[ch][bufIdx++]);
-            currentTriggerCounter[ch] = ((flags & SIS3302_V1410_MSK_EVENT_BUF_FAST_TRG_CNT) >> SIS3302_V1410_OFF_EVENT_BUF_FAST_TRG_CNT);
-            currentPileupFlag[ch] = ((flags & SIS3302_V1410_MSK_EVENT_BUF_PILEUP_FLAG) >> SIS3302_V1410_OFF_EVENT_BUF_PILEUP_FLAG);
-            currentRetriggerFlag[ch] = ((flags & SIS3302_V1410_MSK_EVENT_BUF_RETRIG_FLAG) >> SIS3302_V1410_OFF_EVENT_BUF_RETRIG_FLAG);
-        }
-    }
+                currentTimestamp[ch] =
+                        (((uint64_t)(readBuffer[ch][0] & SIS3302_V1410_MSK_EVENT_BUF_TS_HI)) << 16) + (readBuffer[ch][1]);
+                currentHeader[ch] = (readBuffer[ch][0] & SIS3302_V1410_MSK_EVENT_BUF_HEADER);
+                currentRawLengthFromHeader[ch] = ((currentHeader[ch]-ch)/2);
+                bufIdx = 2;
+                for(uint32_t i = 0; i < raw_sample_length_samples;) {
+                    currentRawBuffer[ch][i++] = (readBuffer[ch][bufIdx] & SIS3302_V1410_MSK_EVENT_BUF_RAW_LOW);
+                    currentRawBuffer[ch][i++] = ((readBuffer[ch][bufIdx] & SIS3302_V1410_MSK_EVENT_BUF_RAW_HIGH) >> SIS3302_V1410_OFF_EVENT_BUF_RAW_HIGH);
+                    //INFO_i("raw data",i-2, currentRawBuffer[ch][i-2]);
+                    //INFO_i("raw data",i-1, currentRawBuffer[ch][i-1]);
+                    bufIdx++;
+                }
+                for(uint32_t i = 0; i < energy_sample_length_words; ++i) {
+                    currentEnergyBuffer[ch][i] = (int32_t)(readBuffer[ch][bufIdx++]);
+                    //INFO_i("energy data",i, currentEnergyBuffer[ch][i]);
+                    //printf("<%d,%d> Energy data before: 0x%08x = %u, after 0x%08x = %d\n",
+                    //       ch,i,readBuffer[ch][bufIdx-1],readBuffer[ch][bufIdx-1],
+                    //       currentEnergyBuffer[ch][i],currentEnergyBuffer[ch][i]);
+                }
+                currentEnergyMaxValue[ch] =  (int32_t)(readBuffer[ch][bufIdx++]);
+                currentEnergyFirstValue[ch] =  (int32_t)(readBuffer[ch][bufIdx++]);
+                uint32_t flags = (readBuffer[ch][bufIdx++]);
+                currentTriggerCounter[ch] = ((flags & SIS3302_V1410_MSK_EVENT_BUF_FAST_TRG_CNT) >> SIS3302_V1410_OFF_EVENT_BUF_FAST_TRG_CNT);
+                currentPileupFlag[ch] = ((flags & SIS3302_V1410_MSK_EVENT_BUF_PILEUP_FLAG) >> SIS3302_V1410_OFF_EVENT_BUF_PILEUP_FLAG);
+                currentRetriggerFlag[ch] = ((flags & SIS3302_V1410_MSK_EVENT_BUF_RETRIG_FLAG) >> SIS3302_V1410_OFF_EVENT_BUF_RETRIG_FLAG);
 
-    // Use the data for module display
-    for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
-        if(conf.enable_ch[ch]) {
-            printf("\n\n<%s><%d> Start Event Dump #################\n",MODULE_NAME,ch);
-            printf("<%s><%d> Timestamp:\t %llu \n",MODULE_NAME,ch,(long long unsigned int)(currentTimestamp[ch]));
-            printf("<%s><%d> Header:\t %d \n",MODULE_NAME,ch,currentHeader[ch]);
-            printf("<%s><%d> Raw length:\t %d \n",MODULE_NAME,ch,currentRawLengthFromHeader[ch]);
-            printf("<%s><%d> Energy min:\t %d \n",MODULE_NAME,ch,currentEnergyFirstValue[ch]);
-            printf("<%s><%d> Energy max:\t %d \n",MODULE_NAME,ch,currentEnergyMaxValue[ch]);
-            if(currentTriggerCounter[ch]) {
-                printf("<%s><%d> Fast trigger counter: \t %d \n",MODULE_NAME,ch,currentTriggerCounter[ch]);
-            }
-            if(currentPileupFlag[ch]) {
-                printf("<%s><%d> Pileup Flag detected.\n",MODULE_NAME,ch);
-            }
-            if(currentRetriggerFlag[ch]) {
-                printf("<%s><%d> Retrigger Flag detected.\n",MODULE_NAME,ch);
+                /*if(!currentPileupFlag[ch]) {
+                    DUMP("currentEnergyBuffer[ch]",currentEnergyBuffer[ch],energy_sample_length_words);
+                }*/
             }
         }
+
+        // Print event dump
+        /*
+        for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
+            if(conf.enable_ch[ch]) {
+                printf("\n\n<%s><%d,%d> Start Event Dump #################\n",MODULE_NAME,n,ch);
+                printf("<%s><%d,%d> Timestamp:\t %llu \n",MODULE_NAME,n,ch,(long long unsigned int)(currentTimestamp[ch]));
+                printf("<%s><%d,%d> Header:\t %d \n",MODULE_NAME,n,ch,currentHeader[ch]);
+                printf("<%s><%d,%d> Raw length:\t %d \n",MODULE_NAME,n,ch,currentRawLengthFromHeader[ch]);
+                printf("<%s><%d,%d> Energy min:\t %d \n",MODULE_NAME,n,ch,currentEnergyFirstValue[ch]);
+                printf("<%s><%d,%d> Energy max:\t %d \n",MODULE_NAME,n,ch,currentEnergyMaxValue[ch]);
+                if(currentTriggerCounter[ch]) {
+                    printf("<%s><%d,%d> Fast trigger counter: \t %d \n",MODULE_NAME,n,ch,currentTriggerCounter[ch]);
+                }
+                if(currentPileupFlag[ch]) {
+                    printf("<%s><%d,%d> Pileup Flag detected.\n",MODULE_NAME,n,ch);
+                }
+                if(currentRetriggerFlag[ch]) {
+                    printf("<%s><%d,%d> Retrigger Flag detected.\n",MODULE_NAME,n,ch);
+                }
+            }
+        }*/
     }
 
     // Flush output buffer
@@ -682,9 +734,10 @@ int Sis3302V1410Module::acquisitionStartSingle()
     ret = this->disarm();
 
     // Wait until sampling complete
-    while(ret = isArmed(1)) {
+    while(isArmedOrBusy()) {
         ++waitCounter;
     }
+    //INFO("waitCounter",waitCounter);
 
     //INFO("Reading channel data");
     for(int i=0; i<NOF_CHANNELS; ++i) {
@@ -708,8 +761,8 @@ int Sis3302V1410Module::acquisitionStartSingle()
                         expectedNextSamplingAddr_words,endSampleAddr_words[i]);
             }
 
-            //uint32_t reqNofWords = endSampleAddr_words[i];
-            uint32_t reqNofWords = expectedNextSamplingAddr_words;
+            uint32_t reqNofWords = endSampleAddr_words[i];
+            //uint32_t reqNofWords = expectedNextSamplingAddr_words;
             //INFO_i("reqNofWords",i,reqNofWords);
             this->readAdcChannelSinglePage(i,reqNofWords);
             //INFO_i("readLength[i]",i,readLength[i]);
@@ -731,59 +784,73 @@ int Sis3302V1410Module::acquisitionStartSingle()
 int Sis3302V1410Module::acquisitionStartMulti()
 {
     int ret = 0;
-#if 0
-    uint32_t evCnt = 0;
-    uint32_t nofReqWords = 0;
+    int waitCounter = 0;
 
-    for(int i=0; i<8; i++)
-    {
+    //INFO("Arming bank 1");
+    ret = this->arm(1);
+    //INFO("Waiting for Addr Threshold");
+    ret = this->waitForAddrThreshold();
+    if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
+
+    //INFO("Disarming bank 1");
+    ret = this->disarm();
+
+    // Wait until sampling complete
+    while(isArmedOrBusy()) {
+        ++waitCounter;
+    }
+    //INFO("waitCounter",waitCounter);
+
+    //INFO("Reading channel data");
+    for(int i=0; i<NOF_CHANNELS; ++i) {
         readLength[i] = 0;
+        currentTriggerCounter[i] = 0;
+
+        if(conf.enable_ch[i]) {
+            uint32_t expectedNextSamplingAddr_words =
+                    (6 + conf.raw_sample_length[i/2]/2
+                    + conf.energy_sample_length[i/2]) * conf.nof_events;
+
+            //INFO_i("Start reading on channel.",i);
+            uint32_t nofSamplesRead = 0;
+            this->getNextSampleAddr(i,&nofSamplesRead);
+            //INFO_i("nofSamplesRead",i,nofSamplesRead);
+            endSampleAddr_words[i] = nofSamplesRead/2;
+
+            if(expectedNextSamplingAddr_words != endSampleAddr_words[i]) {
+                ERROR_i("Expected next sample addr does not match",i,
+                        expectedNextSamplingAddr_words,endSampleAddr_words[i]);
+            }
+
+            uint32_t reqNofWords = endSampleAddr_words[i];
+            //uint32_t reqNofWords = expectedNextSamplingAddr_words;
+            //INFO_i("reqNofWords",i,reqNofWords);
+            this->readAdcChannelSinglePage(i,reqNofWords);
+            //INFO_i("readLength[i]",i,readLength[i]);
+
+            // Check event trailer
+            if(readLength[i] > 1 && readBuffer[i][readLength[i]-1] != SIS3302_V1410_MSK_EVENT_BUF_TRAILER) {
+                ERROR_i("Event trailer does not match",i,readBuffer[i][readLength[i]-1]);
+                ERROR_i("reqNofWords, readLength[ch]",i,reqNofWords,readLength[i]);
+                DUMP("readBuffer[i]",readBuffer[i],readLength[i]);
+            }
+            // Store channel information in highest 3 bits of readLength[i];
+            readLength[i] |= (i << 29);
+        }
     }
 
-    // Acquire
-
-    //printf("sis3302: acquisitionStartMulti\n");
-
-    ret = this->arm(1); // After arm, sampling should start automatically
-
-    //printf("sis3302: arm \n");
-
-    if(conf.autostart_acq == false) ret = this->start_sampling(); // If not, force start
-
-    //printf("sis3302: start_sampling \n");
-
-    ret = waitForSamplingComplete(); // Wait and poll
-
-    //printf("sis3302: getEventCounter \n");
-
-    ret = this->getEventCounter(&evCnt);
-    if(evCnt != conf.nof_events) printf("sis3302 event counter mismatch (expected: %u, got: %u).\n",conf.nof_events,evCnt);
-    nofReqWords = evCnt * (getWrapSizeFromConfig(conf.wrapSize) / 2);
-    printf("sis3302 nofReqWords = %d\n",nofReqWords);
-
-    // Read the timestamp dir
-    getTimeStampDir();
-
-    //printf("sis3302: getTimeStampDir \n");
-
-    // Read the event dirs
-    for(int ch=0; ch<8; ch++)
-    {
-        if(conf.ch_enabled[ch] == true)
-            getEventDir(ch);
-    }
-
-    // Read data from the ADC buffers
-    for(int ch=0; ch<8; ch++)
-    {
-        readAdcChannel(ch, nofReqWords);
-    }
-#endif
     return ret;
 }
 
 int Sis3302V1410Module::writeToBuffer(Event *ev)
 {
+    if(conf.acMode == Sis3302V1410config::multiEvent) {
+        dmx.setMultiEvent(true);
+        dmx.setNofEvents(conf.nof_events);
+    } else {
+        dmx.setMultiEvent(false);
+        dmx.setNofEvents(1);
+    }
     for(unsigned int i = 0; i < NOF_CHANNELS; i++)
     {
         //printf("sis3302: ch %d: Trying to write to buffer (ev = 0x%x)\n",i,ev);
@@ -1042,6 +1109,22 @@ void Sis3302V1410Module::DUMP(const char* name, uint32_t* buf, uint32_t len) {
     printf("\n");
     fflush(stdout);
 }
+void Sis3302V1410Module::DUMP(const char* name, int32_t* buf, uint32_t len) {
+    uint8_t cnt = 1;
+    printf("<%s> Dumping %s\n",MODULE_NAME,name);
+    printf("0x%04x:  ",0);
+    for(uint32_t i = 0; i < len; ++i) {
+        printf("\t 0x%08x",buf[i]);
+        if(cnt == 4) {
+            cnt = 0;
+            printf("\n");
+            printf("0x%04x:  ",i);
+        }
+        ++cnt;
+    }
+    printf("\n");
+    fflush(stdout);
+}
 
 // STRUCK legacy methods
 
@@ -1123,6 +1206,7 @@ static const confmap_t confmap [] = {
     confmap_t ("poll_count", &Sis3302V1410config::poll_count),
     confmap_t ("irq_level", &Sis3302V1410config::irq_level),
     confmap_t ("irq_vector", &Sis3302V1410config::irq_vector),
+    confmap_t ("nof_events", &Sis3302V1410config::nof_events),
     confmap_t ("module_id", &Sis3302V1410config::module_id),
     confmap_t ("firmware_major_rev", &Sis3302V1410config::firmware_major_rev),
     confmap_t ("firmware_minor_rev", &Sis3302V1410config::firmware_minor_rev),
@@ -1343,10 +1427,17 @@ void Sis3302V1410Module::saveSettings (QSettings *s) {
 
 void Sis3302V1410Module::updateEndAddrThresholds(){
     for (int i = 0; i < NOF_ADC_GROUPS; ++i) {
-        conf.end_addr_thr_in_samples[i] = 6*2
-                + conf.raw_sample_length[i]
-                + conf.energy_sample_length[i]*2;
-        INFO_i("Setting end_addr_thr_in_samples",i,conf.end_addr_thr_in_samples[i]);
+        if(conf.acMode == Sis3302V1410config::singleEvent) {
+            conf.end_addr_thr_in_samples[i] = 6*2
+                    + conf.raw_sample_length[i]
+                    + conf.energy_sample_length[i]*2;
+        } else if (conf.acMode == Sis3302V1410config::multiEvent){
+            conf.end_addr_thr_in_samples[i] = (6*2
+                    + conf.raw_sample_length[i]
+                    + conf.energy_sample_length[i]*2) * conf.nof_events;
+        }
+
+        //INFO_i("Setting end_addr_thr_in_samples",i,conf.end_addr_thr_in_samples[i]);
     }
 }
 

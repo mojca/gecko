@@ -206,7 +206,13 @@ void RawWriteSis3302v1410Plugin::userProcess()
     }
 
     // Check how many seconds until next start
-    int seconds_until_next_start = now.secsTo(next_interval_time);
+    int seconds_until_next_start = 0;
+    if(now.hour() == 23 && next_interval_time.hour() == 0) {
+        const static int seconds_in_a_day = 86400;
+        seconds_until_next_start = now.secsTo(next_interval_time) + seconds_in_a_day;
+    } else {
+        seconds_until_next_start = now.secsTo(next_interval_time);
+    }
 
     //printf("sec_to %d, ev_to_go %d, \n",seconds_until_next_start,events_to_go);
 
@@ -217,7 +223,7 @@ void RawWriteSis3302v1410Plugin::userProcess()
 
     // Only if the next deadline has passed
     // or we still have to write events
-    if(nof_events_written == 0) {
+    if(file && nof_events_written == 0) {
         interval_number += 1;
         if(file && file->isOpen()) {
             file->close();
@@ -242,7 +248,6 @@ void RawWriteSis3302v1410Plugin::userProcess()
     // Write one event
     if(file->isWritable())
     {
-
         QDataStream out(file);
         out.setByteOrder(QDataStream::LittleEndian); //!
 

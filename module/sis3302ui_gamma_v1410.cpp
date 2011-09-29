@@ -55,9 +55,11 @@ void Sis3302V1410UI::createUI()
                          << "Single Event"
                          << "Multi Event"
                          << "MCA Mode"));
+    uif.addSpinnerToGroup(tn[nt],gn[ng],"Number of Events","nof_events",1,10000);
     uif.addLineEditReadOnlyToGroup(tn[nt],gn[ng],"Module ID","module_id_lineedit","unknown");
     uif.addLineEditReadOnlyToGroup(tn[nt],gn[ng],"Firmware","firmware_lineedit","unknown");
     uif.addButtonToGroup(tn[nt],gn[ng],"Update","update_firmware_button");
+    uif.getWidgets()->find("nof_events").value()->setEnabled(false);
 
     gn.append("Advanced Setup"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addPopupToGroup(tn[nt],gn[ng],"Vme Access Mode","vmeMode",
@@ -244,9 +246,12 @@ void Sis3302V1410UI::createUI()
     QPushButton* previewButton = new QPushButton("Preview");
     connect(previewButton,SIGNAL(clicked()),this,SLOT(clicked_previewButton()));
     l->addWidget(previewButton);
+    singleShotPreviewButton = new QPushButton("Singleshot");
     startStopPreviewButton = new QPushButton("Start");
     startStopPreviewButton->setCheckable(true);
+    connect(singleShotPreviewButton,SIGNAL(clicked()),this,SLOT(clicked_singleshot_button()));
     connect(startStopPreviewButton,SIGNAL(clicked()),this,SLOT(clicked_startStopPreviewButton()));
+    l->addWidget(singleShotPreviewButton);
     l->addWidget(startStopPreviewButton);
     bottomButtons->setLayout(l);
     }
@@ -302,10 +307,49 @@ void Sis3302V1410UI::createPreviewUI()
         }
         ew->setLayout(l);
     }
+    // Value displays
+    ch = 0;
+    QWidget* vw = new QWidget();
+    {
+        QGridLayout* l = new QGridLayout();
+        for(int r = 0; r < nofRows; ++r) {
+            for(int c = 0; c < nofCols; ++c) {
+                QGroupBox* b = new QGroupBox(tr("Ch: %1").arg(ch));
+                {
+                    QGridLayout* lb = new QGridLayout();
+                    headerIdDisplay[ch] = new QLabel();
+                    energyMinValueDisplay[ch] = new QLabel();
+                    energyMaxValueDisplay[ch] = new QLabel();
+                    timestampDisplay[ch] = new QLabel();
+                    fastTriggerCounterDisplay[ch] = new QLabel();
+                    flagDisplay[ch] = new QLabel();
+
+                    lb->addWidget(new QLabel("Header ID:"),0,0,1,1);
+                    lb->addWidget(headerIdDisplay[ch],0,1,1,1);
+                    lb->addWidget(new QLabel("Flags:"),1,0,1,1);
+                    lb->addWidget(flagDisplay[ch],1,1,1,1);
+                    lb->addWidget(new QLabel("Trigger counter:"),2,0,1,1);
+                    lb->addWidget(fastTriggerCounterDisplay[ch],2,1,1,1);
+                    lb->addWidget(new QLabel("Timestamp:"),3,0,1,1);
+                    lb->addWidget(timestampDisplay[ch],3,1,1,1);
+                    lb->addWidget(new QLabel("Energy min:"),4,0,1,1);
+                    lb->addWidget(energyMinValueDisplay[ch],4,1,1,1);
+                    lb->addWidget(new QLabel("Energy max:"),5,0,1,1);
+                    lb->addWidget(energyMaxValueDisplay[ch],5,1,1,1);
+
+                    b->setLayout(lb);
+                }
+                l->addWidget(b,r,c,1,1);
+                ++ch;
+            }
+        }
+        vw->setLayout(l);
+    }
 
     ew->setEnabled(false);
     t->addTab(rw,"RAW signals");
     t->addTab(ew,"Energy");
+    t->addTab(vw,"Values");
     l->addWidget(t);
 
     previewWindow.setLayout(l);
@@ -378,7 +422,14 @@ void Sis3302V1410UI::uiInput(QString _name)
     QComboBox* cbb = findChild<QComboBox*>(_name);
     if(cbb != 0)
     {
-        if(_name == "acMode") module->conf.acMode = static_cast<Sis3302V1410config::AcMode>(cbb->currentIndex());
+        if(_name == "acMode") {
+            module->conf.acMode = static_cast<Sis3302V1410config::AcMode>(cbb->currentIndex());
+            if(module->conf.acMode == Sis3302V1410config::multiEvent) {
+                uif.getWidgets()->find("nof_events").value()->setEnabled(true);
+            } else {
+                uif.getWidgets()->find("nof_events").value()->setEnabled(false);
+            }
+        }
         if(_name == "vmeMode") module->conf.vmeMode = static_cast<Sis3302V1410config::VmeMode>(cbb->currentIndex());
         if(_name == "clockSource") module->conf.clockSource = static_cast<Sis3302V1410config::ClockSource>(cbb->currentIndex());
         if(_name == "irqSource") module->conf.irqSource = static_cast<Sis3302V1410config::IrqSource>(cbb->currentIndex());
@@ -401,6 +452,9 @@ void Sis3302V1410UI::uiInput(QString _name)
         if(_name == "irq_level") module->conf.irq_level = sb->value();
         if(_name == "irq_vector"){
             module->conf.irq_vector = sb->value();
+        }
+        if(_name == "nof_events"){
+            module->conf.nof_events = sb->value();
         }
         if(_name.startsWith("trigger_pulse_length_")) {
             int ch = _name.right(1).toInt();
@@ -592,6 +646,18 @@ void Sis3302V1410UI::updatePreview()
     //std::cout << "Sis3302V1410UI::updatePreview" << std::endl << std::flush;
     for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
         if(module->conf.enable_ch[ch]) {
+            // Values
+            headerIdDisplay[ch]->setText(tr("0x%1").arg(module->currentHeader[ch],4,16));
+            QString flagString = "";
+            if(module->currentPileupFlag[ch]) flagString += "Pileup ";
+            if(module->currentRetriggerFlag[ch]) flagString += "Retrigger";
+            flagDisplay[ch]->setText(flagString);
+            timestampDisplay[ch]->setText(tr("0x%1").arg(module->currentTimestamp[ch],16,16));
+            energyMinValueDisplay[ch]->setText(tr("%1").arg(module->currentEnergyFirstValue[ch]));
+            energyMaxValueDisplay[ch]->setText(tr("%1").arg(module->currentEnergyMaxValue[ch]));
+            fastTriggerCounterDisplay[ch]->setText(tr("%1").arg(module->currentTriggerCounter[ch]));
+
+            // RAW data
             previewData[ch].resize(module->conf.raw_sample_length[ch/2]);
             //printf("Channel size: %d\n",previewData[ch].size());
             for(int i = 0; i < previewData[ch].size(); ++i) {
@@ -601,15 +667,21 @@ void Sis3302V1410UI::updatePreview()
             previewCh[ch]->getChannelById(0)->setData(previewData[ch]);
             previewCh[ch]->update();
 
-            previewEnergyData[ch].resize(module->conf.energy_sample_length[ch/2]);
-            if(previewEnergyData[ch].size() > 510) previewEnergyData[ch].resize(510);
+            // Energy data, only if there was no pileup
+            if(module->currentPileupFlag[ch] == false) {
+                previewEnergyData[ch].resize(module->conf.energy_sample_length[ch/2]);
+                if(previewEnergyData[ch].size() > 510) previewEnergyData[ch].resize(510);
 
-            //printf("Channel size: %d\n",previewEnergyData[ch].size());
-            for(int i = 0; i < previewEnergyData[ch].size(); ++i) {
-                previewEnergyData[ch][i] = module->currentEnergyBuffer[ch][i]
-                        - module->currentEnergyFirstValue[ch];
-                //printf("%d,%d: %f\n",ch,i,previewEnergyData[ch][i]);
+                //printf("Channel size: %d\n",previewEnergyData[ch].size());
+                for(int i = 0; i < previewEnergyData[ch].size(); ++i) {
+                    previewEnergyData[ch][i] = module->currentEnergyBuffer[ch][i]
+                            - module->currentEnergyFirstValue[ch];
+                    //printf("%d,%d: %f\n",ch,i,previewEnergyData[ch][i]);
+                }
+            } else {
+                previewEnergyData[ch].clear();
             }
+            previewEnergy[ch]->resetBoundaries(0);
             previewEnergy[ch]->getChannelById(0)->setData(previewEnergyData[ch]);
             previewEnergy[ch]->update();
         }
@@ -673,7 +745,12 @@ void Sis3302V1410UI::applySettings()
         {
             QComboBox* w = (*it);
             //printf("Found combobox with the name %s\n",w->objectName().toStdString().c_str());
-            if(w->objectName() == "acMode") w->setCurrentIndex(module->conf.acMode);
+            if(w->objectName() == "acMode") {
+                w->setCurrentIndex(module->conf.acMode);
+                if(module->conf.acMode == Sis3302V1410config::multiEvent) {
+                    uif.getWidgets()->find("nof_events").value()->setEnabled(true);
+                }
+            }
             if(w->objectName() == "clockSource") w->setCurrentIndex(module->conf.clockSource);
             if(w->objectName() == "irqSource") w->setCurrentIndex(module->conf.irqSource);
             if(w->objectName() == "vmeMode") w->setCurrentIndex(module->conf.vmeMode);
@@ -698,6 +775,7 @@ void Sis3302V1410UI::applySettings()
             //printf("Found spinbox with the name %s\n",w->objectName().toStdString().c_str());
             if(w->objectName() == "irq_level") w->setValue(module->conf.irq_level);
             if(w->objectName() == "irq_vector") w->setValue(module->conf.irq_vector);
+            if(w->objectName() == "nof_events") w->setValue(module->conf.nof_events);
 
             for(int ch=0; ch<NOF_CHANNELS; ch++)
             {

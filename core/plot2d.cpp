@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "plot2d.h"
 #include "samqvector.h"
 
+#include <limits>
 #include <QTimer>
 #include <QPixmap>
 
@@ -317,8 +318,8 @@ void plot2d::setBoundaries()
         }
         else if(ch->isEnabled())
         {
-            int newymin = 0;
-            int newymax = 0;
+            int newymin = std::numeric_limits<int>::max();
+            int newymax = std::numeric_limits<int>::min();
 
             QVector<double> data = ch->getData();
             if(data.size() > 0)
@@ -343,6 +344,7 @@ void plot2d::setBoundaries()
             }
 
             //cout << "Bounds: (" << ch->xmin << "," << ch->xmax << ") (" << ch->ymin << "," << ch->ymax << ") " << endl;
+            //cout << std::flush;
 
             data.clear();
         }
@@ -485,15 +487,15 @@ void plot2d::drawTicks(QPainter &painter)
     int i=0, value=0;
     int incx=0, incy=0;
 
-    int chxmin = channels->at(ch)->xmin;
-    int chxmax = channels->at(ch)->xmax;
-    int chymin = channels->at(ch)->ymin;
-    int chymax = channels->at(ch)->ymax;
+    double chxmin = channels->at(ch)->xmin;
+    double chxmax = channels->at(ch)->xmax;
+    double chymin = channels->at(ch)->ymin;
+    double chymax = channels->at(ch)->ymax;
 
-    int xmin = (chxmax - chxmin) * viewport.left ();
-    int xmax = (chxmax - chxmin) * viewport.right ();
-    int ymin = (chymax - chymin) * (1 - viewport.bottom ());
-    int ymax = (chymax - chymin) * (1 - viewport.top ());
+    double xmin = (chxmax - chxmin) * viewport.left ();
+    double xmax = (chxmax - chxmin) * viewport.right ();
+    double ymin = (chymax - chymin) * (1 - viewport.bottom ());
+    double ymax = (chymax - chymin) * (1 - viewport.top ());
 
     // Draw tickmarks around the border
 
@@ -502,9 +504,13 @@ void plot2d::drawTicks(QPainter &painter)
     {
         incx+=10;
     }
-    while(incx<(xmax-xmin)/10)
+    while(incx<10000 && incx<(xmax-xmin)/10)
     {
         incx+=50;
+    }
+    while(incx<(xmax-xmin)/10)
+    {
+        incx+=10000;
     }
     while(incy<10 && incy<(ymax-ymin)/5)
     {
@@ -514,9 +520,13 @@ void plot2d::drawTicks(QPainter &painter)
     {
         incy+=10;
     }
-    while(incy<(ymax-ymin)/5)
+    while(incy<10000 && incy<(ymax-ymin)/5)
     {
         incy+=50;
+    }
+    while(incy<(ymax-ymin)/5)
+    {
+        incy+=10000;
     }
 
     if(incx == 0) incx = 1;
