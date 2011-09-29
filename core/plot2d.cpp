@@ -484,8 +484,8 @@ void plot2d::drawTicks(QPainter &painter)
 {
     int ch = curTickCh;
 
-    int i=0, value=0;
-    int incx=0, incy=0;
+    long i=0, value=0;
+    long incx=0, incy=0;
 
     double chxmin = channels->at(ch)->xmin;
     double chxmax = channels->at(ch)->xmax;
@@ -508,10 +508,11 @@ void plot2d::drawTicks(QPainter &painter)
     {
         incx+=50;
     }
-    while(incx<(xmax-xmin)/10)
-    {
-        incx+=10000;
-    }
+    // for large ranges the increment is the smallest multiple of 10000 larger than
+    // or equal to one tenth of the x-range
+    if (incx < (xmax-xmin)/10)
+        incx = 10000 * (floor ((xmax-xmin)/(10*10000)) + 1);
+
     while(incy<10 && incy<(ymax-ymin)/5)
     {
         incy+=1;
@@ -524,10 +525,11 @@ void plot2d::drawTicks(QPainter &painter)
     {
         incy+=50;
     }
-    while(incy<(ymax-ymin)/5)
-    {
-        incy+=10000;
-    }
+
+    // for large ranges the increment is the smallest multiple of 10000 larger than
+    // or equal to one fifth of the y-range
+    if (incy < (ymax-ymin)/5)
+        incy = 10000 * (floor ((ymax-ymin)/(5*10000)) + 1);
 
     if(incx == 0) incx = 1;
     if(incy == 0) incy = 1;
