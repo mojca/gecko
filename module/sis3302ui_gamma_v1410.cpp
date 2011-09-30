@@ -91,7 +91,8 @@ void Sis3302V1410UI::createUI()
     tn.append("I/O"); nt++; uif.addTab(tn[nt]);
     gn.append("LEMO Input"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addPopupToGroup(tn[nt],gn[ng],"Mode","lemo_in_mode",(QStringList()
-                               << "Veto" << "Gate"));
+                               << "Veto, Timestamp Clear, Trigger"
+                               << "Gate, Timestamp Clear, Trigger"));
     for(int i = 0; i<3; ++i) {
         uif.addCheckBoxToGroup(tn[nt],gn[ng],tr("Enable Input %1").arg(i),
                                tr("enable_lemo_in_%1").arg(i));
@@ -281,37 +282,37 @@ void Sis3302V1410UI::createPreviewUI()
     int ch = 0;
     QWidget* rw = new QWidget();
     {
-        QGridLayout* l = new QGridLayout();
+        QGridLayout* li = new QGridLayout();
         for(int r = 0; r < nofRows; ++r) {
             for(int c = 0; c < nofCols; ++c) {
                 previewCh[ch] = new plot2d(this,QSize(240,200),ch);
-                previewCh[ch]->addChannel(0,"adc",previewData[ch],QColor(Qt::blue),Channel::line,1);
-                l->addWidget(previewCh[ch],r,c,1,1);
+                previewCh[ch]->addChannel(0,"raw",previewData[ch],QColor(Qt::blue),Channel::line,1);
+                li->addWidget(previewCh[ch],r,c,1,1);
                 ++ch;
             }
         }
-        rw->setLayout(l);
+        rw->setLayout(li);
     }
     // Energy displays
     ch = 0;
     QWidget* ew = new QWidget();
     {
-        QGridLayout* l = new QGridLayout();
+        QGridLayout* li = new QGridLayout();
         for(int r = 0; r < nofRows; ++r) {
             for(int c = 0; c < nofCols; ++c) {
-                previewEnergy[ch] = new plot2d(this,QSize(240,200),ch);
+                previewEnergy[ch] = new plot2d(0,QSize(240,200),ch+8);
                 previewEnergy[ch]->addChannel(0,"adc",previewEnergyData[ch],QColor(Qt::red),Channel::line,1);
-                l->addWidget(previewEnergy[ch],r,c,1,1);
+                li->addWidget(previewEnergy[ch],r,c,1,1);
                 ++ch;
             }
         }
-        ew->setLayout(l);
+        ew->setLayout(li);
     }
     // Value displays
     ch = 0;
     QWidget* vw = new QWidget();
     {
-        QGridLayout* l = new QGridLayout();
+        QGridLayout* li = new QGridLayout();
         for(int r = 0; r < nofRows; ++r) {
             for(int c = 0; c < nofCols; ++c) {
                 QGroupBox* b = new QGroupBox(tr("Ch: %1").arg(ch));
@@ -339,14 +340,13 @@ void Sis3302V1410UI::createPreviewUI()
 
                     b->setLayout(lb);
                 }
-                l->addWidget(b,r,c,1,1);
+                li->addWidget(b,r,c,1,1);
                 ++ch;
             }
         }
-        vw->setLayout(l);
+        vw->setLayout(li);
     }
 
-    ew->setEnabled(false);
     t->addTab(rw,"RAW signals");
     t->addTab(ew,"Energy");
     t->addTab(vw,"Values");
