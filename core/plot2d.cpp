@@ -220,6 +220,7 @@ void plot2d::mouseMoveEvent(QMouseEvent *ev)
     } else if (ev->x () <= 5 || ev->x () >= width () - 5) {
         setCursor (Qt::SizeVerCursor);
     } else if (scalemode == ScaleOff) {
+        // XXX: does this have to happen everytime the mouse moves? --rw
         unsetCursor ();
     }
 
@@ -251,7 +252,7 @@ void plot2d::paintEvent(QPaintEvent *)
             backbuffer = new QPixmap (size ());
         }
 
-        backbuffer->fill (Qt::white);
+        backbuffer->fill (isEnabled () ? Qt::white : Qt::lightGray);
         QPainter pixmappainter (backbuffer);
         {
             QReadLocker rd (&lock);
@@ -463,7 +464,7 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
             }
         }
 
-        painter.setPen(QPen(curChan->getColor()));
+        painter.setPen(QPen(isEnabled () ? curChan->getColor() : Qt::darkGray));
         painter.drawText(QPoint(0,id*20),tr("%1").arg(id,1,10));
 
         // Scale and move to display complete signals
@@ -535,7 +536,7 @@ void plot2d::drawTicks(QPainter &painter)
     if(incy == 0) incy = 1;
 
     painter.save ();
-    painter.setPen(QPen(channels->at(ch)->getColor()));
+    painter.setPen(QPen(isEnabled () ? channels->at(ch)->getColor() : Qt::darkGray));
 
     // x Ticks
     value=xmin;
