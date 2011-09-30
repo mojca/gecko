@@ -346,7 +346,6 @@ void Sis3302V1410UI::createPreviewUI()
         vw->setLayout(l);
     }
 
-    ew->setEnabled(false);
     t->addTab(rw,"RAW signals");
     t->addTab(ew,"Energy");
     t->addTab(vw,"Values");
@@ -631,6 +630,17 @@ void Sis3302V1410UI::clicked_startStopPreviewButton()
         previewRunning = false;
     } else {
         // Starting
+        // precondition check
+        if(!module->getInterface()) {
+            return;
+        }
+        if(!module->getInterface()->isOpen()){
+            if(0 != module->getInterface()->open()) {
+                QMessageBox::warning (this, tr ("<%1> SIS3302 ADC").arg (module->MODULE_NAME), tr ("Could not open interface"), QMessageBox::Ok);
+                return;
+            }
+        }
+
         startStopPreviewButton->setText("Stop");
         if(previewWindow.isHidden()) {
             previewWindow.show();
