@@ -220,6 +220,7 @@ void plot2d::mouseMoveEvent(QMouseEvent *ev)
     } else if (ev->x () <= 5 || ev->x () >= width () - 5) {
         setCursor (Qt::SizeVerCursor);
     } else if (scalemode == ScaleOff) {
+        // XXX: does this have to happen everytime the mouse moves? --rw
         unsetCursor ();
     }
 
@@ -251,7 +252,7 @@ void plot2d::paintEvent(QPaintEvent *)
             backbuffer = new QPixmap (size ());
         }
 
-        backbuffer->fill (Qt::white);
+        backbuffer->fill (isEnabled () ? Qt::white : Qt::lightGray);
         QPainter pixmappainter (backbuffer);
         {
             QReadLocker rd (&lock);
@@ -463,7 +464,7 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
             }
         }
 
-        painter.setPen(QPen(curChan->getColor()));
+        painter.setPen(QPen(isEnabled () ? curChan->getColor() : Qt::darkGray));
         painter.drawText(QPoint(0,id*20),tr("%1").arg(id,1,10));
 
         // Scale and move to display complete signals
@@ -484,8 +485,8 @@ void plot2d::drawTicks(QPainter &painter)
 {
     int ch = curTickCh;
 
-    int i=0, value=0;
-    int incx=0, incy=0;
+    long i=0, value=0;
+    long incx=0, incy=0;
 
     double chxmin = channels->at(ch)->xmin;
     double chxmax = channels->at(ch)->xmax;
@@ -508,10 +509,11 @@ void plot2d::drawTicks(QPainter &painter)
     {
         incx+=50;
     }
-    while(incx<(xmax-xmin)/10)
-    {
-        incx+=10000;
-    }
+    // for large ranges the increment is the smallest multiple of 10000 larger than
+    // or equal to one tenth of the x-range
+    if (incx < (xmax-xmin)/10)
+        incx = 10000 * (floor ((xmax-xmin)/(10*10000)) + 1);
+
     while(incy<10 && incy<(ymax-ymin)/5)
     {
         incy+=1;
@@ -524,16 +526,17 @@ void plot2d::drawTicks(QPainter &painter)
     {
         incy+=50;
     }
-    while(incy<(ymax-ymin)/5)
-    {
-        incy+=10000;
-    }
+
+    // for large ranges the increment is the smallest multiple of 10000 larger than
+    // or equal to one fifth of the y-range
+    if (incy < (ymax-ymin)/5)
+        incy = 10000 * (floor ((ymax-ymin)/(5*10000)) + 1);
 
     if(incx == 0) incx = 1;
     if(incy == 0) incy = 1;
 
     painter.save ();
-    painter.setPen(QPen(channels->at(ch)->getColor()));
+    painter.setPen(QPen(isEnabled () ? channels->at(ch)->getColor() : Qt::darkGray));
 
     // x Ticks
     value=xmin;
