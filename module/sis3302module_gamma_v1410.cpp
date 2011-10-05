@@ -917,7 +917,13 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
 
     case Sis3302V1410config::vme2E: {
         uint32_t words = 0;
-        ret = iface->readA322E(addr,&readBuffer[ch][0],_reqNofWords,&words);
+        if (_reqNofWords < 16) {
+            int minNofWords = 16;
+            ret = iface->readA322E(addr,&readBuffer[ch][0],minNofWords,&words);
+            words = _reqNofWords;
+        } else {
+            ret = iface->readA322E(addr,&readBuffer[ch][0],_reqNofWords,&words);
+        }
         if(ret != 0) {
             ERROR("readAdcChannelSinglePage with vme2E"
                    "read error in ch = a, ret = b",ch,ret);
@@ -1267,14 +1273,14 @@ void Sis3302V1410Module::applySettings (QSettings *s) {
         if (s->contains (key)) conf.energy_sample_start_idx[i][1] = s->value (key).toUInt ();
         key = QString ("energy_sample_start_idx_3_%1").arg (i);
         if (s->contains (key)) conf.energy_sample_start_idx[i][2] = s->value (key).toUInt ();
-        key = QString ("energy_tau%1").arg (i);
-        if (s->contains (key)) conf.energy_tau [i] = s->value (key).toUInt ();
         key = QString ("enable_energy_extra_filter%1").arg (i);
         if (s->contains (key)) conf.enable_energy_extra_filter [i] = s->value (key).toBool ();
         key = QString ("energy_decim_mode%1").arg (i);
         if (s->contains (key)) conf.energy_decim_mode[i] = (Sis3302V1410config::EnDecimMode)s->value (key).toUInt ();
         key = QString ("energy_test_mode%1").arg (i);
         if (s->contains (key)) conf.energy_test_mode[i] = (Sis3302V1410config::EnTestMode)s->value (key).toUInt ();
+        key = QString ("energy_sample_mode%1").arg (i);
+        if (s->contains (key)) conf.energy_sample_mode[i] = (Sis3302V1410config::EnSampleMode)s->value (key).toUInt ();
     }
 
     for (int i = 0; i < NOF_CHANNELS; ++i) {
@@ -1292,6 +1298,8 @@ void Sis3302V1410Module::applySettings (QSettings *s) {
         if (s->contains (key)) conf.trigger_int_trg_delay [i] = s->value (key).toUInt ();
         key = QString ("dac_offset%1").arg (i);
         if (s->contains (key)) conf.dac_offset [i] = s->value (key).toUInt ();
+        key = QString ("energy_tau%1").arg (i);
+        if (s->contains (key)) conf.energy_tau [i] = s->value (key).toUInt ();
         key = QString ("enable_input_invert%1").arg (i);
         if (s->contains (key)) conf.enable_input_invert [i] = s->value (key).toBool();
         key = QString ("enable_ch%1").arg (i);
@@ -1369,15 +1377,14 @@ void Sis3302V1410Module::saveSettings (QSettings *s) {
         s->setValue (key, static_cast<uint32_t> (conf.energy_sample_start_idx[i][1]));
         key = QString ("energy_sample_start_idx_3_%1").arg(i);
         s->setValue (key, static_cast<uint32_t> (conf.energy_sample_start_idx[i][2]));
-        key = QString ("energy_tau%1").arg(i);
-        s->setValue (key, static_cast<uint32_t> (conf.energy_tau[i]));
         key = QString ("enable_energy_extra_filter%1").arg(i);
         s->setValue (key, static_cast<bool> (conf.enable_energy_extra_filter[i]));
         key = QString ("energy_decim_mode%1").arg(i);
         s->setValue (key, static_cast<uint32_t> (conf.energy_decim_mode[i]));
         key = QString ("energy_test_mode%1").arg(i);
         s->setValue (key, static_cast<uint32_t> (conf.energy_test_mode[i]));
-
+        key = QString ("energy_sample_mode%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_sample_mode[i]));
     }
 
     for (int i = 0; i < NOF_CHANNELS; ++i) {
@@ -1391,6 +1398,8 @@ void Sis3302V1410Module::saveSettings (QSettings *s) {
         s->setValue (key, static_cast<int32_t> (conf.trigger_threshold[i]));
         key = QString ("dac_offset%1").arg(i);
         s->setValue (key, static_cast<uint32_t> (conf.dac_offset[i]));
+        key = QString ("energy_tau%1").arg(i);
+        s->setValue (key, static_cast<uint32_t> (conf.energy_tau[i]));
         key = QString ("enable_ch%1").arg(i);
         s->setValue (key, static_cast<bool> (conf.enable_ch[i]));
         key = QString ("trigger_int_gate_length%1").arg(i);
@@ -1425,6 +1434,32 @@ void Sis3302V1410Module::saveSettings (QSettings *s) {
     std::cout << "done" << std::endl;
 }
 
+int Sis3302V1410Module::getDecimationFactor(Sis3302V1410config::EnDecimMode mode){
+    switch(mode) {
+    case Sis3302V1410config::enDecimOff:
+        return 1;
+    case Sis3302V1410config::enDecim2:
+        return 2;
+    case Sis3302V1410config::enDecim4:
+        return 4;
+    case Sis3302V1410config::enDecim8:
+        return 8;
+    }
+}
+
+int Sis3302V1410Module::getDecimationFactor(Sis3302V1410config::TrgDecimMode mode){
+    switch(mode) {
+    case Sis3302V1410config::trgDecimOff:
+        return 1;
+    case Sis3302V1410config::trgDecim2:
+        return 2;
+    case Sis3302V1410config::trgDecim4:
+        return 4;
+    case Sis3302V1410config::trgDecim8:
+        return 8;
+    }
+}
+
 void Sis3302V1410Module::updateEndAddrThresholds(){
     for (int i = 0; i < NOF_ADC_GROUPS; ++i) {
         if(conf.acMode == Sis3302V1410config::singleEvent) {
@@ -1441,6 +1476,36 @@ void Sis3302V1410Module::updateEndAddrThresholds(){
     }
 }
 
+
+
+void Sis3302V1410Module::updateGateLengths(){
+    for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
+        int adc = ch/2;
+        uint8_t trgDecimationFactor = getDecimationFactor(conf.trigger_decim_mode[ch]);
+        int delay = conf.trigger_pretrigger_delay[adc] / trgDecimationFactor;
+
+        int energyGateLength = delay + (2 * conf.energy_peak_length[adc])
+                                     + conf.energy_sumg_length[adc] + 20;
+
+        if (energyGateLength < 550) {
+            energyGateLength = delay + 550; // Must be greater than 512 (from Tino Haeupke)
+        }
+
+        int triggerGateLength_from_energy = conf.trigger_pretrigger_delay[ch] +
+                                            (2 * conf.energy_peak_length[adc]) +
+                                            conf.energy_sumg_length[adc];
+        int triggerGateLength_from_raw = conf.raw_sample_length[adc] + conf.raw_data_sample_start_idx[adc];
+        int triggerGateLength = 0;
+        if(triggerGateLength_from_energy > triggerGateLength_from_raw) {
+            triggerGateLength = triggerGateLength_from_energy + 16;
+        } else {
+            triggerGateLength = triggerGateLength_from_raw + 16;
+        }
+
+        conf.trigger_gate_length[adc] = triggerGateLength;
+        conf.energy_gate_length[adc] = energyGateLength;
+    }
+}
 
 /*!
 \page sis3302mod SIS 3302 Flash ADC (gamma)

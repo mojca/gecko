@@ -105,6 +105,7 @@ public slots:
     void clicked_update_firmware_button();
     void timeout_previewTimer();
     void updatePreview();
+    void updateGateSettings();
 };
 
 #endif // SIS3302UI_GAMMA_V1410_H

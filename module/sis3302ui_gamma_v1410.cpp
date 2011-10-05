@@ -139,6 +139,7 @@ void Sis3302V1410UI::createUI()
                 uif.addCheckBoxToGroup(tn[nt],un+gn[ng],"Int. Trigger",tr("enable_int_trg_%1").arg(ch));
                 uif.addCheckBoxToGroup(tn[nt],un+gn[ng],"Disable Output",tr("disable_trg_out_%1").arg(ch));
                 uif.addCheckBoxToGroup(tn[nt],un+gn[ng],"Invert Input",tr("enable_input_invert_%1").arg(ch));
+                uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Tau",tr("energy_tau_%1").arg(ch),0,0xff);  // 8 bits
                 ch++;
             }
         }
@@ -172,11 +173,15 @@ void Sis3302V1410UI::createUI()
                 uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Pretrigger",tr("trigger_pretrigger_delay_%1").arg(ch),0,1023);  // 16 bits
                 uif.addSpinnerToGroup(tn[nt],un+gn[ng],"RAW Length",tr("raw_sample_length_%1").arg(ch),0,65532);  // 16 bits
                 uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Energy Length",tr("energy_sample_length_%1").arg(ch),0,510);  // 16 bits
+                uif.addPopupToGroup(tn[nt],un+gn[ng],"Mode",tr("energy_sample_mode_%1").arg(ch),(QStringList()
+                                          << "Full Trapez"
+                                          << "Only Energy"
+                                          << "3 Parts"
+                                          << "Custom"));
                 uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Start Index 1",tr("energy_sample_start_idx_1_%1").arg(ch),0,0xffff);  // 16 bits
                 uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Start Index 2",tr("energy_sample_start_idx_2_%1").arg(ch),0,0xffff);  // 16 bits
                 uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Start Index 3",tr("energy_sample_start_idx_3_%1").arg(ch),0,0xffff);  // 16 bits
                 uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Start Index RAW",tr("raw_sample_start_idx_%1").arg(ch),0,0xffff);  // 16 bits
-                uif.addSpinnerToGroup(tn[nt],un+gn[ng],"Tau",tr("energy_tau_%1").arg(ch),0,0xff);  // 8 bits
                 uif.addCheckBoxToGroup(tn[nt],un+gn[ng],"Extra Filter",tr("enable_energy_extra_filter_%1").arg(ch));
                 QSpinBox* s = (QSpinBox*)(uif.getWidgets()->find(tr("raw_sample_length_%1").arg(ch)).value());
                 s->setSingleStep(4);
@@ -444,6 +449,69 @@ void Sis3302V1410UI::uiInput(QString _name)
             int ch = _name.right(1).toInt();
             module->conf.energy_decim_mode[ch] = static_cast<Sis3302V1410config::EnDecimMode>(cbb->currentIndex());
         }
+        if(_name.startsWith("energy_sample_mode_")) {
+            int ch = _name.right(1).toInt();
+            module->conf.energy_sample_mode[ch] = static_cast<Sis3302V1410config::EnSampleMode>(cbb->currentIndex());
+            if(module->conf.energy_sample_mode[ch] == Sis3302V1410config::enModeTrapez) {
+                QSpinBox* w;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_length_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(510);
+                module->conf.energy_sample_length[ch] = 510;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_start_idx_1_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(1);
+                module->conf.energy_sample_start_idx[ch][0] = 1;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_start_idx_2_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(0);
+                module->conf.energy_sample_start_idx[ch][1] = 0;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_start_idx_3_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(0);
+                module->conf.energy_sample_start_idx[ch][2] = 0;
+            } else if(module->conf.energy_sample_mode[ch] == Sis3302V1410config::enMode3Parts) {
+                QSpinBox* w;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_length_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(170);
+                module->conf.energy_sample_length[ch] = 170;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_start_idx_1_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(1);
+                module->conf.energy_sample_start_idx[ch][0] = 1;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_start_idx_2_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(1 + 171);
+                module->conf.energy_sample_start_idx[ch][1] = 1 + 171;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_start_idx_3_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(1 + 2*171);
+                module->conf.energy_sample_start_idx[ch][2] = 1 + 2*171;
+            } else if(module->conf.energy_sample_mode[ch] == Sis3302V1410config::enModeNothing) {
+                QSpinBox* w;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_length_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(0);
+                module->conf.energy_sample_length[ch] = 0;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_start_idx_1_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(1);
+                module->conf.energy_sample_start_idx[ch][0] = 1;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_start_idx_2_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(0);
+                module->conf.energy_sample_start_idx[ch][1] = 0;
+                w = static_cast<QSpinBox*>(uif.getWidgets()->find(tr("energy_sample_start_idx_3_%1").arg(ch)).value());
+                w->setEnabled(false);
+                w->setValue(0);
+                module->conf.energy_sample_start_idx[ch][2] = 0;
+            } else {
+                uif.getWidgets()->find(tr("energy_sample_start_idx_1_%1").arg(ch)).value()->setEnabled(true);
+                uif.getWidgets()->find(tr("energy_sample_start_idx_2_%1").arg(ch)).value()->setEnabled(true);
+                uif.getWidgets()->find(tr("energy_sample_start_idx_3_%1").arg(ch)).value()->setEnabled(true);
+            }
+        }
         //QMessageBox::information(this,"uiInput","You changed the combobox "+_name);
     }
     QSpinBox* sb = findChild<QSpinBox*>(_name);
@@ -549,6 +617,7 @@ void Sis3302V1410UI::uiInput(QString _name)
         if(_name == "singleshot_button") clicked_singleshot_button();
         if(_name == "update_firmware_button") clicked_update_firmware_button();
     }
+    updateGateSettings();
 }
 
 void Sis3302V1410UI::clicked_start_button()
@@ -696,11 +765,11 @@ void Sis3302V1410UI::updatePreview()
             } else {
                 previewEnergyData[ch].clear();
             }
-            previewEnergy[ch]->resetBoundaries(0);
             {
                 QWriteLocker lck(previewCh[ch]->getChanLock());
                 previewEnergy[ch]->getChannelById(0)->setData(previewEnergyData[ch]);
             }
+            previewEnergy[ch]->resetBoundaries(0);
             previewEnergy[ch]->update();
         }
     }
@@ -779,6 +848,7 @@ void Sis3302V1410UI::applySettings()
             {
                 if(w->objectName() == tr("trg_decim_mode_%1").arg(ch)) w->setCurrentIndex(module->conf.trigger_decim_mode[ch]);
                 if(ch < 4 && w->objectName() == tr("energy_decim_mode_%1").arg(ch)) w->setCurrentIndex(module->conf.energy_decim_mode[ch]);
+                if(ch < 4 && w->objectName() == tr("energy_sample_mode_%1").arg(ch)) w->setCurrentIndex(module->conf.energy_sample_mode[ch]);
             }
             it++;
         }
@@ -820,10 +890,21 @@ void Sis3302V1410UI::applySettings()
             it++;
         }
     }
+
+    updateGateSettings();
+
     applyingSettings = false;
 }
 
-
+void Sis3302V1410UI::updateGateSettings() {
+    module->updateGateLengths();
+    for (int adc = 0; adc < 4; ++adc) {
+        QSpinBox* w = static_cast<QSpinBox*> (uif.getWidgets()->find(tr("energy_gate_length_%1").arg(adc)).value());
+        w->setValue(module->conf.energy_gate_length[adc]);
+        w = static_cast<QSpinBox*> (uif.getWidgets()->find(tr("trigger_gate_length_%1").arg(adc)).value());
+        w->setValue(module->conf.trigger_gate_length[adc]);
+    }
+}
 
 
 
