@@ -126,13 +126,12 @@ int Caen785Module::configure()
     ret = iface->writeA32D16(addr,data);
     if(ret != 0) printf("Error %d at CAEN785_CRATE_SEL\n",ret);
 
-    // Thresholds
-    for(unsigned int i = 0; i < 32; i++)
-    {
-        addr = conf.base_addr + CAEN785_THRESHOLDS + 2*i;
-        data = 0x0 | conf.thresholds[i];
-        ret = iface->writeA32D16(addr,data);
-        if(ret != 0) printf("Error %d at CAEN785_THRESHOLDS %d\n",ret,i);
+    // set channel thresholds and kill bits
+    for (int i = 0; i < 32; ++i) {
+        ret = iface->writeA32D16 (conf.base_addr + CAEN785_THRESHOLDS + 2*i,
+                                  conf.thresholds [i]
+                                  | (conf.killChannel [i] ? (1 << 8) : 0));
+        if (ret) printf ("Error %d at CAEN785_THRESHOLDS[%d]\n", ret, i);
     }
 
     ret = counterReset();

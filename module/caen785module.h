@@ -124,6 +124,8 @@ public:
     virtual uint32_t getBaseAddress () const;
     virtual void setBaseAddress (uint32_t baddr);
 
+    Caen785config *getConfig () { return &conf; }
+
     int singleShot();
     int acquireSingleEvent();
     int acquireSingleEventFIFO();

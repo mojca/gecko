@@ -293,7 +293,6 @@ QWidget* Caen965UI::createThresholdsControls()
             h->addWidget(killChannelBox[ch]);
             h->addWidget(thresholdSpinner[ch]);
 
-
             connect(killChannelBox[ch],SIGNAL(toggled(bool)),this,SLOT(thresholdsChanged()));
             connect(thresholdSpinner[ch],SIGNAL(valueChanged(int)),this,SLOT(thresholdsChanged()));
             connect(killChannelBox[ch+1],SIGNAL(toggled(bool)),this,SLOT(thresholdsChanged()));
@@ -549,8 +548,6 @@ void Caen965UI::testConversionClicked()
             uint32_t data[34];
             uint32_t rd;
             module->singleShot(data,&rd);
-
-
     }
 }
 

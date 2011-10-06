@@ -125,10 +125,10 @@ public:
 
 private:
     Caen792Module (int _id, const QString &, bool _isqdc);
-    void singleShot (uint32_t *data, uint32_t *rd);
     void writeToBuffer(Event *ev);
 
 public slots:
+    void singleShot (uint32_t *data, uint32_t *rd);
     virtual void prepareForNextAcquisition () {}
 
 private:

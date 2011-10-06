@@ -68,7 +68,9 @@ int Caen792Module::configure () {
 
     // set channel thresholds and kill bits
     for (int i = 0; i < 32; ++i) {
-        ret = iface->writeA32D16 (baddr + CAEN792_THRESHOLDS + 2*i, conf_.thresholds [i] | (conf_.killChannel [i] ? (1 << CAEN792_THRESH_KILL) : 0));
+        ret = iface->writeA32D16 (baddr + CAEN792_THRESHOLDS + 2*i,
+                                  conf_.thresholds [i]
+                                  | (conf_.killChannel [i] ? (1 << 8) : 0));
         if (ret) printf ("Error %d at CAEN792_THRESHOLDS[%d]\n", ret, i);
     }
 
