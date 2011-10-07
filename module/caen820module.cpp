@@ -102,6 +102,8 @@ int Caen820Module::reset () {
     if (!iface)
         return -1;
 
+    dataClear();
+
     if ((err = iface->writeA32D16 (conf_.baddr + CAEN820_SRESET, 1)))
         std::cout << "Error " << err << " at CAEN820_SRESET" << std::endl;
 
@@ -144,7 +146,7 @@ int Caen820Module::acquire (Event *ev) {
         bool sem = RunManager::ref ().isSingleEventMode ();
         bool go_on = dmx_.processData (ev, buffer, got);
         if (sem || ! go_on) {
-            dataClear ();
+            //dataClear ();
             break;
         }
     }

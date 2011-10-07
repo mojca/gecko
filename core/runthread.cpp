@@ -26,10 +26,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "abstractinterface.h"
 #include "eventbuffer.h"
 
+#define GECKO_PROFILE_RUN
+
 #ifdef GECKO_PROFILE_RUN
 #include <time.h>
 static struct timespec starttime;
 static uint64_t timeinacq;
+static uint64_t timeinpoll;
+static uint64_t timeForModule[10];
 #endif
 
 RunThread::RunThread () {
@@ -60,7 +64,11 @@ RunThread::~RunThread()
     uint64_t rt = (et.tv_sec - starttime.tv_sec) * 1000000000 + (et.tv_nsec - starttime.tv_nsec);
     std::cout << "Runtime: " << (rt * 1e-9) <<" s, Acq%: " << (100.* timeinacq / rt) << ", Unsuccessful%: "
               << (100. * (nofPolls - nofSuccessfulEvents) / nofPolls)
+              << " Polls per event: " << (1.*nofPolls/nofSuccessfulEvents)
               << std::endl;
+    for(int i = 0; i < 10; ++i) {
+        std::cout << "Time for module " << i << ": " << (100. * timeForModule[i] / rt) << "%" << std::endl;
+    }
 #endif
 
     std::cout << "Run thread stopped." << std::endl;
@@ -85,6 +93,10 @@ void RunThread::run()
 #ifdef GECKO_PROFILE_RUN
     clock_gettime (CLOCK_MONOTONIC, &starttime);
     timeinacq = 0;
+    timeinpoll = 0;
+    for (int i = 0; i < 10; ++i) {
+        timeForModule[i] = 0;
+    }
 #endif
     if(interruptBased)
     {
@@ -112,15 +124,32 @@ void RunThread::createConnections()
 bool RunThread::acquire(AbstractModule* _trg)
 {
     //std::cout << currentThreadId() << ": Run thread acquiring." << std::endl;
-
+    InterfaceManager *imgr = InterfaceManager::ptr ();
     Event *ev = RunManager::ref ().getEventBuffer ()->createEvent ();
+
     int modulesz = modules.size ();
+
+    imgr->getMainInterface()->setOutput1(true);
+
     for (int i = 0; i < modulesz; ++i)
     {
         AbstractModule* curM = modules [i];
-        if (curM == _trg || curM->dataReady ())
+        if (curM == _trg || curM->dataReady ()) {
+#ifdef GECKO_PROFILE_RUN
+            struct timespec st, et;
+            clock_gettime (CLOCK_MONOTONIC, &st);
+#endif
+
             curM->acquire(ev);
+
+#ifdef GECKO_PROFILE_RUN
+            clock_gettime (CLOCK_MONOTONIC, &et);
+            timeForModule[i] += (et.tv_sec - st.tv_sec) * 1000000000 + (et.tv_nsec - st.tv_nsec);
+#endif
+        }
     }
+
+    imgr->getMainInterface()->setOutput1(false);
 
     if (QSet<const EventSlot*>::fromList (mandatories).subtract(ev->getOccupiedSlots ()).empty()) {
         RunManager::ref ().getEventBuffer ()->queue (ev);
@@ -144,7 +173,6 @@ void RunThread::stop()
 
 void RunThread::pollLoop()
 {
-    InterfaceManager *imgr = InterfaceManager::ptr ();
     while(!abort)
     {
         nofPolls++;
@@ -152,7 +180,7 @@ void RunThread::pollLoop()
         {
             if(trg->dataReady())
             {
-                imgr->getMainInterface()->setOutput1(true);
+
 #ifdef GECKO_PROFILE_RUN
                 struct timespec st, et;
                 clock_gettime (CLOCK_MONOTONIC, &st);
@@ -163,7 +191,6 @@ void RunThread::pollLoop()
                 clock_gettime (CLOCK_MONOTONIC, &et);
                 timeinacq += (et.tv_sec - st.tv_sec) * 1000000000 + (et.tv_nsec - st.tv_nsec);
 #endif
-                imgr->getMainInterface()->setOutput1(false);
             }
         }
     }

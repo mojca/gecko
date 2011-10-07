@@ -153,6 +153,7 @@ int Caen965Module::softReset () {
 }
 
 int Caen965Module::reset () {
+    counterReset();
     dataReset();
     return softReset ();
 

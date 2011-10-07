@@ -113,7 +113,7 @@ void Caen965Demux::continueEvent()
     uint8_t ch      = (((*it) >> 17) & 0xf  );
     bool underThr   = (((*it) >> 13) & 0x1  ) != 0;
 
-    if(ch < 32) {
+    if(ch < 16) {
 	// store high range values in the upper half of channels
         if(isLowRange == 0) {
             ch += 16;

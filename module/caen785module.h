@@ -118,7 +118,10 @@ public:
 
     virtual bool dataReady();
     virtual int acquire(Event *);
-    virtual int reset() {return softReset(); }
+    virtual int reset() {
+        counterReset();
+        dataReset();
+        return softReset(); }
     virtual int configure();
 
     virtual uint32_t getBaseAddress () const;

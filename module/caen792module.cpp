@@ -156,6 +156,8 @@ int Caen792Module::softReset () {
 }
 
 int Caen792Module::reset () {
+        counterReset();
+        dataReset();
 	return softReset ();
 }
 
@@ -197,7 +199,7 @@ bool Caen792Module::dataReady () {
     int ret;
     ret = getInterface ()->readA32D16 (conf_.base_addr + CAEN792_STAT1, &status1);
     if (ret)
-        printf ("Error %d at CAEN792_STAT1\n", ret);
+        printf ("Error %d at CAEN792_STAT1 (data ready)\n", ret);
 
     return (status1 & (1 << CAEN792_S1_DREADY)) != 0;
 }
