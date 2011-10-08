@@ -46,9 +46,27 @@ class EventBuilderPlugin : public BasePlugin
 
 protected:
     virtual void createSettings(QGridLayout*);
+    QString makeFileName();
+
+    QLabel* totalBytesWrittenLabel;
+    QLabel* currentFileNameLabel;
+    QLabel* currentBytesWrittenLabel;
+    QLabel* bytesFreeOnDiskLabel;
 
     QVector<uint32_t> outData;
     Attributes attribs_;
+
+    QFile outFile;
+    QDir outDir;
+    QTime lastWriteTime;
+
+    QString filePrefix;
+
+    uint64_t total_bytes_written;
+    uint32_t current_bytes_written;
+    uint32_t current_file_number;
+
+    bool open_new_file;
 
 public:
     EventBuilderPlugin(int _id, QString _name, const Attributes &_attrs);
@@ -64,6 +82,10 @@ public:
     virtual void userProcess();
     virtual void applySettings(QSettings*);
     virtual void saveSettings(QSettings*);
+
+public slots:
+    void updateRunName();
+
 };
 
 #endif // EVENTBUILDERPLUGIN_H

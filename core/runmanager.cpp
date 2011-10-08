@@ -78,10 +78,13 @@ RunManager::~RunManager()
 }
 
 void RunManager::setRunName (QString newValue) {
-    if(!running)
+    if(!running) {
         runName = newValue;
+        emit runNameChanged();
+    }
     else
         throw std::logic_error ("cannot set run name while run is active");
+
 }
 
 void RunManager::start (QString info) {

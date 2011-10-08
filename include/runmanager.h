@@ -151,6 +151,10 @@ signals:
      */
     void runUpdate (float curevspersec, unsigned totalevs);
 
+    /*! Signalled when the name of the run is changed, so that plugins can pick up on this
+     */
+    void runNameChanged ();
+
 private:
     void writeRunStartFile (QString info);
     void writeRunStopFile ();
