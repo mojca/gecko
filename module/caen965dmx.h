@@ -33,10 +33,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #include "caen_v965.h"
 
+#include <QVector>
+
 class Event;
 class EventSlot;
 class AbstractModule;
 template <typename T> class QVector;
+
+#define CAEN965_EVENT_LENGTH 34
 
 class Caen965Demux
 {
@@ -51,6 +55,10 @@ private:
     uint32_t eventCounter;
     uint8_t id;
     std::map<uint8_t, uint16_t> chData;
+    QVector<uint32_t> rawData;
+    uint32_t rawBuffer[CAEN965_EVENT_LENGTH];
+    uint32_t* rawBufferPtr;
+    uint32_t rawCnt;
     const QVector<EventSlot*>& evslots;
     const AbstractModule *owner;
 

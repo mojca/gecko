@@ -51,8 +51,11 @@ Caen965Module::Caen965Module (int i, const QString &n)
 
 void Caen965Module::setChannels () {
     EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
+    // Per channel outputs
     for(int i = 0; i < CAEN_V965_NOF_CHANNELS*2; i++)
         evslots_ << evbuf->registerSlot (this, tr("out %1").arg(i,1,10), PluginConnector::VectorUint32);
+    // Output for raw data -> to event builder
+    evslots_ << evbuf->registerSlot(this, "raw out", PluginConnector::VectorUint32);
 }
 
 int Caen965Module::configure () {

@@ -28,6 +28,7 @@ class PluginConnector;
 class PluginManager;
 
 class QSettings;
+class QLabel;
 class QListWidget;
 class QGridLayout;
 class QListWidgetItem;
@@ -116,6 +117,10 @@ public:
      */
     void runStartingEvent ();
 
+    void setNumberOfMandatoryInputs(int _n) {
+        nofMandatoryInputs = _n;
+    }
+
 public slots:
     /*! Do processing.
      *  This function checks whether there is data available on all input connectors and then calls the userProcess function.
@@ -196,11 +201,14 @@ private:
 
     int nofInputs;
     int nofConnectedInputs;
+    int nofMandatoryInputs;
+    int effectiveMandatory;
     int nofConnectedOutputs;
     int nofOutputs;
 
     QListWidget* inputList;
     QListWidget* outputList;
+    QLabel* nofMandatoryLabel;
 
     friend class PluginManager;
 };

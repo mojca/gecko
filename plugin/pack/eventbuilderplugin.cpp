@@ -50,6 +50,8 @@ EventBuilderPlugin::EventBuilderPlugin(int _id, QString _name, const Attributes 
         addConnector(new PluginConnectorQVUint(this,ScopeCommon::in,QString("in %1").arg(n)));
     }
 
+    setNumberOfMandatoryInputs(1); // Only needs one input to have data for writing the event
+
     std::cout << "Instantiated EventBuilderPlugin" << std::endl;
 }
 
@@ -141,11 +143,13 @@ void EventBuilderPlugin::userProcess()
     QVector<uint32_t> data[nofInputs];
     uint32_t data_length[nofInputs];
     uint32_t total_data_length;
+    uint32_t nofEnabledInputs = 0;
+    uint8_t nofChMsk = nofInputs/8;
     bool input_has_data[nofInputs];
-    uint8_t ch_mask[nofInputs/8];
+    uint8_t ch_mask[nofChMsk];
 
     // Clear channel mask
-    for(uint32_t i=0; i<nofInputs/8; ++i) {
+    for(uint32_t i=0; i<nofChMsk; ++i) {
         ch_mask[i] = 0;
     }
 
@@ -161,6 +165,7 @@ void EventBuilderPlugin::userProcess()
             input_has_data[i] = true;
             ch_mask[i/8] |= (1 << (i%8));
             total_data_length += data_length[i];
+            ++nofEnabledInputs;
             printf("EventBuilder: <%d> Data with length: %d",i,data_length[i]);
         }
     }
@@ -177,12 +182,12 @@ void EventBuilderPlugin::userProcess()
         }
 
         // Open new file
-        filePrefix = "run";
         outDir = QDir(RunManager::ptr()->getRunName());
         if (outDir.exists()) {
             outFile.setFileName(makeFileName());
             outFile.open(QIODevice::WriteOnly);
-            currentFileNameLabel->setText(outFile.fileName());
+            updateRunName();
+            current_bytes_written = 0;
             ++current_file_number;
         } else {
             printf("EventBuilder: The output directory does not exist! (%s)\n",outDir.absolutePath().toStdString().c_str());
@@ -191,9 +196,32 @@ void EventBuilderPlugin::userProcess()
 
     // Write to the file
     if(outFile.isOpen()) {
-        for(uint32_t i=0; i<nofInputs; ++i) {
+        QDataStream out;
+        out.setByteOrder(QDataStream::LittleEndian);
 
+        // Event header
+        uint32_t header = 0x12345678;
+        uint16_t header_length = 2 + (nofChMsk/4)+1 + nofEnabledInputs;
+
+        out << header;
+        out << header_length;
+        for(uint8_t i = 0; i < (nofChMsk+3)/4; ++i) {
+            out << ch_mask[i];
         }
+        for(uint32_t i = 0; i < nofInputs; ++i) {
+            if(data_length[i] > 0) {
+                out << data_length[i];
+            }
+        }
+        for(uint32_t ch = 0; ch < nofInputs; ++ch) {
+            if(data_length[ch] > 0) {
+                for(uint32_t i = 0; i < data_length[ch]; ++i) {
+                    out << data[ch][i];
+                }
+            }
+        }
+    } else {
+        printf("EventBuilder: File is not open for writing.\n");
     }
 
 }

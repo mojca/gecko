@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMenu>
 
 BasePlugin::BasePlugin(int _id, QString _name, QWidget* _parent)
-        : AbstractPlugin(_parent), name(_name), id(_id)
+        : AbstractPlugin(_parent), name(_name), id(_id), nofMandatoryInputs(0), effectiveMandatory(0)
 {
     inputs  = new QList<PluginConnector*>;
     outputs = new QList<PluginConnector*>;
@@ -78,6 +78,8 @@ void BasePlugin::addConnector(PluginConnector* newConnector)
         outputs->append(newConnector);
         nofOutputs = outputs->size();
     }
+    nofMandatoryInputs = nofInputs;
+
     updateDisplayedConnections ();
 }
 
@@ -117,7 +119,11 @@ QWidget* BasePlugin::createInbox()
 
     inputList = new QListWidget();
     inputList->setMaximumHeight(100);
+
+    nofMandatoryLabel = new QLabel(tr("Mandatory inputs: %1").arg(nofMandatoryInputs));
+
     l->addWidget(inputList);
+    l->addWidget(nofMandatoryLabel);
     box->setLayout(l);
 
     return box;
@@ -181,8 +187,11 @@ int BasePlugin::updateConnList (ConnectorList *lst, QListWidget *w) {
 void BasePlugin::updateDisplayedConnections()
 {
     //std::cout << name.toStdString() << " Updating connections...";
-    if (inputs)
+    if (inputs) {
         nofConnectedInputs = updateConnList (inputs, inputList);
+        (nofConnectedInputs > nofMandatoryInputs) ? effectiveMandatory = nofMandatoryInputs : effectiveMandatory = nofConnectedInputs;
+        nofMandatoryLabel->setText(tr("Mandatory Inputs: %1").arg(effectiveMandatory));
+    }
     if (outputs)
         nofConnectedOutputs = updateConnList (outputs, outputList);
     //std::cout << "done" << std::endl;
@@ -291,7 +300,8 @@ void BasePlugin::process()
         if(in->dataAvailable() > 0) cnt++;
         //std::cout << in->getPlugin()->getName().toStdString() << ": " << in->getName() << "::process: dataAvailable " << in->dataAvailable() << std::endl;
     }
-    if(cnt == nofConnectedInputs)
+    //if(cnt == nofConnectedInputs)
+    if(cnt >= effectiveMandatory)
     {
         //clock_t start = clock();
         userProcess();

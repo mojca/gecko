@@ -29,6 +29,7 @@ Caen965Demux::Caen965Demux(const QVector<EventSlot*>& _evslots, const AbstractMo
     , nofChannels (chans)
     , nofChannelsInEvent(0)
     , nofBits (bits)
+    , rawCnt(0)
     , evslots (_evslots)
     , owner (own)
 {
@@ -42,7 +43,10 @@ Caen965Demux::Caen965Demux(const QVector<EventSlot*>& _evslots, const AbstractMo
         std::cout << "Caen965Demux: nofBits invalid. Setting to 12" << std::endl;
     }
 
-	nofChannels *= 2; // Need twice the amount of channels to store the data (high and low range).
+    nofChannels *= 2; // Need twice the amount of channels to store the data (high and low range).
+
+    memset(rawBuffer,0,CAEN965_EVENT_LENGTH);
+    rawData.resize(CAEN965_EVENT_LENGTH);
 
     std::cout << "Instantiated Caen965Demux" << std::endl;
 }
@@ -58,16 +62,20 @@ bool Caen965Demux::processData (Event* ev, uint32_t *data, uint32_t len, bool si
 
         if(id == 0x2)
         {
+            //rawBufferPtr = rawBuffer;  // reset
+            //(*rawBufferPtr++) = (*it); // write header
             if(!inEvent) startNewEvent();
             else std::cout << "Already in event!" << std::endl;
         }
         else if(id == 0x0)
         {
+            //(*rawBufferPtr++) = (*it); // write data
             if(inEvent) continueEvent();
             else std::cout << "Not in event!" << std::endl;
         }
         else if(id == 0x4)
         {
+            //(*rawBufferPtr++) = (*it); // write event trailer
             if(inEvent) {
                 bool go_on = finishEvent(ev);
 
@@ -100,7 +108,12 @@ void Caen965Demux::startNewEvent()
 
     cnt = 0;
     inEvent = true;
+
     chData.clear ();
+
+    rawData.fill(0);
+    rawCnt = 0;
+    rawData[rawCnt++] = (*it);
 
     //printHeader();
 }
@@ -112,6 +125,8 @@ void Caen965Demux::continueEvent()
     bool overRange  = (((*it) >> 12) & 0x1  ) != 0;
     uint8_t ch      = (((*it) >> 17) & 0xf  );
     //bool underThr  = (((*it) >> 13) & 0x1  ) != 0;
+
+    rawData[rawCnt++] = (*it);
 
     if(ch < nofChannels/2)
     {
@@ -137,6 +152,8 @@ bool Caen965Demux::finishEvent(Event *ev)
     //printEob();
     inEvent = false;
 
+    rawData[rawCnt++] = (*it);
+
     /*for(int i=0; i<nofChannels; ++i) {
 	// Publish event data
 	uint8_t ch = chData.at(i)->first;
@@ -158,6 +175,13 @@ bool Caen965Demux::finishEvent(Event *ev)
             ev->put (evslots.at (i->first), QVariant::fromValue (v));
         }
     }
+
+    printf("\nCaen965Demux raw data dump:\n");
+    for(unsigned int* i = rawData.begin(); i != rawData.end(); ++i) {
+        printf("addr: 0x%p, data: 0x%08x\n",&(*i),*i);
+    }
+
+    ev->put(evslots.last(), QVariant::fromValue(rawData));
 
     return true;
 }
