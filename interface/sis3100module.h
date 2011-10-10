@@ -100,6 +100,8 @@ public:
     virtual void saveSettings(QSettings*) {}
     virtual void applySettings(QSettings*) {}
 
+    int vmeReset();
+
     // VME access
     int readA32D32(const uint32_t addr, uint32_t* data);
     int readA32D16(const uint32_t addr, uint16_t* data);

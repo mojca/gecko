@@ -41,12 +41,16 @@ class AbstractModule;
 template <typename T> class QVector;
 
 #define CAEN965_EVENT_LENGTH 34
+#define CAEN_V965_NOF_CHANNELS 16
 
 class Caen965Demux
 {
 private:
     bool inEvent;
     int cnt;
+
+    bool enable_raw_output;
+    bool enable_per_channel_output;
 
     uint8_t nofChannels;
     uint8_t nofChannelsInEvent;
@@ -59,6 +63,7 @@ private:
     uint32_t rawBuffer[CAEN965_EVENT_LENGTH];
     uint32_t* rawBufferPtr;
     uint32_t rawCnt;
+    QVector<bool> enable_ch;
     const QVector<EventSlot*>& evslots;
     const AbstractModule *owner;
 
@@ -74,6 +79,7 @@ public:
     Caen965Demux(const QVector<EventSlot*>& _evslots, const AbstractModule* op, uint chans = 16, uint bits = 12);
 
     bool processData (Event *ev, uint32_t* data, uint32_t len, bool singleev);
+    void runStartingEvent();
 };
 
 #endif // DEMUXCAEN965PLUGIN_H

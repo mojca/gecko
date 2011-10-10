@@ -176,6 +176,12 @@ void Sis3100UI::moduleClosed () {
     vmeControl->setEnabled(false);
 }
 
+void Sis3100UI::resetButtonClicked() {
+    if(module->isOpen()) {
+        module->vmeReset();
+    }
+}
+
 void Sis3100UI::readButtonClicked()
 {
     bool ok;

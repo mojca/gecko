@@ -112,8 +112,13 @@ public:
     /*! enable or disable those UI elements that should not be accessible during a run. */
     void setConfigEnabled (bool enabled);
 
-    /*! perform actions prior to starting a run, eg. clearing statistics, resetting spectra.
+    /*! perform actions prior to starting a run.
      *  The default implementation does nothing.
+     * Possible implementations can:
+     * - Reset counters
+     * - Clear arrays
+     * - Calculate values that are the same for each run
+     * - Use run-specific information
      */
     void runStartingEvent ();
 
@@ -142,6 +147,11 @@ public slots:
      *  \sa PluginConnector::setData, PluginConnector::getData
      */
     virtual void userProcess() = 0;
+
+    /*! the plugin's initializer and reset function.
+     * This function is an alias to runStartingEvent and provided for convenience
+     */
+    virtual void reset() {runStartingEvent();};
 
 protected:
     ConnectorList* inputs; /*!< the plugin's inputs */

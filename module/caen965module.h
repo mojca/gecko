@@ -123,6 +123,8 @@ public:
 
     int acquireSingle (uint32_t *data, uint32_t *rd);
 
+    void runStartingEvent() { dmx_.runStartingEvent(); }
+
 private:
     Caen965Module (int _id, const QString &);
     void writeToBuffer(Event *ev);

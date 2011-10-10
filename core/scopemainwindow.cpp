@@ -1167,8 +1167,10 @@ void ScopeMainWindow::loadConfig (QSettings *s) {
         QString type = s->value ("type").toString ();
 
         AbstractModule *daq = ModuleManager::ref().create (type, name);
-        if (!daq)
+        if (!daq) {
             fail << tr ("Module type not found: %1").arg (type);
+            continue;
+        }
 
         if (s->contains ("iface")) {
             if (InterfaceManager::ref().get (s->value ("iface").toString ())) {
@@ -1225,7 +1227,7 @@ void ScopeMainWindow::loadConfig (QSettings *s) {
                     .arg (fromport)
                     .arg (s->value ("to").toString ())
                     .arg (toport)
-                    .arg (tr ("Plugin does not exist"));
+                    .arg (!from ? tr ("Output plugin does not exist") : tr("Input plugin does not exist"));
             continue;
         }
 

@@ -479,9 +479,9 @@ void Caen785UI::applySettings()
     slidingScaleSpinner->setValue(module->conf.slide_constant);
 
     for(int ch = 0; ch < 32; ++ch) {
-        printf("Settings value: ch:%d, val:%d, kill:%d\n",ch,
-               module->getConfig()->thresholds[ch],
-               (int)module->getConfig()->killChannel[ch]);
+        //printf("Settings value: ch:%d, val:%d, kill:%d\n",ch,
+        //       module->getConfig()->thresholds[ch],
+        //       (int)module->getConfig()->killChannel[ch]);
         thresholdSpinner[ch]->setValue(module->getConfig()->thresholds[ch]);
         if(module->getConfig()->killChannel[ch] == false) killChannelBox[ch]->setChecked(true);
         else killChannelBox[ch]->setChecked(false);

@@ -100,6 +100,8 @@ public:
 
     OutputPlugin* getOutputPlugin () const { return output; }
 
+    virtual void runStartingEvent () {}
+
 public slots:
     virtual void prepareForNextAcquisition () {}
 

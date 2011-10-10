@@ -129,6 +129,10 @@ int Sis3100Module::setOutput2(bool enable)
     return ret;
 }
 
+int Sis3100Module::vmeReset() {
+    return sis3100_vmesysreset(m_device);
+}
+
 int Sis3100Module::readA32D32(const uint32_t addr, uint32_t* data)
 {
     return sis3100_vme_A32D32_read(m_device,addr,data);

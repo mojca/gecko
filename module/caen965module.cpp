@@ -64,6 +64,8 @@ int Caen965Module::configure () {
     uint16_t data;
     int ret = 0;
 
+    if(!iface->isOpen()) return 1;
+
     // set crate number
     ret = iface->writeA32D16 (baddr + CAEN965_CRATE_SEL, conf_.cratenumber);
     if (ret) printf ("Error %d at CAEN965_CRATE_SEL\n", ret);

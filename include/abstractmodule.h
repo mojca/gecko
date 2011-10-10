@@ -105,6 +105,11 @@ public:
      */
     virtual int reset() = 0;
 
+    /*! Called whenever a run is started
+     *  Used to initialize the output plugin
+     */
+    virtual void runStartingEvent() = 0;
+
     /*! Configure the device using the information supplied by #applySettings.
      *  Implementors should use the local configuration data structures to initialise the vme module.
      */

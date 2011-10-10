@@ -28,7 +28,7 @@ class EventSlot;
 
 /*! The OutputPlugin class handles the transition from the module world to the plugin world.
  *  It generates output connectors from the EventSlots registered by its owning module and
- *  transfers the corrsponding data from the Event objects to them.
+ *  transfers the corresponding data from the Event objects to them.
  */
 class OutputPlugin : public BasePlugin {
     Q_OBJECT
@@ -46,6 +46,8 @@ public:
 public slots:
     void userProcess () { }
 
+    void runStartingEvent();
+
     void latchData (Event *);
 
 protected:
@@ -53,6 +55,7 @@ protected:
 
 private:
     std::map<const EventSlot*, PluginConnector*> datamap_;
+    AbstractModule* owner;
 };
 
 #endif // OUTPUTPLUGIN_H

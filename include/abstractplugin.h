@@ -97,6 +97,9 @@ public:
     /*! Make the plugin initialise its UI. */
     virtual void createUI() = 0;
 
+    /*! Reset the plugin to initialize */
+    virtual void reset() = 0;
+
 signals:
     void jumpToPluginRequested (AbstractPlugin *);
 

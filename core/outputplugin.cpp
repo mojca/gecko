@@ -26,7 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 
 OutputPlugin::OutputPlugin (AbstractModule *mod)
-: BasePlugin (-1, mod->getName () + " out")
+: BasePlugin (-1, mod->getName () + " out"),
+  owner(mod)
 {
     const QList<EventSlot*>* evslots = RunManager::ref ().getEventBuffer()->getEventSlots (mod);
     foreach (EventSlot *i, *evslots)
@@ -35,6 +36,10 @@ OutputPlugin::OutputPlugin (AbstractModule *mod)
         datamap_ [i] = conn;
         addConnector (conn);
     }
+}
+
+void OutputPlugin::runStartingEvent() {
+    owner->runStartingEvent();
 }
 
 void OutputPlugin::latchData (Event *ev) {

@@ -32,6 +32,7 @@ EventBuilderPlugin::EventBuilderPlugin(int _id, QString _name, const Attributes 
             , total_bytes_written(0)
             , current_bytes_written(0)
             , current_file_number(0)
+            , open_new_file(true)
 {
     createSettings(settingsLayout);
 
@@ -51,6 +52,9 @@ EventBuilderPlugin::EventBuilderPlugin(int _id, QString _name, const Attributes 
     }
 
     setNumberOfMandatoryInputs(1); // Only needs one input to have data for writing the event
+
+    connect(RunManager::ptr(),SIGNAL(runNameChanged()),this,SLOT(updateRunName()));
+    connect(RunManager::ptr(),SIGNAL(runStopped()),this,SLOT(updateRunName()));
 
     std::cout << "Instantiated EventBuilderPlugin" << std::endl;
 }
@@ -125,6 +129,7 @@ void EventBuilderPlugin::saveSettings(QSettings* settings)
 
 void EventBuilderPlugin::updateRunName() {
     currentFileNameLabel->setText(makeFileName());
+    open_new_file = true;
 }
 
 QString EventBuilderPlugin::makeFileName() {
@@ -144,13 +149,13 @@ void EventBuilderPlugin::userProcess()
     uint32_t data_length[nofInputs];
     uint32_t total_data_length;
     uint32_t nofEnabledInputs = 0;
-    uint8_t nofChMsk = nofInputs/8;
+    uint8_t nofChMsk = (nofInputs/8)+1;
     bool input_has_data[nofInputs];
     uint8_t ch_mask[nofChMsk];
 
     // Clear channel mask
     for(uint32_t i=0; i<nofChMsk; ++i) {
-        ch_mask[i] = 0;
+        ch_mask[i] = 0x00;
     }
 
     // Get extends of each data input
@@ -159,14 +164,14 @@ void EventBuilderPlugin::userProcess()
         if(data[i].empty()) {
             data_length[i] = 0;
             input_has_data[i] = false;
-            printf("EventBuilder: <%d> No data\n",i);
+            //printf("EventBuilder: <ch%d> No data, ch_mask: 0x%02x\n",i,ch_mask[i/8]);
         } else {
             data_length[i] = data[i].size();
             input_has_data[i] = true;
             ch_mask[i/8] |= (1 << (i%8));
             total_data_length += data_length[i];
             ++nofEnabledInputs;
-            printf("EventBuilder: <%d> Data with length: %d",i,data_length[i]);
+            //printf("EventBuilder: <ch%d> Data with length: %d, ch_mask: 0x%02x\n",i,data_length[i],ch_mask[i/8]);
         }
     }
 
@@ -189,6 +194,7 @@ void EventBuilderPlugin::userProcess()
             updateRunName();
             current_bytes_written = 0;
             ++current_file_number;
+            open_new_file = false;
         } else {
             printf("EventBuilder: The output directory does not exist! (%s)\n",outDir.absolutePath().toStdString().c_str());
         }
@@ -196,17 +202,20 @@ void EventBuilderPlugin::userProcess()
 
     // Write to the file
     if(outFile.isOpen()) {
-        QDataStream out;
+        QDataStream out(&outFile);
         out.setByteOrder(QDataStream::LittleEndian);
 
         // Event header
-        uint32_t header = 0x12345678;
+        uint16_t header = 0xABCD;
         uint16_t header_length = 2 + (nofChMsk/4)+1 + nofEnabledInputs;
 
         out << header;
         out << header_length;
-        for(uint8_t i = 0; i < (nofChMsk+3)/4; ++i) {
-            out << ch_mask[i];
+        for(uint8_t i = 0; i < nofChMsk; ++i) {
+            out << (uint8_t)(ch_mask[i]);
+        }
+        for(uint8_t i = 0; i < (4-nofChMsk%4); ++i) {
+            out << (uint8_t)(0x00);
         }
         for(uint32_t i = 0; i < nofInputs; ++i) {
             if(data_length[i] > 0) {
@@ -220,6 +229,11 @@ void EventBuilderPlugin::userProcess()
                 }
             }
         }
+        // Add 16 bit 0x0 to align quad word
+        if(nofEnabledInputs & 0x1) {
+            out << 0x0000;
+        }
+        //outFile.flush();
     } else {
         printf("EventBuilder: File is not open for writing.\n");
     }

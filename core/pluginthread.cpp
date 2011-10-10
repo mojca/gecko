@@ -49,12 +49,15 @@ void PluginThread::createProcessList()
     int maxDepth;
 
     unconnectedList.clear ();
+
+    // Add output plugins to the list
     foreach(AbstractModule* module, (*mmgr->list ()))
     {
         processList.insert(module->getOutputPlugin(),0);
     }
     addChildrenToProcessList(processList, maxDepth);
 
+    // Output process list
     std::cout << "ProcessList: " << std::endl;
     QMap<AbstractPlugin*, int>::const_iterator i = processList.constBegin();
     while (i != processList.constEnd())
@@ -132,6 +135,10 @@ void PluginThread::run()
     std::cout << "PluginThread started." << std::endl;
     if(levelList.empty())
         std::cout << "No plugins connected." << std::endl;
+
+    foreach(AbstractModule* module, (*mmgr->list ())) {
+        module->getOutputPlugin()->runStartingEvent();
+    }
 
     foreach (AbstractPlugin *p, *PluginManager::ref().list()) {
         p->runStartingEvent ();

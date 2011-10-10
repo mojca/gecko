@@ -58,6 +58,7 @@ public slots:
     void openCloseButtonClicked();
     void readButtonClicked();
     void writeButtonClicked();
+    void resetButtonClicked();
     void outputText(QString);
     void addrModeChanged(int);
     void dataModeChanged(int);
