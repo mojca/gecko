@@ -55,6 +55,7 @@ public:
     enum TrgDecimMode{trgDecimOff,trgDecim2,trgDecim4,trgDecim8};
     enum EnDecimMode{enDecimOff,enDecim2,enDecim4,enDecim8};
     enum EnTestMode{testMwdTrapez,testMwTrapez,testTrapez};
+    enum EnSampleMode{enModeTrapez,enModeNothing,enMode3Parts,enModeCustom};
     enum LemoInMode{lemoInVeto,lemoInGate};
     enum VmeMode{vmeSingle,vmeDMA32,vmeFIFO,vmeBLT32,vmeMBLT64,vme2E};
 #if defined(SIS3302_V1410_MCA_MODE)
@@ -150,12 +151,13 @@ public:
     // Energy config parameters
     EnDecimMode energy_decim_mode[4];
     EnTestMode energy_test_mode[4];
+    EnSampleMode energy_sample_mode[4];
     uint32_t energy_peak_length[4];
     uint32_t energy_sumg_length[4];
     uint16_t energy_gate_length[4];
     uint16_t energy_sample_length[4]; /* in samples, only even */
     uint16_t energy_sample_start_idx[4][3];
-    uint8_t  energy_tau[4];
+    uint8_t  energy_tau[8];
     bool enable_energy_extra_filter[4];
 
     // Daq config parameters
@@ -209,6 +211,7 @@ public:
             trigger_pretrigger_delay[i]     = 20;
             energy_decim_mode[i]            = enDecimOff;
             energy_test_mode[i]             = testMwdTrapez;
+            energy_sample_mode[i]           = enModeTrapez;
             energy_peak_length[i]           = 180;
             energy_sumg_length[i]           = 40;
             energy_gate_length[i]           = 1000;
@@ -216,7 +219,6 @@ public:
             energy_sample_start_idx[i][0]   = 0;
             energy_sample_start_idx[i][1]   = 0;
             energy_sample_start_idx[i][2]   = 0;
-            energy_tau[i]                   = 0;
             enable_energy_extra_filter[i]   = false;
 #if defined(SIS3302_V1410_MCA_MODE)
             mca_histogram_size[i]           = hist8k;
@@ -235,6 +237,7 @@ public:
             trigger_int_trg_delay[i]    = 0;
             trigger_threshold[i]        = 0;
             dac_offset[i]               = 37000; // About the middle of the input range
+            energy_tau[i]               = 0;
             enable_ch[i]                = true;
             enable_next_adc_gate[i]     = false;
             enable_prev_adc_gate[i]     = false;
@@ -315,7 +318,10 @@ public:
     int writeToBuffer(Event *);
     int getMcaTrgStartCounter(uint8_t ch, uint32_t* _evCnt);
     int updateModuleInfo();
+    int getDecimationFactor(Sis3302V1410config::EnDecimMode);
+    int getDecimationFactor(Sis3302V1410config::TrgDecimMode); /*! Overload */
     void updateEndAddrThresholds();
+    void updateGateLengths();
     bool isArmed(uint8_t bank);
     bool isArmedOrBusy();
     bool isArmedNotBusy(uint8_t bank);

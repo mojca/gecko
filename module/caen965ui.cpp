@@ -147,6 +147,17 @@ QWidget* Caen965UI::createInfoTab()
     return box;
 }
 
+QWidget* Caen965UI::createThresholdsTab()
+{
+    QWidget* box = new QWidget();
+    QGridLayout* l = new QGridLayout;
+
+    l->addWidget(createThresholdsControls(),0,0,1,1);
+
+    box->setLayout(l);
+    return box;
+}
+
 QWidget* Caen965UI::createIrqTab()
 {
     QWidget* box = new QWidget();
@@ -260,6 +271,36 @@ QWidget* Caen965UI::createThresholdsControls()
     QWidget *box = new QWidget(this);
     QGridLayout *l = new QGridLayout();
     l->setMargin(0);
+    l->setSpacing(0);
+
+    for(int ch = 0; ch < 32; ch+=2) {
+        QWidget* w = new QWidget();
+        {
+            QHBoxLayout* h = new QHBoxLayout();
+            h->setMargin(0);
+            h->setSpacing(0);
+            killChannelBox[ch] = new QCheckBox("Enable high");
+            thresholdSpinner[ch] = new QSpinBox();
+            thresholdSpinner[ch]->setMaximum(0xffff);
+
+            killChannelBox[ch+1] = new QCheckBox("Enable low");
+            thresholdSpinner[ch+1] = new QSpinBox();
+            thresholdSpinner[ch+1]->setMaximum(0xffff);
+
+            h->addWidget(new QLabel(tr("Ch %1:").arg(ch)));
+            h->addWidget(killChannelBox[ch+1]);
+            h->addWidget(thresholdSpinner[ch+1]);
+            h->addWidget(killChannelBox[ch]);
+            h->addWidget(thresholdSpinner[ch]);
+
+            connect(killChannelBox[ch],SIGNAL(toggled(bool)),this,SLOT(thresholdsChanged()));
+            connect(thresholdSpinner[ch],SIGNAL(valueChanged(int)),this,SLOT(thresholdsChanged()));
+            connect(killChannelBox[ch+1],SIGNAL(toggled(bool)),this,SLOT(thresholdsChanged()));
+            connect(thresholdSpinner[ch+1],SIGNAL(valueChanged(int)),this,SLOT(thresholdsChanged()));
+            w->setLayout(h);
+        }
+        l->addWidget(w);
+    }
 
     box->setLayout(l);
     return box;
@@ -374,6 +415,18 @@ QWidget* Caen965UI::createSettings3Controls()
     return box;
 }
 
+void Caen965UI::thresholdsChanged() {
+    if (blockSlots) return;
+    for(int ch = 0; ch < 32; ++ch) {
+        module->getConfig()->thresholds[ch] = thresholdSpinner[ch]->value();
+        if(killChannelBox[ch]->isChecked()) {
+            module->getConfig()->killChannel[ch] = false;
+        } else {
+            module->getConfig()->killChannel[ch] = true;
+        }
+    }
+}
+
 void Caen965UI::settings1Changed()
 {
     if (blockSlots) return;
@@ -437,7 +490,7 @@ void Caen965UI::infoUpdateClicked() {
 void Caen965UI::applySettings()
 {
     blockSlots = true;
-    baseAddressEdit->setText(tr("%1").arg(module->getConfig ()->base_addr,8,16,QChar('0')));
+    baseAddressEdit->setText(tr("0x%1").arg(module->getConfig ()->base_addr,8,16,QChar('0')));
 
     blockEndBox->setChecked(module->getConfig ()->block_end);
     align64Box->setChecked(module->getConfig ()->align64);
@@ -461,6 +514,15 @@ void Caen965UI::applySettings()
     irqLevelSpinner->setValue(module->getConfig ()->irq_level);
     nofEventSpinner->setValue(module->getConfig ()->ev_trg);
 
+    for(int ch = 0; ch < 32; ++ch) {
+        printf("Settings value: ch:%d, val:%d, kill:%d\n",ch,
+               module->getConfig()->thresholds[ch],
+               (int)module->getConfig()->killChannel[ch]);
+        thresholdSpinner[ch]->setValue(module->getConfig()->thresholds[ch]);
+        if(module->getConfig()->killChannel[ch] == false) killChannelBox[ch]->setChecked(true);
+        else killChannelBox[ch]->setChecked(false);
+    }
+
     irqVectorEdit->setText(tr("%1").arg(module->getConfig ()->irq_vector,8,16,QChar('0')));
     blockSlots = false;
 }
@@ -475,6 +537,7 @@ void Caen965UI::statusUpdateClicked()
 
 void Caen965UI::configureClicked()
 {
+    module->reset();
     module->configure();
 }
 
@@ -482,7 +545,9 @@ void Caen965UI::testConversionClicked()
 {
     for(int i = 0; i < nofTestConversionBox->value(); i++)
     {
-            //module->singleShot();
+            uint32_t data[34];
+            uint32_t rd;
+            module->singleShot(data,&rd);
     }
 }
 

@@ -73,6 +73,24 @@ int Sis3100Module::open()
 
     }
 
+    // Set disable VME IRQ
+    s3100_control_write(m_device,SIS3104_IRQ,(1 << 16));
+
+    // Read Type/Version
+    uint32_t opt_vme_type_version = 0;
+    s3100_control_read(m_device,0x0,&opt_vme_type_version);
+    ui->outputText(tr("opt/vme type/version: 0x%1\n").arg(opt_vme_type_version,8,16));
+
+    // Read Master status
+    uint32_t opt_vme_master_status = 0;
+    s3100_control_read(m_device,0x100,&opt_vme_master_status);
+    ui->outputText(tr("opt/vme master status: 0x%1\n").arg(opt_vme_master_status,8,16));
+
+    // Read interrupt status
+    uint32_t opt_vme_interrupt_status = 0;
+    s3100_control_read(m_device,SIS3104_IRQ,&opt_vme_interrupt_status);
+    ui->outputText(tr("opt/vme interrupt status: 0x%1\n").arg(opt_vme_interrupt_status,8,16));
+
     // Set BERR timeout to 100 us
     //s3100_control_write(m_device,0x100,(1<<15));
     //s3100_control_write(m_device,SIS3104_VME_MASTER,vme_berr_timer);

@@ -148,6 +148,17 @@ QWidget* Caen792UI::createInfoTab()
     return box;
 }
 
+QWidget* Caen792UI::createThresholdsTab()
+{
+    QWidget* box = new QWidget();
+    QGridLayout* l = new QGridLayout;
+
+    l->addWidget(createThresholdsControls(),0,0,1,1);
+
+    box->setLayout(l);
+    return box;
+}
+
 QWidget* Caen792UI::createIrqTab()
 {
     QWidget* box = new QWidget();
@@ -193,6 +204,45 @@ QWidget* Caen792UI::createDeviceControls()
     l->addWidget(incrOffsetButton,2,1,1,1);
     l->addWidget(testConversionButton,3,0,1,1);
     l->addWidget(nofTestConversionBox,3,1,1,1);
+
+    box->setLayout(l);
+    return box;
+}
+
+QWidget* Caen792UI::createThresholdsControls()
+{
+    QWidget *box = new QWidget(this);
+    QGridLayout *l = new QGridLayout();
+    l->setMargin(0);
+    l->setSpacing(0);
+
+    for(int ch = 0; ch < 32; ch+=2) {
+        QWidget* w = new QWidget();
+        {
+            QHBoxLayout* h = new QHBoxLayout();
+            h->setMargin(0);
+            h->setSpacing(0);
+            killChannelBox[ch] = new QCheckBox(tr("Ch %1:").arg(ch));
+            thresholdSpinner[ch] = new QSpinBox();
+            thresholdSpinner[ch]->setMaximum(0xffff);
+
+            killChannelBox[ch+1] = new QCheckBox(tr("Ch %1:").arg(ch+1));
+            thresholdSpinner[ch+1] = new QSpinBox();
+            thresholdSpinner[ch+1]->setMaximum(0xffff);
+
+            h->addWidget(killChannelBox[ch]);
+            h->addWidget(thresholdSpinner[ch]);
+            h->addWidget(killChannelBox[ch+1]);
+            h->addWidget(thresholdSpinner[ch+1]);
+
+            connect(killChannelBox[ch],SIGNAL(toggled(bool)),this,SLOT(thresholdsChanged()));
+            connect(thresholdSpinner[ch],SIGNAL(valueChanged(int)),this,SLOT(thresholdsChanged()));
+            connect(killChannelBox[ch+1],SIGNAL(toggled(bool)),this,SLOT(thresholdsChanged()));
+            connect(thresholdSpinner[ch+1],SIGNAL(valueChanged(int)),this,SLOT(thresholdsChanged()));
+            w->setLayout(h);
+        }
+        l->addWidget(w);
+    }
 
     box->setLayout(l);
     return box;
@@ -251,16 +301,6 @@ QWidget* Caen792UI::createInfoControls()
     l->addWidget(romLabel);
     l->addWidget(romInfoEdit);
     l->addWidget(infoUpdateButton);
-
-    box->setLayout(l);
-    return box;
-}
-
-QWidget* Caen792UI::createThresholdsControls()
-{
-    QWidget *box = new QWidget(this);
-    QGridLayout *l = new QGridLayout();
-    l->setMargin(0);
 
     box->setLayout(l);
     return box;
@@ -381,6 +421,18 @@ QWidget* Caen792UI::createSettings3Controls()
     return box;
 }
 
+void Caen792UI::thresholdsChanged() {
+    if (blockSlots) return;
+    for(int ch = 0; ch < 32; ++ch) {
+        module->getConfig()->thresholds[ch] = thresholdSpinner[ch]->value();
+        if(killChannelBox[ch]->isChecked()) {
+            module->getConfig()->killChannel[ch] = false;
+        } else {
+            module->getConfig()->killChannel[ch] = true;
+        }
+    }
+}
+
 void Caen792UI::settings1Changed()
 {
     if (blockSlots) return;
@@ -480,6 +532,15 @@ void Caen792UI::applySettings()
     irqLevelSpinner->setValue(module->getConfig ()->irq_level);
     nofEventSpinner->setValue(module->getConfig ()->ev_trg);
 
+    for(int ch = 0; ch < 32; ++ch) {
+        printf("Settings value: ch:%d, val:%d, kill:%d\n",ch,
+               module->getConfig()->thresholds[ch],
+               (int)module->getConfig()->killChannel[ch]);
+        thresholdSpinner[ch]->setValue(module->getConfig()->thresholds[ch]);
+        if(module->getConfig()->killChannel[ch] == false) killChannelBox[ch]->setChecked(true);
+        else killChannelBox[ch]->setChecked(false);
+    }
+
     irqVectorEdit->setText(tr("%1").arg(module->getConfig ()->irq_vector,8,16,QChar('0')));
     blockSlots = false;
 }
@@ -494,6 +555,7 @@ void Caen792UI::statusUpdateClicked()
 
 void Caen792UI::configureClicked()
 {
+    module->reset();
     module->configure();
 }
 
@@ -501,7 +563,9 @@ void Caen792UI::testConversionClicked()
 {
     for(int i = 0; i < nofTestConversionBox->value(); i++)
     {
-            //module->singleShot();
+        uint32_t data[34];
+        uint32_t rd;
+        module->singleShot(data,&rd);
     }
 }
 

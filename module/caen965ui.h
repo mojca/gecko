@@ -65,6 +65,7 @@ public slots:
 	void nofEventsChanged();
 	void settings1Changed();
 	void settings2Changed();
+        void thresholdsChanged();
 	void crateNoChanged();
 	void ipedChanged();
 	void fclrChanged();
@@ -80,7 +81,7 @@ private:
 
 	QWidget* createDevCtrlTab();
 	QWidget* createSettingsTab();
-	QWidget* createThresholdsTab(){return 0;}
+        QWidget* createThresholdsTab();
 	QWidget* createIrqTab();
 	QWidget* createInfoTab();
 
@@ -97,6 +98,9 @@ private:
 	QLineEdit* status2Edit;
 	QLineEdit* evCntrEdit;
 	QLineEdit* irqVectorEdit;
+
+        QSpinBox* thresholdSpinner[32];
+        QCheckBox* killChannelBox[32];
 
 	QSpinBox* irqLevelSpinner;
 	QSpinBox* nofEventSpinner;

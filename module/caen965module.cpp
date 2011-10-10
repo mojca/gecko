@@ -68,9 +68,15 @@ int Caen965Module::configure () {
     ret = iface->writeA32D16 (baddr + CAEN965_CRATE_SEL, conf_.cratenumber);
     if (ret) printf ("Error %d at CAEN965_CRATE_SEL\n", ret);
 
+    // set geo address
+    ret = iface->writeA32D16(baddr + CAEN965_GEO_ADDR, 0x00);
+    if (ret) printf ("Error %d at CAEN965_GEO_ADDR", ret);
+
     // set channel thresholds and kill bits
-    for (int i = 0; i < CAEN_V965_NOF_CHANNELS; ++i) {
-        ret = iface->writeA32D16 (baddr + CAEN965_THRESHOLDS + 2*i, conf_.thresholds [i] | (conf_.killChannel [i] ? (1 << CAEN965_THRESH_KILL) : 0));
+    for (int i = 0; i < 32; ++i) {
+        ret = iface->writeA32D16 (baddr + CAEN965_THRESHOLDS + 2*i,
+                                  conf_.thresholds [i]
+                                  | (conf_.killChannel [i] ? (1 << CAEN965_THRESH_KILL) : 0));
         if (ret) printf ("Error %d at CAEN965_THRESHOLDS[%d]\n", ret, i);
     }
 
@@ -99,7 +105,7 @@ int Caen965Module::configure () {
         (conf_.zeroSuppressionThr?          (1 << CAEN965_B2_STEPTH)    : 0) |
         (conf_.autoIncrementEnabled?        (1 << CAEN965_B2_AUTOINC)   : 0) |
         (conf_.emptyEventWriteEnabled?      (1 << CAEN965_B2_EMPTYEN)   : 0) |
-        (conf_.slideSubEnabled?             (1 << CAEN965_B2_SLSUBEN)   : 0) |
+        (!conf_.slideSubEnabled?             (1 << CAEN965_B2_SLSUBEN)   : 0) |
         (conf_.alwaysIncrementEventCounter? (1 << CAEN965_B2_ALLTRG)    : 0);
     ret = iface->writeA32D16 (baddr + CAEN965_BIT_SET2, data & CAEN965_B2_MASK);
     if (ret) printf ("Error %d at CAEN965_BIT_SET2\n", ret);
@@ -150,7 +156,10 @@ int Caen965Module::softReset () {
 }
 
 int Caen965Module::reset () {
-	return softReset ();
+    counterReset();
+    dataReset();
+    return softReset ();
+
 }
 
 uint16_t Caen965Module::getInfo () const {
@@ -183,7 +192,7 @@ int Caen965Module::readStatus () {
     ret = iface->readA32D16 (conf_.base_addr + CAEN965_EVCNT_H, &data);
     if (ret)
         printf ("Error %d at CAEN965_EVCNT_H\n", ret);
-    evcnt |= (data << 16);
+    evcnt |= (((uint32_t)(data) & 0x000000ff) << 16);
     return 0;
 }
 
@@ -201,8 +210,8 @@ int Caen965Module::acquire (Event* ev) {
 
     ret = acquireSingle (data, &rd);
     if (ret == 0) writeToBuffer(ev);
+    else printf("Error at acquireSingle\n");
 
-    //buffer_->write (data, rd);
     return rd;
 }
 
@@ -215,11 +224,21 @@ void Caen965Module::writeToBuffer(Event *ev)
 
 int Caen965Module::acquireSingle (uint32_t *data, uint32_t *rd) {
     *rd = 0;
-    int ret = getInterface ()->readA32MBLT64 (conf_.base_addr + CAEN965_MEB, data, CAEN_V965_MAX_NOF_WORDS, rd);
+
+    uint32_t addr = conf_.base_addr + CAEN965_MEB;
+    //printf("caen965: acquireSingle from addr = 0x%08x",addr);
+    int ret = getInterface ()->readA32MBLT64 (addr, data, CAEN_V965_MAX_NOF_WORDS, rd);
     if (!*rd && ret && !getInterface ()->isBusError (ret)) {
         printf ("Error %d at CAEN965_MEB\n", ret);
         return ret;
     }
+
+    /*printf("\nEvent dump:\n");
+    for(int i =0; i < (*rd); ++i) {
+        printf("<%d> 0x%08x\n",i,data[i]);
+    }
+    printf("\n"); fflush(stdout);*/
+
     return 0;
 }
 
@@ -272,8 +291,10 @@ void Caen965Module::applySettings (QSettings *settings) {
     ConfMap::apply (settings, &conf_, confmap);
     for (int i = 0; i < 32; ++i) {
         QString key = QString ("thresholds%1").arg (i);
-        if (settings->contains (key))
-            conf_.thresholds [i] = settings->value (key).toInt ();
+        if (settings->contains (key)) {
+            conf_.thresholds [i] = settings->value (key).toUInt ();
+            //printf("Found key %s with value %d\n",key.toStdString().c_str(),conf_.thresholds[i]);
+        }
         key = QString ("killChannel%1").arg (i);
         if (settings->contains (key))
             conf_.killChannel [i] = settings->value (key).toBool ();
@@ -288,7 +309,7 @@ void Caen965Module::saveSettings (QSettings *settings) {
     std::cout << "Saving settings for " << getName ().toStdString () << "... ";
     settings->beginGroup (getName ());
     ConfMap::save (settings, &conf_, confmap);
-    for (int i = 0; i < CAEN_V965_NOF_CHANNELS; ++i) {
+    for (int i = 0; i < 32; ++i) {
             QString key = QString ("thresholds%1").arg (i);
             settings->setValue (key, conf_.thresholds [i]);
             key = QString ("killChannel%1").arg (i);

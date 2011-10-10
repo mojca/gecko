@@ -124,20 +124,18 @@ void Caen965Demux::continueEvent()
     bool isLowRange = (((*it) >> 16) & 0x1  );
     bool overRange  = (((*it) >> 12) & 0x1  ) != 0;
     uint8_t ch      = (((*it) >> 17) & 0xf  );
-    //bool underThr  = (((*it) >> 13) & 0x1  ) != 0;
+    bool underThr   = (((*it) >> 13) & 0x1  ) != 0;
 
     rawData[rawCnt++] = (*it);
 
-    if(ch < nofChannels/2)
-    {
+    if(ch < 16) {
 	// store high range values in the upper half of channels
-	if(isLowRange == 0)
-        {
-            ch += nofChannels/2;
+        if(isLowRange == 0) {
+            ch += 16;
         }
-        if(val < (1 << nofBits) && !overRange)
-        {
+        if(val < (1 << nofBits)) {
             chData.insert (std::make_pair (ch, val));
+            //printf("ch <%d> : low range: %d, value = %d, over: %d, under: %d (0x%08x)\n",ch,(int)isLowRange,val,(int)overRange,(int)underThr);
         }
     } else {
         std::cout << "DemuxCaen965: got invalid channel number " << std::dec << (int)ch << std::endl;
@@ -148,6 +146,7 @@ void Caen965Demux::continueEvent()
 
 bool Caen965Demux::finishEvent(Event *ev)
 {
+
     eventCounter = 0x0 | (((*it) >> 0)  & 0xffffff);
     //printEob();
     inEvent = false;

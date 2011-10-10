@@ -35,8 +35,8 @@ struct Caen965ModuleConfig {
     uint8_t irq_vector;
     uint8_t ev_trg;
 
-    uint8_t thresholds[CAEN_V965_NOF_CHANNELS];
-    bool killChannel[CAEN_V965_NOF_CHANNELS];
+    uint16_t thresholds[32];
+    bool killChannel[32];
 
     uint8_t cratenumber;
     uint16_t fastclear;
@@ -78,7 +78,7 @@ struct Caen965ModuleConfig {
     , alwaysIncrementEventCounter (false)
     , pollcount (10000)
     {
-        for (int i = 0; i < CAEN_V965_NOF_CHANNELS; ++i) {
+        for (int i = 0; i < 32; ++i) {
             killChannel [i] = false;
             thresholds [i] = 0;
         }
@@ -125,11 +125,11 @@ public:
 
 private:
     Caen965Module (int _id, const QString &);
-    void singleShot (uint32_t *data, uint32_t *rd);
     void writeToBuffer(Event *ev);
 
 public slots:
     virtual void prepareForNextAcquisition () {}
+    void singleShot (uint32_t *data, uint32_t *rd);
 
 private:
     Caen965ModuleConfig conf_;
