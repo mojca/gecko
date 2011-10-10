@@ -113,6 +113,8 @@ public:
     /*! Returns a pointer to the global event buffer. */
     EventBuffer *getEventBuffer () { return evbuf; }
 
+    QThread* getPluginThread() {return (QThread*)pluginthread;}
+
     // set
     /*! sets a pointer to the main window for saving the active settings to the run directory.
      *  \note Only to be called from the ScopeMainWindow constructor.

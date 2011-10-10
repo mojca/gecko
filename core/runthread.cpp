@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static struct timespec starttime;
 static uint64_t timeinacq;
 static uint64_t timeinpoll;
-static uint64_t timeForModule[10];
+static uint64_t timeForModule[20];
 #endif
 
 RunThread::RunThread () {

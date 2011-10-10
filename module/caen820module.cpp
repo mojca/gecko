@@ -35,17 +35,20 @@ AbstractModule *Caen820Module::create (int id, const QString &name) {
 
 Caen820Module::Caen820Module (int id, const QString &name)
 : BaseModule (id, name)
-, dmx_ (evslots_)
+, dmx_ (evslots_,this)
 {
-    setUI (new Caen820UI (this));
     setChannels ();
     createOutputPlugin ();
+
+    setUI (new Caen820UI (this));
 }
 
 void Caen820Module::setChannels () {
     EventBuffer *evbuf = RunManager::ref().getEventBuffer();
     for (int i = 0; i < 32; ++i)
         evslots_ << evbuf->registerSlot (this, QString ("out %1").arg (i), PluginConnector::VectorUint32);
+    // Output for raw data -> to event builder
+    evslots_ << evbuf->registerSlot(this, "raw out", PluginConnector::VectorUint32);
 }
 
 int Caen820Module::configure () {

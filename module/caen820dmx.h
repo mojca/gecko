@@ -25,22 +25,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class Event;
 class EventSlot;
+class AbstractModule;
 
 class Caen820Demux
 {
 public:
-    Caen820Demux (const QVector<EventSlot*> &);
+    Caen820Demux (const QVector<EventSlot*> &, const AbstractModule* op);
 
     bool processData (Event *ev, const uint32_t *data, int len);
     void setChannelBitmap (uint32_t bmp) { enabledch_ = bmp; }
     void setHeaderEnabled (bool en) { hdrenabled_ = en; }
     void setShortDataFmt (bool isshort) { shortfmt_ = isshort; }
+    void runStartingEvent();
 
 private:
     uint32_t enabledch_;
     bool shortfmt_;
     bool hdrenabled_;
     const QVector<EventSlot*> &evslots_;
+    const AbstractModule *owner;
+
+    QVector<uint32_t> rawData;
+    uint32_t rawCnt;
+    QVector<bool> enable_ch;
+
+    bool enable_raw_output;
+    bool enable_per_channel_output;
 };
 
 #endif // DEMUXCAEN820PLUGIN_H

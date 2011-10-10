@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "pluginmanager.h"
 #include "runmanager.h"
 #include "pluginconnectorqueued.h"
-#include <boost/filesystem/convenience.hpp>
+
 
 static PluginRegistrar registrar ("eventbuilder", EventBuilderPlugin::create, AbstractPlugin::GroupPack, EventBuilderPlugin::getEventBuilderAttributeMap());
 
@@ -29,10 +29,15 @@ EventBuilderPlugin::EventBuilderPlugin(int _id, QString _name, const Attributes 
             : BasePlugin(_id, _name)
             , attribs_ (_attrs)
             , filePrefix("run")
+            , port(40000)
+            , net(0)
             , total_bytes_written(0)
             , current_bytes_written(0)
             , current_file_number(0)
             , open_new_file(true)
+            , runPath("/tmp")
+            , total_data_length(0)
+            , nofEnabledInputs(0)
 {
     createSettings(settingsLayout);
 
@@ -75,17 +80,21 @@ void EventBuilderPlugin::createSettings(QGridLayout * l)
     {
         QGridLayout* cl = new QGridLayout;
 
-        QLabel* lineEdit = new QLabel(tr("%1").arg(inputs->size(),1,10));
+        nofInputsLabel = new QLabel(tr("%1").arg(inputs->size(),1,10));
 
         totalBytesWrittenLabel = new QLabel(tr("%1 MBytes").arg(total_bytes_written/1024./1024.));
         currentBytesWrittenLabel = new QLabel(tr("%1 MBytes").arg(current_bytes_written/1024./1024.));
         currentFileNameLabel = new QLabel(makeFileName());
-        boost::filesystem::path runPath(RunManager::ptr()->getRunName().toStdString().c_str());
+        runPath = RunManager::ptr()->getRunName().toStdString().c_str();
         boost::uintmax_t freeBytes = boost::filesystem::space(runPath).available;
         bytesFreeOnDiskLabel = new QLabel(tr("%1 GBytes").arg((double)(freeBytes/1024./1024./1024.)));
 
+        portSpinner = new QSpinBox();
+        portSpinner->setMinimum(1024);
+        portSpinner->setMaximum(65535);
+
         cl->addWidget(new QLabel("Number of inputs:"),      0,0,1,1);
-        cl->addWidget(lineEdit,                             0,1,1,1);
+        cl->addWidget(nofInputsLabel,                       0,1,1,1);
         cl->addWidget(new QLabel("File:"),                  1,0,1,1);
         cl->addWidget(currentFileNameLabel,                 1,1,1,1);
         cl->addWidget(new QLabel("Data written:"),          2,0,1,1);
@@ -94,6 +103,8 @@ void EventBuilderPlugin::createSettings(QGridLayout * l)
         cl->addWidget(totalBytesWrittenLabel,               3,1,1,1);
         cl->addWidget(new QLabel("Disk free:"),             4,0,1,1);
         cl->addWidget(bytesFreeOnDiskLabel,                 4,1,1,1);
+        cl->addWidget(new QLabel("Network Port:"),          5,0,1,1);
+        cl->addWidget(portSpinner,                          5,1,1,1);
 
         container->setLayout(cl);
 
@@ -127,7 +138,15 @@ void EventBuilderPlugin::saveSettings(QSettings* settings)
     }
 }
 
+void EventBuilderPlugin::updateByteCounters() {
+    boost::uintmax_t freeBytes = boost::filesystem::space(runPath).available;
+    currentBytesWrittenLabel->setText(tr("%1 MBytes").arg(current_bytes_written/1024./1024.,2,'f',3));
+    bytesFreeOnDiskLabel->setText(tr("%1 GBytes").arg((double)(freeBytes/1024./1024./1024.),2,'f',3));
+    totalBytesWrittenLabel->setText(tr("%1 MBytes").arg(total_bytes_written/1024./1024.,2,'f',3));
+}
+
 void EventBuilderPlugin::updateRunName() {
+    runPath = RunManager::ptr()->getRunName().toStdString().c_str();
     currentFileNameLabel->setText(makeFileName());
     open_new_file = true;
 }
@@ -140,23 +159,50 @@ QString EventBuilderPlugin::makeFileName() {
             .arg(current_file_number,4,10,QChar('0'));
 }
 
+void EventBuilderPlugin::runStartingEvent() {
+    // Reset timer
+    lastUpdateTime.start();
+
+    // Get number of inputs
+    nofInputs = inputs->size();
+    nofChMsk = (nofInputs/8)+1;
+
+    // Resize vectors
+    data.resize(nofInputs);
+    data_length.resize(nofInputs);
+    input_has_data.resize(nofInputs);
+    ch_mask.resize(nofChMsk);
+
+    // Reset counters
+    current_bytes_written = 0;
+    current_file_number = 0;
+    total_bytes_written = 0;
+
+    // Clear vectors
+    data_length.fill(0);
+    input_has_data.fill(false);
+    ch_mask.fill(0);
+
+    // Start udp socket
+//    if(!(net->state() == QUdpSocket::BoundState)) {
+//        net->bind(QHostAddress::LocalHost,port,QUdpSocket::DefaultForPlatform);
+//    }
+
+    // Update UI
+    updateRunName();
+    updateByteCounters();
+    nofInputsLabel->setText(tr("%1").arg(nofInputs));
+
+}
+
 void EventBuilderPlugin::userProcess()
 {
+    if(!net) net = new QUdpSocket ();
+
     //std::cout << "EventBuilderPlugin Processing" << std::endl;
 
-    uint32_t nofInputs = inputs->size();
-    QVector<uint32_t> data[nofInputs];
-    uint32_t data_length[nofInputs];
-    uint32_t total_data_length;
-    uint32_t nofEnabledInputs = 0;
-    uint8_t nofChMsk = (nofInputs/8)+1;
-    bool input_has_data[nofInputs];
-    uint8_t ch_mask[nofChMsk];
-
-    // Clear channel mask
-    for(uint32_t i=0; i<nofChMsk; ++i) {
-        ch_mask[i] = 0x00;
-    }
+    total_data_length = 0;
+    nofEnabledInputs = 0;
 
     // Get extends of each data input
     for(uint32_t i=0; i<nofInputs; ++i) {
@@ -200,42 +246,70 @@ void EventBuilderPlugin::userProcess()
         }
     }
 
+    QByteArray netData;
+    QDataStream netOut(&netData,QIODevice::WriteOnly);
+
     // Write to the file
     if(outFile.isOpen()) {
         QDataStream out(&outFile);
+
         out.setByteOrder(QDataStream::LittleEndian);
 
         // Event header
         uint16_t header = 0xABCD;
-        uint16_t header_length = 2 + (nofChMsk/4)+1 + nofEnabledInputs;
+        uint16_t header_length = 1 + (nofChMsk/4)+1 + (nofEnabledInputs/2)+1;
+        total_data_length += header_length;
 
         out << header;
         out << header_length;
+
+        netOut << header;
+        netOut << header_length;
+
+        // Write channel mask
         for(uint8_t i = 0; i < nofChMsk; ++i) {
             out << (uint8_t)(ch_mask[i]);
+            netOut << (uint8_t)(ch_mask[i]);
         }
+        // Fill channel mask quad word
         for(uint8_t i = 0; i < (4-nofChMsk%4); ++i) {
             out << (uint8_t)(0x00);
+            netOut << (uint8_t)(0x00);
         }
+        // Write channel length
         for(uint32_t i = 0; i < nofInputs; ++i) {
             if(data_length[i] > 0) {
                 out << data_length[i];
+                netOut << data_length[i];
             }
         }
+        // Fill channel quad word
+        if(nofEnabledInputs & 0x1) {
+            out << 0x0000;
+            netOut << 0x0000;
+        }
+        // Write channel data
         for(uint32_t ch = 0; ch < nofInputs; ++ch) {
             if(data_length[ch] > 0) {
                 for(uint32_t i = 0; i < data_length[ch]; ++i) {
                     out << data[ch][i];
+                    netOut << data[ch][i];
                 }
             }
         }
-        // Add 16 bit 0x0 to align quad word
-        if(nofEnabledInputs & 0x1) {
-            out << 0x0000;
-        }
+
+        current_bytes_written += total_data_length * 4;
+        total_bytes_written += total_data_length * 4;
         //outFile.flush();
     } else {
         printf("EventBuilder: File is not open for writing.\n");
     }
 
+    // Write to network
+    net->writeDatagram(netData,QHostAddress::LocalHost,port);
+
+    if(lastUpdateTime.msecsTo(QTime::currentTime()) > 500) {
+        updateByteCounters();
+        lastUpdateTime.start();
+    }
 }

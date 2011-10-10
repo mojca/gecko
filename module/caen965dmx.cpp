@@ -199,9 +199,7 @@ bool Caen965Demux::finishEvent(Event *ev)
 
     if(enable_raw_output){
         rawData[rawCnt++] = (*it);
-        if (owner->getOutputPlugin ()->isSlotConnected (evslots.last())) {
-            ev->put(evslots.last(), QVariant::fromValue(rawData));
-        }
+        ev->put(evslots.last(), QVariant::fromValue(rawData));
     }
 
     return true;

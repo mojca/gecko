@@ -26,10 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "runmanager.h"
 #include "eventbuffer.h"
 
+#define GECKO_PROFILE_PLUGIN
+
 #ifdef GECKO_PROFILE_PLUGIN
 #include <time.h>
 static struct timespec starttime;
 static uint64_t timeinwait;
+static uint64_t timeForPlugin[40];
 #endif
 
 PluginThread::PluginThread(PluginManager* _pmgr, ModuleManager* _mmgr)
@@ -125,6 +128,9 @@ PluginThread::~PluginThread()
     clock_gettime(CLOCK_MONOTONIC, &et);
     uint64_t rt = (et.tv_sec - starttime.tv_sec) * 1000000000 + (et.tv_nsec - starttime.tv_nsec);
     std::cout << "Runtime: " << (rt * 1e-9) <<" s, Waiting: " << (100.* timeinwait / rt) << "%" << std::endl;
+    for(int i = 0; i < 10; ++i) {
+        std::cout << "Time for plugin " << i << ": " << (100. * timeForPlugin[i] / rt) << "%" << std::endl;
+    }
 #endif
 
     std::cout << "PluginThread stopped." << std::endl;
@@ -137,6 +143,7 @@ void PluginThread::run()
         std::cout << "No plugins connected." << std::endl;
 
     foreach(AbstractModule* module, (*mmgr->list ())) {
+        std::cout << "runStartingEvent: " << module->getName().toStdString() << std::endl;
         module->getOutputPlugin()->runStartingEvent();
     }
 
@@ -147,6 +154,9 @@ void PluginThread::run()
 #ifdef GECKO_PROFILE_PLUGIN
     clock_gettime(CLOCK_MONOTONIC, &starttime);
     timeinwait = 0;
+    for (int i = 0; i < 10; ++i) {
+        timeForPlugin[i] = 0;
+    }
 #endif
 
     for(;;)
@@ -210,7 +220,9 @@ void PluginThread::process()
 void PluginThread::execProcessList()
 {
     //std::cout << "PluginThread::execProcessList" << std::endl;
-
+#ifdef GECKO_PROFILE_PLUGIN
+    int i_prof = 0;
+#endif
     for (QList< QList<AbstractPlugin*> >::const_iterator i = levelList.begin ();
          i != levelList.end ();
          ++i)
@@ -228,7 +240,16 @@ void PluginThread::execProcessList()
         {
             foreach(AbstractPlugin* p, *i)
             {
+#ifdef GECKO_PROFILE_PLUGIN
+                struct timespec st, et;
+                clock_gettime (CLOCK_MONOTONIC, &st);
+#endif
                 p->process();
+#ifdef GECKO_PROFILE_PLUGIN
+                clock_gettime (CLOCK_MONOTONIC, &et);
+                timeForPlugin[i_prof] += (et.tv_sec - st.tv_sec) * 1000000000 + (et.tv_nsec - st.tv_nsec);
+                ++i_prof;
+#endif
             }
         }
     }

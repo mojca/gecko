@@ -32,9 +32,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QByteArray>
 #include <QDataStream>
 #include <QDateTime>
+#include <QSpinBox>
+#include <QUdpSocket>
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <boost/filesystem/convenience.hpp>
 
 #include "baseplugin.h"
 
@@ -52,21 +55,29 @@ protected:
     QLabel* currentFileNameLabel;
     QLabel* currentBytesWrittenLabel;
     QLabel* bytesFreeOnDiskLabel;
+    QLabel* nofInputsLabel;
+    QSpinBox* portSpinner;
 
     QVector<uint32_t> outData;
     Attributes attribs_;
 
     QFile outFile;
     QDir outDir;
-    QTime lastWriteTime;
+    QTime lastUpdateTime;
 
     QString filePrefix;
+
+    uint16_t port;
+
+    QUdpSocket* net;
 
     uint64_t total_bytes_written;
     uint32_t current_bytes_written;
     uint32_t current_file_number;
 
     bool open_new_file;
+
+    boost::filesystem::path runPath;
 
 public:
     EventBuilderPlugin(int _id, QString _name, const Attributes &_attrs);
@@ -85,6 +96,18 @@ public:
 
 public slots:
     void updateRunName();
+    void updateByteCounters();
+    void runStartingEvent();
+
+private:
+    uint32_t nofInputs;
+    uint8_t nofChMsk;
+    uint32_t total_data_length;
+    uint32_t nofEnabledInputs;
+    QVector< QVector<uint32_t> > data;
+    QVector<uint32_t> data_length;
+    QVector<bool> input_has_data;
+    QVector<uint8_t> ch_mask;
 
 };
 

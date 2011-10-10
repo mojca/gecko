@@ -69,6 +69,8 @@ public:
     void applySettings (QSettings *);
     void saveSettings (QSettings *);
 
+    void runStartingEvent() { dmx_.runStartingEvent(); }
+
 private:
     Caen820Module (int id, const QString &name);
 
