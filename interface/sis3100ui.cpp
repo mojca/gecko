@@ -135,6 +135,8 @@ QWidget* Sis3100UI::createVmeControl()
 
     connect(readButton,SIGNAL(clicked()),this,SLOT(readButtonClicked()));
     connect(writeButton,SIGNAL(clicked()),this,SLOT(writeButtonClicked()));
+    connect(resetButton,SIGNAL(clicked()),this,SLOT(resetButtonClicked()));
+
 
     layout->addWidget(addrLabel,  0,0,1,1);
     layout->addWidget(dataLabel,  1,0,1,1);
@@ -178,6 +180,8 @@ void Sis3100UI::moduleClosed () {
 
 void Sis3100UI::resetButtonClicked() {
     if(module->isOpen()) {
+        module->setOutput1(false);
+        module->setOutput2(false);
         module->vmeReset();
     }
 }

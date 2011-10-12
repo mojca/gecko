@@ -25,11 +25,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstdio>
 #include <stdint.h>
 #include <QList>
+#include <QVector>
 
 #include "sis3302_gamma_v1410.h"
 
 class Event;
 class EventSlot;
+class AbstractModule;
+
+#define SIS3302_V1410_NOF_CHANNELS 8
+#define SIS3302_V1410_EVENT_LEN_MIN 6
 
 class Sis3302V1410Demux
 {
@@ -43,14 +48,36 @@ public:
     void setMultiEvent(bool _isMultiEvent);
     void setNofEvents(uint32_t _nofEvents);
 
+    void runStartingEvent(AbstractModule* owner);
+
 protected:
     DataStruct_t* data;
     uint32_t len;
 
-    uint32_t* curEvent[8];
+    uint32_t* curEvent[SIS3302_V1410_NOF_CHANNELS];
     uint32_t nofTraces;
     uint32_t nofEvents;
+
+    int output_raw_traces_start_idx;
+    int output_energy_traces_start_idx;
+    int output_energy_value_start_idx;
+    int output_raw_data_start_idx;
+
     bool isMultiEvent;
+    bool enable_raw_output;
+    bool enable_per_channel_output;
+    bool enable_meta_output;
+
+    QVector<uint32_t> outData;
+    QVector<uint32_t> outData2;
+    QVector<double> outData3;
+
+    QVector<uint32_t> rawData;
+    uint32_t rawCnt;
+
+    QVector<bool> enabled_raw_sample_ch;
+    QVector<bool> enabled_energy_sample_ch;
+    QVector<bool> enabled_energy_value_ch;
 
     const QList<EventSlot*> &evslots;
 
@@ -58,3 +85,4 @@ protected:
 };
 
 #endif // DEMUXSIS3302V1410PLUGIN_H
+

@@ -56,6 +56,7 @@ protected:
     QLabel* currentBytesWrittenLabel;
     QLabel* bytesFreeOnDiskLabel;
     QLabel* nofInputsLabel;
+    QLineEdit* addrEdit;
     QSpinBox* portSpinner;
 
     QVector<uint32_t> outData;
@@ -68,6 +69,7 @@ protected:
     QString filePrefix;
 
     uint16_t port;
+    QHostAddress addr;
 
     QUdpSocket* net;
 
@@ -98,16 +100,16 @@ public slots:
     void updateRunName();
     void updateByteCounters();
     void runStartingEvent();
+    void uiInput();
 
 private:
     uint32_t nofInputs;
-    uint8_t nofChMsk;
     uint32_t total_data_length;
     uint32_t nofEnabledInputs;
+    uint32_t ch_mask;
     QVector< QVector<uint32_t> > data;
     QVector<uint32_t> data_length;
     QVector<bool> input_has_data;
-    QVector<uint8_t> ch_mask;
 
 };
 

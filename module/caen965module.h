@@ -142,7 +142,7 @@ private:
     uint16_t status1;
     uint16_t status2;
     uint32_t evcnt;
-    uint32_t data [34];
+    uint32_t data [CAEN_V965_MAX_NOF_WORDS];
     uint32_t rd;
 
     Caen965Demux dmx_;

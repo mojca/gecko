@@ -212,7 +212,7 @@ int Caen965Module::acquire (Event* ev) {
 
     ret = acquireSingle (data, &rd);
     if (ret == 0) writeToBuffer(ev);
-    else printf("Error at acquireSingle\n");
+    else printf("Caen965Module::Error at acquireSingle\n");
 
     return rd;
 }

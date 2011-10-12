@@ -23,7 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "outputplugin.h"
 #include <iostream>
 
-Caen965Demux::Caen965Demux(const QVector<EventSlot*>& _evslots, const AbstractModule* own, uint chans, uint bits)
+Caen965Demux::Caen965Demux(const QVector<EventSlot*>& _evslots,
+                           const AbstractModule* own,
+                           uint chans, uint bits)
     : inEvent (false)
     , cnt (0)
     , enable_raw_output(false)
@@ -36,12 +38,12 @@ Caen965Demux::Caen965Demux(const QVector<EventSlot*>& _evslots, const AbstractMo
     , owner (own)
 {
     if (nofChannels == 0) {
-        nofChannels = 16;
+        nofChannels = CAEN_V965_NOF_CHANNELS;
         std::cout << "Caen965Demux: nofChannels invalid. Setting to 16" << std::endl;
     }
 
     if (nofBits == 0) {
-        nofBits = 12;
+        nofBits = CAEN_V965_NOF_BITS;
         std::cout << "Caen965Demux: nofBits invalid. Setting to 12" << std::endl;
     }
 
@@ -60,6 +62,7 @@ void Caen965Demux::runStartingEvent() {
     } else {
         enable_raw_output = false;
     }
+
     int cnt = 0;
     for(int ch = 0; ch < CAEN_V965_NOF_CHANNELS*2; ++ch) {
         if (owner->getOutputPlugin ()->isSlotConnected (evslots.at(ch))) {
@@ -126,7 +129,6 @@ void Caen965Demux::startNewEvent()
         crateNumber = 0x0 | (((*it) >> 16) & 0xff);
 
         cnt = 0;
-
         chData.clear ();
     }
 

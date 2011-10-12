@@ -52,8 +52,11 @@ Caen792Module::Caen792Module (int i, const QString &n, bool _isqdc)
 
 void Caen792Module::setChannels () {
     EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
-    for(int i = 0; i < 32; i++)
+    // Per channel outputs
+    for(int i = 0; i < CAEN_V792_NOF_CHANNELS; i++)
         evslots_ << evbuf->registerSlot (this, tr("out %1").arg(i,1,10), PluginConnector::VectorUint32);
+    // Output for raw data -> to event builder
+    evslots_ << evbuf->registerSlot(this, "raw out", PluginConnector::VectorUint32);
 }
 
 int Caen792Module::configure () {
@@ -62,12 +65,14 @@ int Caen792Module::configure () {
     uint16_t data;
     int ret = 0;
 
+    if(!iface->isOpen()) return 1;
+
     // set crate number
     ret = iface->writeA32D16 (baddr + CAEN792_CRATE_SEL, conf_.cratenumber);
     if (ret) printf ("Error %d at CAEN792_CRATE_SEL\n", ret);
 
     // set channel thresholds and kill bits
-    for (int i = 0; i < 32; ++i) {
+    for (int i = 0; i < CAEN_V792_NOF_CHANNELS; ++i) {
         ret = iface->writeA32D16 (baddr + CAEN792_THRESHOLDS + 2*i,
                                   conf_.thresholds [i]
                                   | (conf_.killChannel [i] ? (1 << 8) : 0));
@@ -209,8 +214,8 @@ int Caen792Module::acquire (Event* ev) {
 
     ret = acquireSingle (data, &rd);
     if (ret == 0) writeToBuffer(ev);
+    else printf("Caen792Module::Error at acquireSingle\n");
 
-    //buffer_->write (data, rd);
     return rd;
 }
 

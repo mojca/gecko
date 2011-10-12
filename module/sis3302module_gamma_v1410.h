@@ -292,6 +292,8 @@ public:
     virtual uint32_t getBaseAddress () const { return conf.base_addr; }
     virtual void setBaseAddress (uint32_t baddr) { conf.base_addr = baddr; }
 
+    virtual void runStartingEvent() { dmx.runStartingEvent(this); }
+
     // Supplementary methods
     void init();
     int getModuleId(uint32_t* _modId);
@@ -344,6 +346,7 @@ public:
     void ERROR(const char* e, uint32_t a, uint32_t b); /*! Overload */
 
     // Data dumping
+    void REG_DUMP();
     void DUMP(const char* name, uint32_t* buf, uint32_t len);
     void DUMP(const char* name, int32_t* buf, uint32_t len); /*! Overload */
 

@@ -30,6 +30,7 @@ EventBuilderPlugin::EventBuilderPlugin(int _id, QString _name, const Attributes 
             , attribs_ (_attrs)
             , filePrefix("run")
             , port(40000)
+            , addr(QHostAddress::LocalHost)
             , net(0)
             , total_bytes_written(0)
             , current_bytes_written(0)
@@ -43,9 +44,9 @@ EventBuilderPlugin::EventBuilderPlugin(int _id, QString _name, const Attributes 
 
     bool ok;
     int _nofInputs = _attrs.value ("nofInputs", QVariant (4)).toInt (&ok);
-    if (!ok || _nofInputs <= 0) {
-        _nofInputs = 1;
-        std::cout << _name.toStdString () << ": nofInputs invalid. Setting to 1" << std::endl;
+    if (!ok || _nofInputs <= 0 || _nofInputs > 32) {
+        _nofInputs = 32;
+        std::cout << _name.toStdString () << ": nofInputs invalid. Setting to 32." << std::endl;
     }
 
     addConnector(new PluginConnectorQVUint (this,ScopeCommon::out,"out"));
@@ -93,22 +94,50 @@ void EventBuilderPlugin::createSettings(QGridLayout * l)
         portSpinner->setMinimum(1024);
         portSpinner->setMaximum(65535);
 
-        cl->addWidget(new QLabel("Number of inputs:"),      0,0,1,1);
-        cl->addWidget(nofInputsLabel,                       0,1,1,1);
-        cl->addWidget(new QLabel("File:"),                  1,0,1,1);
-        cl->addWidget(currentFileNameLabel,                 1,1,1,1);
-        cl->addWidget(new QLabel("Data written:"),          2,0,1,1);
-        cl->addWidget(currentBytesWrittenLabel,             2,1,1,1);
-        cl->addWidget(new QLabel("Total Data Written:"),    3,0,1,1);
-        cl->addWidget(totalBytesWrittenLabel,               3,1,1,1);
-        cl->addWidget(new QLabel("Disk free:"),             4,0,1,1);
-        cl->addWidget(bytesFreeOnDiskLabel,                 4,1,1,1);
-        cl->addWidget(new QLabel("Network Port:"),          5,0,1,1);
-        cl->addWidget(portSpinner,                          5,1,1,1);
+        QString Octet = "(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])";
+        QRegExpValidator* v = new QRegExpValidator(QRegExp("^" + Octet + "\\."
+                                                          + Octet + "\\."
+                                                          + Octet + "\\."
+                                                          + Octet + "$"), this);
+
+        addrEdit = new QLineEdit();
+        //addrEdit->setInputMask("000.000.000.000;_");
+        addrEdit->setText(addr.toString());
+        addrEdit->setValidator(v);
+
+        //cl->addWidget(new QLabel("Number of inputs:"),      0,0,1,1);
+        //cl->addWidget(nofInputsLabel,                       0,1,1,1);
+        QGroupBox* gf = new QGroupBox("Disk stats");
+        {
+            QGridLayout* cl = new QGridLayout();
+            cl->addWidget(new QLabel("File:"),                  1,0,1,1);
+            cl->addWidget(currentFileNameLabel,                 1,1,1,1);
+            cl->addWidget(new QLabel("Data written:"),          2,0,1,1);
+            cl->addWidget(currentBytesWrittenLabel,             2,1,1,1);
+            cl->addWidget(new QLabel("Total Data Written:"),    3,0,1,1);
+            cl->addWidget(totalBytesWrittenLabel,               3,1,1,1);
+            cl->addWidget(new QLabel("Disk free:"),             4,0,1,1);
+            cl->addWidget(bytesFreeOnDiskLabel,                 4,1,1,1);
+            gf->setLayout(cl);
+        }
+        cl->addWidget(gf,0,0,1,2);
+
+        QGroupBox* gn = new QGroupBox("Network Setup");
+        {
+            QGridLayout* cl = new QGridLayout();
+            cl->addWidget(new QLabel("Address:"),       5,0,1,1);
+            cl->addWidget(addrEdit,                     5,1,1,1);
+            cl->addWidget(new QLabel("Port:"),          6,0,1,1);
+            cl->addWidget(portSpinner,                  6,1,1,1);
+            gn->setLayout(cl);
+        }
+        cl->addWidget(gn,1,0,1,2);
 
         container->setLayout(cl);
 
         connect(RunManager::ptr(),SIGNAL(runNameChanged()),this,SLOT(updateRunName()));
+        connect(portSpinner,SIGNAL(valueChanged(int)),this,SLOT(uiInput()));
+        connect(addrEdit,SIGNAL(editingFinished()),this,SLOT(uiInput()));
     }
 
     // End
@@ -116,10 +145,21 @@ void EventBuilderPlugin::createSettings(QGridLayout * l)
     l->addWidget(container,0,0,1,1);
 }
 
+void EventBuilderPlugin::uiInput() {
+    port = portSpinner->value();
+    addr = QHostAddress(addrEdit->text());
+}
+
 void EventBuilderPlugin::applySettings(QSettings* settings)
 {
+    QString set;
     settings->beginGroup(getName());
+        set = "port";   if(settings->contains(set)) port = settings->value(set).toUInt();
+        set = "addr";   if(settings->contains(set)) addr = settings->value(set).toString();
     settings->endGroup();
+
+    portSpinner->setValue(port);
+    addrEdit->setText(addr.toString());
 }
 
 void EventBuilderPlugin::saveSettings(QSettings* settings)
@@ -133,6 +173,8 @@ void EventBuilderPlugin::saveSettings(QSettings* settings)
     {
         std::cout << getName().toStdString() << " saving settings...";
         settings->beginGroup(getName());
+            settings->setValue("port",port);
+            settings->setValue("addr",addr.toString());
         settings->endGroup();
         std::cout << " done" << std::endl;
     }
@@ -165,28 +207,21 @@ void EventBuilderPlugin::runStartingEvent() {
 
     // Get number of inputs
     nofInputs = inputs->size();
-    nofChMsk = (nofInputs/8)+1;
 
     // Resize vectors
     data.resize(nofInputs);
     data_length.resize(nofInputs);
     input_has_data.resize(nofInputs);
-    ch_mask.resize(nofChMsk);
 
     // Reset counters
     current_bytes_written = 0;
     current_file_number = 0;
     total_bytes_written = 0;
+    ch_mask = 0;
 
     // Clear vectors
     data_length.fill(0);
     input_has_data.fill(false);
-    ch_mask.fill(0);
-
-    // Start udp socket
-//    if(!(net->state() == QUdpSocket::BoundState)) {
-//        net->bind(QHostAddress::LocalHost,port,QUdpSocket::DefaultForPlatform);
-//    }
 
     // Update UI
     updateRunName();
@@ -203,6 +238,7 @@ void EventBuilderPlugin::userProcess()
 
     total_data_length = 0;
     nofEnabledInputs = 0;
+    ch_mask = 0;
 
     // Get extends of each data input
     for(uint32_t i=0; i<nofInputs; ++i) {
@@ -214,7 +250,7 @@ void EventBuilderPlugin::userProcess()
         } else {
             data_length[i] = data[i].size();
             input_has_data[i] = true;
-            ch_mask[i/8] |= (1 << (i%8));
+            ch_mask |= (1 << i);
             total_data_length += data_length[i];
             ++nofEnabledInputs;
             //printf("EventBuilder: <ch%d> Data with length: %d, ch_mask: 0x%02x\n",i,data_length[i],ch_mask[i/8]);
@@ -256,26 +292,18 @@ void EventBuilderPlugin::userProcess()
         out.setByteOrder(QDataStream::LittleEndian);
 
         // Event header
-        uint16_t header = 0xABCD;
-        uint16_t header_length = 1 + (nofChMsk/4)+1 + (nofEnabledInputs/2)+1;
+        uint16_t header = 0xFEED;
+        uint16_t header_length = 2 + (nofEnabledInputs/2)+1; // in words
         total_data_length += header_length;
 
         out << header;
         out << header_length;
+        out << ch_mask;
 
         netOut << header;
         netOut << header_length;
+        netOut << ch_mask;
 
-        // Write channel mask
-        for(uint8_t i = 0; i < nofChMsk; ++i) {
-            out << (uint8_t)(ch_mask[i]);
-            netOut << (uint8_t)(ch_mask[i]);
-        }
-        // Fill channel mask quad word
-        for(uint8_t i = 0; i < (4-nofChMsk%4); ++i) {
-            out << (uint8_t)(0x00);
-            netOut << (uint8_t)(0x00);
-        }
         // Write channel length
         for(uint32_t i = 0; i < nofInputs; ++i) {
             if(data_length[i] > 0) {
@@ -283,11 +311,7 @@ void EventBuilderPlugin::userProcess()
                 netOut << data_length[i];
             }
         }
-        // Fill channel quad word
-        if(nofEnabledInputs & 0x1) {
-            out << 0x0000;
-            netOut << 0x0000;
-        }
+
         // Write channel data
         for(uint32_t ch = 0; ch < nofInputs; ++ch) {
             if(data_length[ch] > 0) {
@@ -300,13 +324,12 @@ void EventBuilderPlugin::userProcess()
 
         current_bytes_written += total_data_length * 4;
         total_bytes_written += total_data_length * 4;
-        //outFile.flush();
     } else {
         printf("EventBuilder: File is not open for writing.\n");
     }
 
     // Write to network
-    net->writeDatagram(netData,QHostAddress::LocalHost,port);
+    net->writeDatagram(netData,addr,port);
 
     if(lastUpdateTime.msecsTo(QTime::currentTime()) > 500) {
         updateByteCounters();

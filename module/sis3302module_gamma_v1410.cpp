@@ -101,6 +101,9 @@ void Sis3302V1410Module::setChannels()
                                       PluginConnector::VectorDouble);
     }
 
+    evslots << evb->registerSlot (this, tr("Raw data"),
+                                  PluginConnector::VectorUint32);
+
     evslots << evb->registerSlot (this, tr("Meta"),
                                   PluginConnector::VectorUint32);
 }
@@ -339,6 +342,8 @@ int Sis3302V1410Module::configure()
 
     resetSampleLogic();
 
+    //REG_DUMP();
+
     return ret;
 }
 
@@ -424,11 +429,14 @@ int Sis3302V1410Module::reset()
 
 int Sis3302V1410Module::resetSampleLogic()
 {
-    printf("sis3302::reset\n");
+    printf("sis3302::resetSampleLogic\n");
     int ret = 0x0;
     addr = conf.base_addr + SIS3302_V1410_SAMPLE_LOGIC_RESET; data = 0;
     ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SIS3302_V1410_SAMPLE_LOGIC_RESET",ret);
+
+    this->arm(1);
+
     return ret;
 }
 
@@ -725,7 +733,7 @@ int Sis3302V1410Module::acquisitionStartSingle()
     int waitCounter = 0;
 
     //INFO("Arming bank 1");
-    ret = this->arm(1);
+    //ret = this->arm(1);
     //INFO("Waiting for Addr Threshold");
     ret = this->waitForAddrThreshold();
     if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
@@ -777,6 +785,8 @@ int Sis3302V1410Module::acquisitionStartSingle()
             readLength[i] |= (i << 29);
         }
     }
+
+    ret = this->arm(1);
 
     return ret;
 }
@@ -863,8 +873,10 @@ int Sis3302V1410Module::writeToBuffer(Event *ev)
 
 bool Sis3302V1410Module::dataReady()
 {
-    bool dready = isNotArmedNotBusy();
-    return dready;
+    //bool dready = isNotArmedNotBusy();
+    //bool dready = isArmedOrBusy();
+    int ret = this->waitForAddrThreshold();
+    return true;
 }
 
 /*! This function does the readout of the ADC memory
@@ -959,6 +971,9 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
 
 int Sis3302V1410Module::readAdcChannel(int ch, uint32_t _reqNofWords)
 {
+    Q_UNUSED (ch)
+    Q_UNUSED (_reqNofWords)
+
     int ret = 0 ;
 #if 0
     //printf("sis3302 Starting ADC ch %d read of %d lwords\n",ch,_reqNofWords);
@@ -1097,6 +1112,24 @@ void Sis3302V1410Module::ERROR(const char *e, uint32_t v) {
 }
 void Sis3302V1410Module::ERROR(const char *e, uint32_t a, uint32_t b) {
     printf("<%s> ERROR: %s (a = 0x%08x, b= 0x%08x)\n",MODULE_NAME,e,a,b);
+}
+
+void Sis3302V1410Module::REG_DUMP() {
+    int nof_reg_groups = 6;
+    uint32_t start_addr[] = {0x00000000, 0x02000000, 0x02800000, 0x03000000, 0x03800000};
+    uint32_t end_addr[]   = {0x0000042C, 0x0200009C, 0x0280009C, 0x0300009C, 0x0380009C};
+    uint32_t data;
+
+    printf("\nSis3302V1410Module::REG_DUMP:\n");
+    for(int i = 0; i < nof_reg_groups; ++i) {
+        for(uint32_t addr = conf.base_addr + start_addr[i]; addr < conf.base_addr + end_addr[i]; addr += 4) {
+            if(getInterface()->readA32D32(addr,&data) == 0) {
+                printf("0x%08x: 0x%08x\n",addr,data);
+            }
+        }
+        printf("*\n");
+    }
+    fflush(stdout);
 }
 
 void Sis3302V1410Module::DUMP(const char* name, uint32_t* buf, uint32_t len) {
@@ -1491,7 +1524,7 @@ void Sis3302V1410Module::updateGateLengths(){
             energyGateLength = delay + 550; // Must be greater than 512 (from Tino Haeupke)
         }
 
-        int triggerGateLength_from_energy = conf.trigger_pretrigger_delay[ch] +
+        int triggerGateLength_from_energy = conf.trigger_pretrigger_delay[adc] +
                                             (2 * conf.energy_peak_length[adc]) +
                                             conf.energy_sumg_length[adc];
         int triggerGateLength_from_raw = conf.raw_sample_length[adc] + conf.raw_data_sample_start_idx[adc];

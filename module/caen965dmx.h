@@ -42,6 +42,7 @@ template <typename T> class QVector;
 
 #define CAEN965_EVENT_LENGTH 34
 #define CAEN_V965_NOF_CHANNELS 16
+#define CAEN_V965_NOF_BITS 12
 
 class Caen965Demux
 {
@@ -58,12 +59,15 @@ private:
     uint8_t crateNumber;
     uint32_t eventCounter;
     uint8_t id;
-    std::map<uint8_t, uint16_t> chData;
-    QVector<uint32_t> rawData;
+
     uint32_t rawBuffer[CAEN965_EVENT_LENGTH];
     uint32_t* rawBufferPtr;
+
+    std::map<uint8_t, uint16_t> chData;
+    QVector<uint32_t> rawData;
     uint32_t rawCnt;
     QVector<bool> enable_ch;
+
     const QVector<EventSlot*>& evslots;
     const AbstractModule *owner;
 
@@ -76,7 +80,9 @@ private:
     void printEob();
 
 public:
-    Caen965Demux(const QVector<EventSlot*>& _evslots, const AbstractModule* op, uint chans = 16, uint bits = 12);
+    Caen965Demux(const QVector<EventSlot*>& _evslots, const AbstractModule* op,
+                 uint chans = CAEN_V965_NOF_CHANNELS,
+                 uint bits = CAEN_V965_NOF_BITS);
 
     bool processData (Event *ev, uint32_t* data, uint32_t len, bool singleev);
     void runStartingEvent();

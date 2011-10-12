@@ -25,6 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "caenadcdmx.h"
 #include "pluginmanager.h"
 
+#define CAEN_V792_NOF_CHANNELS 32
+#define CAEN_V792_MAX_NOF_WORDS 34 // per event
+
 struct Caen792ModuleConfig {
     uint32_t base_addr;
 
@@ -32,8 +35,8 @@ struct Caen792ModuleConfig {
     uint8_t irq_vector;
     uint8_t ev_trg;
 
-    uint8_t thresholds[32];
-    bool killChannel[32];
+    uint8_t thresholds[CAEN_V792_NOF_CHANNELS];
+    bool killChannel[CAEN_V792_NOF_CHANNELS];
 
     uint8_t cratenumber;
     uint16_t fastclear;
@@ -75,7 +78,7 @@ struct Caen792ModuleConfig {
     , alwaysIncrementEventCounter (false)
     , pollcount (10000)
     {
-        for (int i = 0; i < 32; ++i) {
+        for (int i = 0; i < CAEN_V792_NOF_CHANNELS; ++i) {
             killChannel [i] = false;
             thresholds [i] = 0;
         }
@@ -123,6 +126,8 @@ public:
 
     int acquireSingle (uint32_t *data, uint32_t *rd);
 
+    void runStartingEvent() { dmx_.runStartingEvent(); }
+
 private:
     Caen792Module (int _id, const QString &, bool _isqdc);
     void writeToBuffer(Event *ev);
@@ -141,7 +146,7 @@ private:
     uint16_t status1;
     uint16_t status2;
     uint32_t evcnt;
-    uint32_t data [34];
+    uint32_t data [CAEN_V792_MAX_NOF_WORDS];
     uint32_t rd;
 
     CaenADCDemux dmx_;

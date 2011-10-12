@@ -129,7 +129,7 @@ bool RunThread::acquire(AbstractModule* _trg)
 
     int modulesz = modules.size ();
 
-    imgr->getMainInterface()->setOutput1(true);
+    imgr->getMainInterface()->setOutput1(true); // VETO signal for DAQ readout
 
     for (int i = 0; i < modulesz; ++i)
     {
@@ -149,7 +149,7 @@ bool RunThread::acquire(AbstractModule* _trg)
         }
     }
 
-    imgr->getMainInterface()->setOutput1(false);
+    imgr->getMainInterface()->setOutput1(false); // Remove VETO signal for DAQ readout
 
     if (QSet<const EventSlot*>::fromList (mandatories).subtract(ev->getOccupiedSlots ()).empty()) {
         RunManager::ref ().getEventBuffer ()->queue (ev);

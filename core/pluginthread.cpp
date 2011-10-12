@@ -143,7 +143,6 @@ void PluginThread::run()
         std::cout << "No plugins connected." << std::endl;
 
     foreach(AbstractModule* module, (*mmgr->list ())) {
-        std::cout << "runStartingEvent: " << module->getName().toStdString() << std::endl;
         module->getOutputPlugin()->runStartingEvent();
     }
 

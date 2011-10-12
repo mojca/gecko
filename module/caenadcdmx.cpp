@@ -23,9 +23,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "outputplugin.h"
 #include <iostream>
 
-CaenADCDemux::CaenADCDemux(const QVector<EventSlot*>& _evslots, const AbstractModule* own, uint chans, uint bits)
+CaenADCDemux::CaenADCDemux(const QVector<EventSlot*>& _evslots,
+                           const AbstractModule* own,
+                           uint chans, uint bits)
     : inEvent (false)
     , cnt (0)
+    , enable_raw_output(false)
+    , enable_per_channel_output(false)
     , nofChannels (chans)
     , nofChannelsInEvent(0)
     , nofBits (bits)
@@ -33,16 +37,42 @@ CaenADCDemux::CaenADCDemux(const QVector<EventSlot*>& _evslots, const AbstractMo
     , owner (own)
 {
     if (nofChannels == 0) {
-        nofChannels = 32;
+        nofChannels = CAEN_V792_V775_NOF_CHANNELS;
         std::cout << "CaenADCDemux: nofChannels invalid. Setting to 32" << std::endl;
     }
 
     if (nofBits == 0) {
-        nofBits = 12;
+        nofBits = CAEN_V792_V775_NOF_BITS;
         std::cout << "CaenADCDemux: nofBits invalid. Setting to 12" << std::endl;
     }
 
+    rawData.resize(CAEN_V792_V775_EVENT_LENGTH);
+    enable_ch.resize(CAEN_V792_V775_NOF_CHANNELS);
+
     std::cout << "Instantiated CaenADCDemux" << std::endl;
+}
+
+void CaenADCDemux::runStartingEvent() {
+    if (owner->getOutputPlugin ()->isSlotConnected (evslots.last())) {
+        enable_raw_output = true;
+    } else {
+        enable_raw_output = false;
+    }
+
+    int cnt = 0;
+    for(int ch = 0; ch < CAEN_V792_V775_NOF_CHANNELS; ++ch) {
+        if (owner->getOutputPlugin ()->isSlotConnected (evslots.at(ch))) {
+            enable_per_channel_output = true;
+            enable_ch[ch] = true;
+            cnt++;
+        } else {
+            enable_ch[ch] = false;
+        }
+    }
+    if(cnt == 0) enable_per_channel_output = false;
+
+    printf("CaenADCDemux::runStartingEvent: enable_raw_output %d\n",enable_raw_output);
+    printf("CaenADCDemux::runStartingEvent: enable_per_channel_output %d\n",enable_per_channel_output);
 }
 
 bool CaenADCDemux::processData (Event* ev, uint32_t *data, uint32_t len, bool singleev)
@@ -92,52 +122,74 @@ bool CaenADCDemux::processData (Event* ev, uint32_t *data, uint32_t len, bool si
 void CaenADCDemux::startNewEvent()
 {
     //    std::cout << "DemuxCaenADCPlugin: Start" << std::endl;
-
-    nofChannelsInEvent = 0x0 | (((*it) >>  8) & 0x1f);
-    crateNumber = 0x0 | (((*it) >> 16) & 0xff);
-
-    cnt = 0;
     inEvent = true;
-    chData.clear ();
+
+    if(enable_per_channel_output) {
+        nofChannelsInEvent = 0x0 | (((*it) >>  8) & 0x1f);
+        crateNumber = 0x0 | (((*it) >> 16) & 0xff);
+
+        cnt = 0;
+        chData.clear ();
+    }
+
+    if(enable_raw_output) {
+        rawData.fill(0);
+        rawCnt = 0;
+        rawData[rawCnt++] = (*it);
+    }
 
     //printHeader();
 }
 
 void CaenADCDemux::continueEvent()
 {
-    uint8_t ch     = (((*it) >> 16) & 0x1f );
-    uint16_t val   = (((*it) >>  0) & 0xfff);
-    bool overRange = (((*it) >> 12) & 0x1  ) != 0;
-    //bool underThr  = (((*it) >> 13) & 0x1  ) != 0;
-
-    if(ch < nofChannels)
-    {
-        if(val < (1 << nofBits) && !overRange)
-        {
-            chData.insert (std::make_pair (ch, val));
-        }
-    } else {
-        std::cout << "DemuxCaenADC: got invalid channel number " << std::dec << (int)ch << std::endl;
+    if(enable_raw_output) {
+        rawData[rawCnt++] = (*it);
     }
 
-    cnt++;
+    if(enable_per_channel_output) {
+        uint8_t ch     = (((*it) >> 16) & 0x1f );
+        uint16_t val   = (((*it) >>  0) & 0xfff);
+        bool overRange = (((*it) >> 12) & 0x1  ) != 0;
+        //bool underThr  = (((*it) >> 13) & 0x1  ) != 0;
+
+        if(ch < nofChannels)
+        {
+            if(val < (1 << nofBits) && !overRange)
+            {
+                chData.insert (std::make_pair (ch, val));
+            }
+        } else {
+            std::cout << "DemuxCaenADC: got invalid channel number " << std::dec << (int)ch << std::endl;
+        }
+        cnt++;
+    }
 }
 
 bool CaenADCDemux::finishEvent(Event *ev)
 {
-    eventCounter = 0x0 | (((*it) >> 0)  & 0xffffff);
-    //printEob();
     inEvent = false;
 
-    for (std::map<uint8_t,uint16_t>::const_iterator i = chData.begin (); i != chData.end (); ++i) {
-        // Publish event data
-        if (owner->getOutputPlugin ()->isSlotConnected (evslots.at (i->first))) {
-            const EventSlot* sl = evslots.at (i->first);
-            QVector<uint32_t> v = ev->get (sl).value< QVector<uint32_t> > ();
-            v << i->second;
-            ev->put (evslots.at (i->first), QVariant::fromValue (v));
+    if(enable_per_channel_output) {
+        eventCounter = 0x0 | (((*it) >> 0)  & 0xffffff);
+        //printEob();
+
+        for (std::map<uint8_t,uint16_t>::const_iterator i = chData.begin (); i != chData.end (); ++i) {
+            // Publish event data
+            if (owner->getOutputPlugin ()->isSlotConnected (evslots.at (i->first))) {
+                const EventSlot* sl = evslots.at (i->first);
+                QVector<uint32_t> v = ev->get (sl).value< QVector<uint32_t> > ();
+                v << i->second;
+                ev->put (evslots.at (i->first), QVariant::fromValue (v));
+            }
         }
     }
+
+    if(enable_raw_output){
+        rawData[rawCnt++] = (*it);
+        ev->put(evslots.last(), QVariant::fromValue(rawData));
+    }
+
     return true;
 }
 
