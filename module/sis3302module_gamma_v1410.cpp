@@ -47,6 +47,7 @@ Sis3302V1410Module::Sis3302V1410Module(int _id, QString _name)
     : BaseModule(_id, _name)
     , addr(0)
     , data(0)
+    , nof_adrr_mismatch(0)
     , dmx (evslots)
 {   
     init();
@@ -402,15 +403,15 @@ int Sis3302V1410Module::getMcaTrgStartCounter(uint8_t ch, uint32_t* _evCnt)
 // This function returns the next sampling address from each adc
 // adc: Range 0..7 denotes the adc channel
 // _addr: Placeholder to store the value
-int Sis3302V1410Module::getNextSampleAddr(int adc, uint32_t* _addr)
+int Sis3302V1410Module::getNextSampleAddr(int ch, uint32_t* _addr)
 {
     int ret = 0x0;
-    addr = conf.base_addr + SIS3302_V1410_NEXT_SAMPLE_ADDR(adc);
+    addr = conf.base_addr + SIS3302_V1410_NEXT_SAMPLE_ADDR(ch);
     data = 0;
     ret = getInterface ()->readA32D32(addr,&data);
-    //printf("sis3302: ch %d, nextsampleaddr: 0x%x from addr 0x%x\n",adc,data,addr);
+    //printf("sis3302: ch %d, nextsampleaddr: 0x%x from addr 0x%x\n",ch,data,addr);
     if(ret != 0) {
-        printf("Error %d at VME READ SIS3302_V1410_NEXT_SAMPLE_ADDR(%d)",ret,adc);
+        printf("Error %d at VME READ SIS3302_V1410_NEXT_SAMPLE_ADDR(%d)",ret,ch);
         (*_addr) = 0;
     }
     else (*_addr) = data;
@@ -424,6 +425,7 @@ int Sis3302V1410Module::reset()
     addr = conf.base_addr + SIS3302_V1410_RESET; data = 0;
     ret = getInterface()->writeA32D32(addr,data);
     if(ret != 0) printf("Error %d at SIS3302_V1410_RESET",ret);
+    nof_adrr_mismatch = 0;
     return ret;
 }
 
@@ -627,6 +629,7 @@ int Sis3302V1410Module::singleShot()
 
     int nof_events = 1;
     if(conf.acMode == Sis3302V1410config::singleEvent) {
+        while(!dataReady());
         ret = acquisitionStartSingle();
         nof_events = 1;
     } else if(conf.acMode == Sis3302V1410config::multiEvent) {
@@ -735,8 +738,8 @@ int Sis3302V1410Module::acquisitionStartSingle()
     //INFO("Arming bank 1");
     //ret = this->arm(1);
     //INFO("Waiting for Addr Threshold");
-    ret = this->waitForAddrThreshold();
-    if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
+    //ret = this->waitForAddrThreshold();
+    //if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
 
     //INFO("Disarming bank 1");
     ret = this->disarm();
@@ -765,8 +768,10 @@ int Sis3302V1410Module::acquisitionStartSingle()
             endSampleAddr_words[i] = nofSamplesRead/2;
 
             if(expectedNextSamplingAddr_words != endSampleAddr_words[i]) {
+                ++nof_adrr_mismatch;
                 ERROR_i("Expected next sample addr does not match",i,
                         expectedNextSamplingAddr_words,endSampleAddr_words[i]);
+                ERROR_i("Number of mismatches:",i,nof_adrr_mismatch);
             }
 
             uint32_t reqNofWords = endSampleAddr_words[i];
@@ -876,6 +881,7 @@ bool Sis3302V1410Module::dataReady()
     //bool dready = isNotArmedNotBusy();
     //bool dready = isArmedOrBusy();
     int ret = this->waitForAddrThreshold();
+    if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
     return true;
 }
 
@@ -1102,16 +1108,16 @@ void Sis3302V1410Module::INFO(const char *msg, uint32_t a, uint32_t b) {
 }
 
 void Sis3302V1410Module::ERROR_i(const char *e, int i, uint32_t v) {
-    printf("<%s> ERROR in loop at (%d): %s (0x%08x)\n",MODULE_NAME,i,e,v);
+    printf("<%s> ERROR in loop at (%d): %s (0x%08x)\n",MODULE_NAME,i,e,v);fflush(stdout);
 }
 void Sis3302V1410Module::ERROR_i(const char *e, int i, uint32_t a, uint32_t b) {
-    printf("<%s> ERROR in loop at (%d): %s (a = 0x%08x, b = 0x%08x)\n",MODULE_NAME,i,e,a,b);
+    printf("<%s> ERROR in loop at (%d): %s (a = 0x%08x, b = 0x%08x)\n",MODULE_NAME,i,e,a,b);fflush(stdout);
 }
 void Sis3302V1410Module::ERROR(const char *e, uint32_t v) {
-    printf("<%s> ERROR: %s (0x%08x)\n",MODULE_NAME,e,v);
+    printf("<%s> ERROR: %s (0x%08x)\n",MODULE_NAME,e,v);fflush(stdout);
 }
 void Sis3302V1410Module::ERROR(const char *e, uint32_t a, uint32_t b) {
-    printf("<%s> ERROR: %s (a = 0x%08x, b= 0x%08x)\n",MODULE_NAME,e,a,b);
+    printf("<%s> ERROR: %s (a = 0x%08x, b= 0x%08x)\n",MODULE_NAME,e,a,b);fflush(stdout);
 }
 
 void Sis3302V1410Module::REG_DUMP() {

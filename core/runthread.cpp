@@ -26,6 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "abstractinterface.h"
 #include "eventbuffer.h"
 
+#include <QCoreApplication>
+#include <sched.h>
+#include <cstdio>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/resource.h>
+
 #define GECKO_PROFILE_RUN
 
 #ifdef GECKO_PROFILE_RUN
@@ -44,6 +51,8 @@ RunThread::RunThread () {
 
     interruptBased = false;
     pollBased = false;
+
+    setObjectName("RunThread");
 
     moveToThread(this);
 
@@ -77,6 +86,36 @@ RunThread::~RunThread()
 
 void RunThread::run()
 {
+    // Scheduling magic
+    int cpu = sched_getcpu();
+    printf("cpu: %d\n",cpu);
+
+    __pid_t pid = getpid();
+    printf("pid: %d\n",(uint32_t)pid);
+
+    int scheduler = sched_getscheduler(pid);
+    printf("scheduler: %d\n",scheduler);
+
+    Qt::HANDLE threadId = this->thread()->currentThreadId();
+    printf("threadId: 0x%08x\n",(uint)threadId);
+
+    QThread* thisThread = this->thread()->currentThread();
+    printf("thisThread: 0x%08x\n",(uint*)thisThread);
+
+    pid_t tid;
+    tid = syscall(SYS_gettid);
+    printf("tid: %d\n",(uint32_t)tid);
+
+    int threadScheduler = sched_getscheduler(tid);
+    printf("thread scheduler: %d\n",threadScheduler);
+
+    rlimit rl_nice;
+    getrlimit(RLIMIT_NICE,&rl_nice);
+    printf("rlimit nice: %d, %d\n",rl_nice.rlim_cur,rl_nice.rlim_max);
+    rlimit rl_prio;
+    getrlimit(RLIMIT_RTPRIO,&rl_prio);
+    printf("rlimit rtprio: %d, %d\n",rl_prio.rlim_cur,rl_prio.rlim_max);
+
     modules = *ModuleManager::ref ().list ();
     triggers = ModuleManager::ref ().getTriggers ().toList ();
     mandatories = ModuleManager::ref ().getMandatorySlots ().toList ();

@@ -507,6 +507,7 @@ void Sis3302V1410UI::uiInput(QString _name)
                 w->setValue(0);
                 module->conf.energy_sample_start_idx[ch][2] = 0;
             } else {
+                uif.getWidgets()->find(tr("energy_sample_length_%1").arg(ch)).value()->setEnabled(true);
                 uif.getWidgets()->find(tr("energy_sample_start_idx_1_%1").arg(ch)).value()->setEnabled(true);
                 uif.getWidgets()->find(tr("energy_sample_start_idx_2_%1").arg(ch)).value()->setEnabled(true);
                 uif.getWidgets()->find(tr("energy_sample_start_idx_3_%1").arg(ch)).value()->setEnabled(true);
@@ -896,13 +897,15 @@ void Sis3302V1410UI::applySettings()
     applyingSettings = false;
 }
 
-void Sis3302V1410UI::updateGateSettings() {
-    module->updateGateLengths();
-    for (int adc = 0; adc < 4; ++adc) {
-        QSpinBox* w = static_cast<QSpinBox*> (uif.getWidgets()->find(tr("energy_gate_length_%1").arg(adc)).value());
-        w->setValue(module->conf.energy_gate_length[adc]);
-        w = static_cast<QSpinBox*> (uif.getWidgets()->find(tr("trigger_gate_length_%1").arg(adc)).value());
-        w->setValue(module->conf.trigger_gate_length[adc]);
+void Sis3302V1410UI::updateGateSettings() { // FIXME ! Must be done for each ADC separately
+    if(!module->conf.energy_sample_mode[0] == Sis3302V1410config::enModeCustom) {
+        module->updateGateLengths();
+        for (int adc = 0; adc < 4; ++adc) {
+            QSpinBox* w = static_cast<QSpinBox*> (uif.getWidgets()->find(tr("energy_gate_length_%1").arg(adc)).value());
+            w->setValue(module->conf.energy_gate_length[adc]);
+            w = static_cast<QSpinBox*> (uif.getWidgets()->find(tr("trigger_gate_length_%1").arg(adc)).value());
+            w->setValue(module->conf.trigger_gate_length[adc]);
+        }
     }
 }
 

@@ -360,6 +360,8 @@ private:
     uint32_t readLength[NOF_CHANNELS];
     uint32_t endSampleAddr_words[NOF_CHANNELS];
 
+    uint32_t nof_adrr_mismatch;
+
 public:
     // Values for display in the module
     uint64_t currentTimestamp[NOF_CHANNELS];
