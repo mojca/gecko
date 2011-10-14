@@ -43,6 +43,7 @@ public:
     Sis3302V1410Demux (const QList<EventSlot*> &);
 
     virtual void process(Event *ev, uint32_t* _data, uint32_t _len);
+    void processRaw(Event *ev, uint32_t _data[][SIS3302_V1410_MAX_NOF_LWORDS], uint32_t* _len);
     void setMetaData(uint32_t, EventDirEntry_t*, TimestampDir_t*);
 
     void setMultiEvent(bool _isMultiEvent);

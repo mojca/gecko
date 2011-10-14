@@ -358,7 +358,7 @@ private:
 
     uint32_t readBuffer[NOF_CHANNELS][SIS3302_V1410_MAX_NOF_LWORDS]; // 8 MB total
     uint32_t readLength[NOF_CHANNELS];
-    uint32_t endSampleAddr_words[NOF_CHANNELS];
+    volatile uint32_t endSampleAddr_words[NOF_CHANNELS];
 
     uint32_t nof_adrr_mismatch;
 

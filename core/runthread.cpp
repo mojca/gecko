@@ -87,6 +87,13 @@ RunThread::~RunThread()
 
 void RunThread::run()
 {
+    cpu_set_t cpuset;
+
+    CPU_ZERO(&cpuset);
+    CPU_SET(3, &cpuset);
+
+    pthread_setaffinity_np(pthread_self(),sizeof(cpuset),&cpuset);
+
     // Scheduling magic
     int cpu = sched_getcpu();
     printf("cpu: %d\n",cpu);
@@ -122,12 +129,12 @@ void RunThread::run()
     int old_priority = old_param.__sched_priority;
     printf("old prio: %d\n",old_priority);
 
-    int new_priority = rl_nice.rlim_max;
+    /*int new_priority = rl_nice.rlim_max;
     int new_scheduler = SCHED_FIFO;
     struct sched_param new_param;
     new_param.__sched_priority = new_priority;
     int stat = sched_setscheduler(tid,new_scheduler,&new_param);
-    if (stat == -1) perror("sched_setscheduler()");
+    if (stat == -1) perror("sched_setscheduler()");*/
 
     modules = *ModuleManager::ref ().list ();
     triggers = ModuleManager::ref ().getTriggers ().toList ();

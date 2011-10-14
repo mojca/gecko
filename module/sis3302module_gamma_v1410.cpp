@@ -343,7 +343,7 @@ int Sis3302V1410Module::configure()
 
     resetSampleLogic();
 
-    REG_DUMP();
+    //REG_DUMP();
 
     return ret;
 }
@@ -771,16 +771,17 @@ int Sis3302V1410Module::acquisitionStartSingle()
                 ++nof_adrr_mismatch;
                 ERROR_i("Expected next sample addr does not match",i,
                         expectedNextSamplingAddr_words,endSampleAddr_words[i]);
+                INFO("waitCounter",waitCounter);
                 ERROR_i("Number of mismatches:",i,nof_adrr_mismatch);
-		uint32_t debug_next_sample_addr[NOF_CHANNELS];
-		for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
-			this->getNextSampleAddr(ch,&debug_next_sample_addr[ch]);
-			debug_next_sample_addr[ch] /= 2;
-		}
-		DUMP("debug_next_sample_addr 1",debug_next_sample_addr,NOF_CHANNELS);
+//		uint32_t debug_next_sample_addr[NOF_CHANNELS];
+//		for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
+//                    this->getNextSampleAddr(ch,&debug_next_sample_addr[ch]);
+//                    debug_next_sample_addr[ch] /= 2;
+//		}
+//		DUMP("debug_next_sample_addr 1",debug_next_sample_addr,NOF_CHANNELS);
             }
 
-            uint32_t reqNofWords = endSampleAddr_words[i];
+            volatile uint32_t reqNofWords = endSampleAddr_words[i];
             //uint32_t reqNofWords = expectedNextSamplingAddr_words;
             //INFO_i("reqNofWords",i,reqNofWords);
             this->readAdcChannelSinglePage(i,reqNofWords);
@@ -872,6 +873,9 @@ int Sis3302V1410Module::writeToBuffer(Event *ev)
         dmx.setMultiEvent(false);
         dmx.setNofEvents(1);
     }
+
+    dmx.processRaw (ev, readBuffer, readLength);
+
     for(unsigned int i = 0; i < NOF_CHANNELS; i++)
     {
         //printf("sis3302: ch %d: Trying to write to buffer (ev = 0x%x)\n",i,ev);
@@ -937,11 +941,12 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
             addr+=4;
         }
         readLength[ch] = _reqNofWords;
-        break;}
+        }
+        break;
 
     case Sis3302V1410config::vme2E: {
         uint32_t words = 0;
-        if (_reqNofWords < 16) {
+        if (false && _reqNofWords < 16) {
             int minNofWords = 16;
             ret = iface->readA322E(addr,&readBuffer[ch][0],minNofWords,&words);
             words = _reqNofWords;
@@ -957,7 +962,8 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
                   "mismatch of a:_reqNofWords and b:words",_reqNofWords,words);
         }
         readLength[ch] = words;
-        break;}
+        }
+        break;
 
     case Sis3302V1410config::vmeBLT32: {
         uint32_t words = 0;
@@ -971,7 +977,39 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
                   "mismatch of a:_reqNofWords and b:words",_reqNofWords,words);
         }
         readLength[ch] = words;
-        break;}
+        }
+        break;
+
+    case Sis3302V1410config::vmeMBLT64: {
+        uint32_t words = 0;
+        if(_reqNofWords & 0x1) ++_reqNofWords;
+        ret = iface->readA32MBLT64(addr,&readBuffer[ch][0],_reqNofWords,&words);
+        if(ret != 0) {
+            ERROR("readAdcChannelSinglePage with vmeMBLT64"
+                   "read error in ch = a, ret = b",ch,ret);
+        }
+        if(_reqNofWords != words) {
+            ERROR("readAdcChannelSinglePage with vmeMBLT64"
+                  "mismatch of a:_reqNofWords and b:words",_reqNofWords,words);
+        }
+        readLength[ch] = words;
+        }
+        break;
+
+    case Sis3302V1410config::vmeDMA32: {
+        uint32_t words = 0;
+        ret = iface->readA32DMA32(addr,&readBuffer[ch][0],_reqNofWords,&words);
+        if(ret != 0) {
+            ERROR("readAdcChannelSinglePage with vmeDMA32"
+                   "read error in ch = a, ret = b",ch,ret);
+        }
+        if(_reqNofWords != words) {
+            ERROR("readAdcChannelSinglePage with vmeDMA32"
+                  "mismatch of a:_reqNofWords and b:words",_reqNofWords,words);
+        }
+        readLength[ch] = words;
+        }
+        break;
 
     default:
         ret = false;

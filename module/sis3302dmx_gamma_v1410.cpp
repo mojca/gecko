@@ -119,27 +119,50 @@ void Sis3302V1410Demux::runStartingEvent(AbstractModule* owner) {
 
 }
 
+void Sis3302V1410Demux::processRaw(Event *ev, uint32_t _data[][SIS3302_V1410_MAX_NOF_LWORDS], uint32_t* len){
+
+    if(enable_raw_output) {
+        DataStruct_t* data_[SIS3302_V1410_NOF_CHANNELS];
+
+        // Recover length
+        uint32_t total_length = 0;
+
+        for(int ch = 0; ch < SIS3302_V1410_NOF_CHANNELS; ++ch) {
+            data_[ch] = (DataStruct_t*)_data[ch];
+            total_length += (len[ch] & 0x1ffffff); // lWords
+            //printf("length %d: %d\n",ch,(len[ch] & 0x1ffffff));
+        }
+
+        rawData.resize(total_length);
+        //printf("total_length: %d\n",total_length);
+
+        int cnt = 0;
+        for(int ch = 0; ch < SIS3302_V1410_NOF_CHANNELS; ++ch) {
+            //printf("filling ch %d raw...\n",ch);
+            for(uint32_t i = 0; i < (len[ch] & 0x1ffffff); ++i) {
+                //printf("rawData[%d] = data_[%d][%d].data = %08x\n",cnt,ch,i,data_[ch][i].data);
+                rawData[cnt++] = data_[ch][i].data;
+            }
+        }
+
+        ev->put (evslots.at(output_raw_data_start_idx),
+                 QVariant::fromValue (rawData));
+
+    }
+}
+
 void Sis3302V1410Demux::process (Event *ev, uint32_t *_data, uint32_t _len)
 {
 
-    //printf("DemuxSis3302V1410Plugin processing...\n");
-    data = (DataStruct_t*)_data;
-    len = _len;
-
-    // Recover length
-    uint32_t length = (len & 0x1ffffff); // lWords
-    uint32_t length_single = 0;
-
-    if(enable_raw_output) {
-        rawData.resize(length);
-        for(uint32_t i = 0; i < length; ++i) {
-            rawData[i] = data[i].data;
-        }
-        ev->put (evslots.at(output_raw_data_start_idx),
-                 QVariant::fromValue (rawData));
-    }
-
     if(enable_per_channel_output) {
+        //printf("DemuxSis3302V1410Plugin processing...\n");
+        data = (DataStruct_t*)_data;
+        len = _len;
+
+        // Recover length
+        uint32_t length = (len & 0x1ffffff); // lWords
+        uint32_t length_single = 0;
+
 
         // Recover channel information
         uint8_t curCh = (len >> 29) & 0x7;
