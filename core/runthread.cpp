@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCoreApplication>
 #include <sched.h>
 #include <cstdio>
+#include <errno.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -115,6 +116,18 @@ void RunThread::run()
     rlimit rl_prio;
     getrlimit(RLIMIT_RTPRIO,&rl_prio);
     printf("rlimit rtprio: %d, %d\n",rl_prio.rlim_cur,rl_prio.rlim_max);
+
+    struct sched_param old_param;
+    sched_getparam(tid,&old_param);
+    int old_priority = old_param.__sched_priority;
+    printf("old prio: %d\n",old_priority);
+
+    int new_priority = rl_nice.rlim_max;
+    int new_scheduler = SCHED_FIFO;
+    struct sched_param new_param;
+    new_param.__sched_priority = new_priority;
+    int stat = sched_setscheduler(tid,new_scheduler,&new_param);
+    if (stat == -1) perror("sched_setscheduler()");
 
     modules = *ModuleManager::ref ().list ();
     triggers = ModuleManager::ref ().getTriggers ().toList ();

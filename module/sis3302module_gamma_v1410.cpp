@@ -343,7 +343,7 @@ int Sis3302V1410Module::configure()
 
     resetSampleLogic();
 
-    //REG_DUMP();
+    REG_DUMP();
 
     return ret;
 }
@@ -772,6 +772,12 @@ int Sis3302V1410Module::acquisitionStartSingle()
                 ERROR_i("Expected next sample addr does not match",i,
                         expectedNextSamplingAddr_words,endSampleAddr_words[i]);
                 ERROR_i("Number of mismatches:",i,nof_adrr_mismatch);
+		uint32_t debug_next_sample_addr[NOF_CHANNELS];
+		for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
+			this->getNextSampleAddr(ch,&debug_next_sample_addr[ch]);
+			debug_next_sample_addr[ch] /= 2;
+		}
+		DUMP("debug_next_sample_addr 1",debug_next_sample_addr,NOF_CHANNELS);
             }
 
             uint32_t reqNofWords = endSampleAddr_words[i];
