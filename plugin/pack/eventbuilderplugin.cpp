@@ -294,7 +294,8 @@ void EventBuilderPlugin::userProcess()
         // Event header
         uint16_t header = 0xFEED;
         uint16_t header_length = 2 + (nofEnabledInputs/2)+1; // in words
-        total_data_length += header_length;
+        total_data_length += header_length
+                          + (nofEnabledInputs); // To account for separators
 
         out << header;
         out << header_length;
@@ -304,7 +305,7 @@ void EventBuilderPlugin::userProcess()
         netOut << header_length;
         netOut << ch_mask;
 
-        // Write channel length
+        // Write channel lengths
         for(uint32_t i = 0; i < nofInputs; ++i) {
             if(data_length[i] > 0) {
                 out << data_length[i];
@@ -312,7 +313,7 @@ void EventBuilderPlugin::userProcess()
             }
         }
 
-        // Write channel data
+        // Write channel data with separators
         for(uint32_t ch = 0; ch < nofInputs; ++ch) {
             if(data_length[ch] > 0) {
                 for(uint32_t i = 0; i < data_length[ch]; ++i) {

@@ -1016,6 +1016,9 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
         break;
     }
 
+    // Store channel length in first word 0xTTTLLLI (T = time, L = Length, I = ID)
+    readBuffer[ch][0] |= (readLength[ch] << 4);
+
     return ret;
 }
 

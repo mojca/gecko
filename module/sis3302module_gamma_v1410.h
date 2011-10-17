@@ -203,7 +203,7 @@ public:
         enable_lemo_in[2] = true;
 
         for (int i=0; i<4; i++) {
-            header_id[i]                    = 0x3302;
+            header_id[i]                    = 0x0;
             raw_sample_length[i]            = 2048;
             raw_data_sample_start_idx[i]    = 0;
             end_addr_thr_in_samples[i]      = 10*(raw_sample_length[i]+4); /* TODO */
