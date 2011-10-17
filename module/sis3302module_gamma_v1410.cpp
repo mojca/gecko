@@ -946,7 +946,7 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
 
     case Sis3302V1410config::vme2E: {
         uint32_t words = 0;
-        if (false && _reqNofWords < 16) {
+        if (_reqNofWords < 16) {
             int minNofWords = 16;
             ret = iface->readA322E(addr,&readBuffer[ch][0],minNofWords,&words);
             words = _reqNofWords;

@@ -319,6 +319,9 @@ void EventBuilderPlugin::userProcess()
                     out << data[ch][i];
                     netOut << data[ch][i];
                 }
+                uint32_t separator = 0xFFFFFFFF;
+                out << separator;
+                netOut << separator;
             }
         }
 
