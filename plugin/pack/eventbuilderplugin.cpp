@@ -293,7 +293,8 @@ void EventBuilderPlugin::userProcess()
 
         // Event header
         uint16_t header = 0xFEED;
-        uint16_t header_length = 2 + (nofEnabledInputs/2)+1; // in words
+        uint16_t header_length = 2 + (nofEnabledInputs/2)+1; // in words (INCORRECT)
+        //uint16_t header_length = 2 + nofEnabledInputs; // in words (CORRECT)
         total_data_length += header_length
                           + (nofEnabledInputs); // To account for separators
 

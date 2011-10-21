@@ -592,6 +592,16 @@ int Sis3302V1410Module::waitForNotBusy()
     return (cnt < conf.poll_count);
 }
 
+bool Sis3302V1410Module::isAboveAddressThreshold()
+{
+    bool ret = false;
+    addr = conf.base_addr + SIS3302_V1410_ACQUISITION_CONTROL; data = 0;
+    if(getInterface()->readA32D32(addr,&data) != 0) {
+        printf("Error %d at VME READ SIS3302_V1410_ACQUISITION_CONTROL\n",ret);
+    }
+    return ((data & SIS3302_V1410_MSK_ACQ_CTRL_END_ADDR_THR) == SIS3302_V1410_MSK_ACQ_CTRL_END_ADDR_THR);
+}
+
 int Sis3302V1410Module::waitForAddrThreshold()
 {
     //printf("sis3302: waitForAddrThreshold \n");
@@ -738,8 +748,9 @@ int Sis3302V1410Module::acquisitionStartSingle()
     //INFO("Arming bank 1");
     //ret = this->arm(1);
     //INFO("Waiting for Addr Threshold");
-    //ret = this->waitForAddrThreshold();
-    //if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
+
+    ret = this->waitForAddrThreshold();
+    if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
 
     //INFO("Disarming bank 1");
     ret = this->disarm();
@@ -769,10 +780,10 @@ int Sis3302V1410Module::acquisitionStartSingle()
 
             if(expectedNextSamplingAddr_words != endSampleAddr_words[i]) {
                 ++nof_adrr_mismatch;
-                ERROR_i("Expected next sample addr does not match",i,
-                        expectedNextSamplingAddr_words,endSampleAddr_words[i]);
-                INFO("waitCounter",waitCounter);
-                ERROR_i("Number of mismatches:",i,nof_adrr_mismatch);
+                //ERROR_i("Expected next sample addr does not match",i,
+                //        expectedNextSamplingAddr_words,endSampleAddr_words[i]);
+                //INFO("waitCounter",waitCounter);
+                ERROR_i("Number of sample addr mismatches:",i,nof_adrr_mismatch);
 //		uint32_t debug_next_sample_addr[NOF_CHANNELS];
 //		for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
 //                    this->getNextSampleAddr(ch,&debug_next_sample_addr[ch]);
@@ -781,8 +792,8 @@ int Sis3302V1410Module::acquisitionStartSingle()
 //		DUMP("debug_next_sample_addr 1",debug_next_sample_addr,NOF_CHANNELS);
             }
 
-            volatile uint32_t reqNofWords = endSampleAddr_words[i];
-            //uint32_t reqNofWords = expectedNextSamplingAddr_words;
+            //uint32_t reqNofWords = endSampleAddr_words[i];
+            uint32_t reqNofWords = expectedNextSamplingAddr_words;
             //INFO_i("reqNofWords",i,reqNofWords);
             this->readAdcChannelSinglePage(i,reqNofWords);
             //INFO_i("readLength[i]",i,readLength[i]);
@@ -890,9 +901,8 @@ bool Sis3302V1410Module::dataReady()
 {
     //bool dready = isNotArmedNotBusy();
     //bool dready = isArmedOrBusy();
-    int ret = this->waitForAddrThreshold();
-    if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
-    return true;
+
+    return isAboveAddressThreshold();
 }
 
 /*! This function does the readout of the ADC memory

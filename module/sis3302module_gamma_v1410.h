@@ -327,6 +327,7 @@ public:
     bool isArmed(uint8_t bank);
     bool isArmedOrBusy();
     bool isArmedNotBusy(uint8_t bank);
+    bool isAboveAddressThreshold();
     bool isNotArmedNotBusy();
 
     int write_dac_offset(unsigned int *offset_value_array);

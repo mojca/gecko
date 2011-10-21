@@ -130,11 +130,20 @@ int Caen820Module::acquire (Event *ev) {
     unsigned evlen = getNofActiveChannels ();
     uint32_t buffer [33] = {0};
     AbstractInterface *iface = getInterface ();
+    bool sem = RunManager::ref().isSingleEventMode();
 
     if (!iface)
         return -1;
 
-    while (!err) {
+    // Read event number register
+    uint16_t nof_events_stored;
+    err = iface->readA32D16(conf_.baddr + CAEN820_MEB_EV_NUM,&nof_events_stored);
+
+    if(sem && nof_events_stored > 1) {
+        std::cout << "Error: " << nof_events_stored << " events stored in CAEN820_MEB." << std::endl;
+    }
+
+    while (!err && nof_events_stored > 0) {
         int toread = evlen + (conf_.hdr_enable ? 1 : 0);
         uint32_t got = 0;
 
@@ -145,10 +154,10 @@ int Caen820Module::acquire (Event *ev) {
             std::cout << "Error " << err << " reading CAEN820_MEB" << std::endl;
             return err;
         }
+        --nof_events_stored;
 
-        bool sem = RunManager::ref ().isSingleEventMode ();
         bool go_on = dmx_.processData (ev, buffer, got);
-        if (sem || ! go_on) {
+        if (false && sem || ! go_on) {
             //dataClear ();
             break;
         }

@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/types.h>
 #include <sys/resource.h>
 
-#define GECKO_PROFILE_RUN
+//#define GECKO_PROFILE_RUN
 
 #ifdef GECKO_PROFILE_RUN
 #include <time.h>
@@ -108,7 +108,7 @@ void RunThread::run()
     printf("threadId: 0x%08x\n",(uint)threadId);
 
     QThread* thisThread = this->thread()->currentThread();
-    printf("thisThread: 0x%08x\n",(uint*)thisThread);
+    printf("thisThread: 0x%08p\n",(unsigned int*)thisThread);
 
     pid_t tid;
     tid = syscall(SYS_gettid);
@@ -141,6 +141,10 @@ void RunThread::run()
     mandatories = ModuleManager::ref ().getMandatorySlots ().toList ();
     createConnections();
 
+    // Hold external trigger logic
+    InterfaceManager::ptr ()->getMainInterface()->setOutput1(true);
+
+    // Reset modules
     foreach (AbstractModule *m, modules) {
         m->reset ();
         if (m->configure ())
@@ -148,6 +152,11 @@ void RunThread::run()
     }
 
     std::cout << "Run thread started." << std::endl;
+
+    // Wait for reset to be done
+    sleep(2);
+
+
 
 #ifdef GECKO_PROFILE_RUN
     clock_gettime (CLOCK_MONOTONIC, &starttime);
@@ -157,6 +166,10 @@ void RunThread::run()
         timeForModule[i] = 0;
     }
 #endif
+
+    // Allow external trigger logic
+    InterfaceManager::ptr ()->getMainInterface()->setOutput1(false);
+
     if(interruptBased)
     {
         exec();
@@ -193,18 +206,27 @@ bool RunThread::acquire(AbstractModule* _trg)
     for (int i = 0; i < modulesz; ++i)
     {
         AbstractModule* curM = modules [i];
+
+        imgr->getMainInterface()->setOutput2(true);
         if (curM == _trg || curM->dataReady ()) {
+            imgr->getMainInterface()->setOutput2(false);
+
+
 #ifdef GECKO_PROFILE_RUN
             struct timespec st, et;
             clock_gettime (CLOCK_MONOTONIC, &st);
 #endif
-
+            imgr->getMainInterface()->setOutput2(true); // VETO signal for DAQ readout
             curM->acquire(ev);
-
+            imgr->getMainInterface()->setOutput2(false); // VETO signal for DAQ readout
 #ifdef GECKO_PROFILE_RUN
             clock_gettime (CLOCK_MONOTONIC, &et);
             timeForModule[i] += (et.tv_sec - st.tv_sec) * 1000000000 + (et.tv_nsec - st.tv_nsec);
 #endif
+//            if(curM->dataReady()) {
+//                std::cout << "RunThread:acquire: ERROR: module " << curM->getName().toStdString()
+//                          << " is still DRDY after acquisition" << std::endl;
+//            }
         }
     }
 
