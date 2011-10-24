@@ -239,6 +239,7 @@ typedef struct {
 // Counter reset mode
 #define MADC32V2_VAL_RST_COUNTER_AB_ALL_A       0x1
 #define MADC32V2_VAL_RST_COUNTER_AB_ALL_B       0x2
+#define MADC32V2_VAL_RST_COUNTER_AB_ALL         0x3
 #define MADC32V2_VAL_RST_COUNTER_AB_A_EXT       0xb
 
 // Timestamp source:
@@ -253,6 +254,7 @@ typedef struct {
 #define MADC32V2_VAL_STOP_COUNTER_B_STOP        0x1
 #define MADC32V2_VAL_STOP_COUNTER_TS_RUN        0x0
 #define MADC32V2_VAL_STOP_COUNTER_TS_STOP       0x2
+#define MADC32V2_VAL_STOP_COUNTER_BOTH          0x3
 
 // Mesytec control bus:
 // ====================
@@ -280,7 +282,6 @@ typedef struct {
 #define MADC32V2_VAL_RC_OPCODE_WRITE_DATA       0x16
 #define MADC32V2_VAL_RC_OPCODE_READ_DATA        0x18
 
-
 // Offsets
 #define MADC32V2_OFF_DATA_SIG   30
 
@@ -295,6 +296,10 @@ typedef struct {
 
 #define MADC32V2_OFF_CBLT_ADDRESS 24
 #define MADC32V2_OFF_MCST_ADDRESS 24
+
+#define MADC32V2_OFF_ECL_TERMINATION_GATE_0 0
+#define MADC32V2_OFF_ECL_TERMINATION_GATE_1 1
+#define MADC32V2_OFF_ECL_TERMINATION_FCLEAR 2
 
 // Lengths
 #define MADC32V2_LEN_DATA_SIG   2

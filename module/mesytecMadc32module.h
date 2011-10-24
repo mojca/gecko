@@ -173,19 +173,26 @@ public:
 
     int readoutReset();
     int startAcquisition();
+    int stopAcquisition();
     int fifoReset();
 
-    int counterResetAB(uint8_t counter);
-    int stopCounter(uint8_t counter);
+    inline int counterResetAll();
+    inline int counterResetAB(uint8_t counter);
+    inline int stopCounter(uint8_t counter);
 
+    // getters
     inline uint16_t getFirmwareRevision();
     inline uint16_t getBufferDataLength(); // Units are as set in data_length_format
     inline bool getDataReady();
+    int getAllCounters();
     inline uint32_t getEventCounter();
     inline uint32_t getTimestampCounter();
     inline uint32_t getAdcBusyTime();
     inline uint32_t getGate1Time();
     inline uint64_t getTime();
+
+    // checks
+    bool checkFirmware();
 
     // Remote control bus control
     int writeRcBus(uint8_t addr, uint16_t data);
@@ -223,9 +230,14 @@ public slots:
 private:
     MesytecMadc32ModuleConfig conf_;
 
+    uint16_t firmware;
     uint32_t event_counter;
+    uint32_t timestamp_counter;
+    uint32_t adc_busy_counter;
+    uint32_t gate1_time_counter;
+    uint32_t time_counter;
+    uint32_t buffer_data_length; // unit depends of conf_.data_length_format
     uint32_t data [MADC32V2_NUM_CHANNELS];
-    uint32_t buffer_data_length;
 
     MesytecMadc32Demux dmx_;
     QVector<EventSlot*> evslots_;
