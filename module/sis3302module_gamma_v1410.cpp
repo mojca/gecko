@@ -343,7 +343,7 @@ int Sis3302V1410Module::configure()
 
     resetSampleLogic();
 
-    REG_DUMP();
+    //REG_DUMP();
 
     return ret;
 }
@@ -592,6 +592,16 @@ int Sis3302V1410Module::waitForNotBusy()
     return (cnt < conf.poll_count);
 }
 
+bool Sis3302V1410Module::isAboveAddressThreshold()
+{
+    bool ret = false;
+    addr = conf.base_addr + SIS3302_V1410_ACQUISITION_CONTROL; data = 0;
+    if(getInterface()->readA32D32(addr,&data) != 0) {
+        printf("Error %d at VME READ SIS3302_V1410_ACQUISITION_CONTROL\n",ret);
+    }
+    return ((data & SIS3302_V1410_MSK_ACQ_CTRL_END_ADDR_THR) == SIS3302_V1410_MSK_ACQ_CTRL_END_ADDR_THR);
+}
+
 int Sis3302V1410Module::waitForAddrThreshold()
 {
     //printf("sis3302: waitForAddrThreshold \n");
@@ -738,8 +748,9 @@ int Sis3302V1410Module::acquisitionStartSingle()
     //INFO("Arming bank 1");
     //ret = this->arm(1);
     //INFO("Waiting for Addr Threshold");
-    //ret = this->waitForAddrThreshold();
-    //if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
+
+    ret = this->waitForAddrThreshold();
+    if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
 
     //INFO("Disarming bank 1");
     ret = this->disarm();
@@ -769,19 +780,20 @@ int Sis3302V1410Module::acquisitionStartSingle()
 
             if(expectedNextSamplingAddr_words != endSampleAddr_words[i]) {
                 ++nof_adrr_mismatch;
-                ERROR_i("Expected next sample addr does not match",i,
-                        expectedNextSamplingAddr_words,endSampleAddr_words[i]);
-                ERROR_i("Number of mismatches:",i,nof_adrr_mismatch);
-		uint32_t debug_next_sample_addr[NOF_CHANNELS];
-		for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
-			this->getNextSampleAddr(ch,&debug_next_sample_addr[ch]);
-			debug_next_sample_addr[ch] /= 2;
-		}
-		DUMP("debug_next_sample_addr 1",debug_next_sample_addr,NOF_CHANNELS);
+                //ERROR_i("Expected next sample addr does not match",i,
+                //        expectedNextSamplingAddr_words,endSampleAddr_words[i]);
+                //INFO("waitCounter",waitCounter);
+                ERROR_i("Number of sample addr mismatches:",i,nof_adrr_mismatch);
+//		uint32_t debug_next_sample_addr[NOF_CHANNELS];
+//		for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
+//                    this->getNextSampleAddr(ch,&debug_next_sample_addr[ch]);
+//                    debug_next_sample_addr[ch] /= 2;
+//		}
+//		DUMP("debug_next_sample_addr 1",debug_next_sample_addr,NOF_CHANNELS);
             }
 
-            uint32_t reqNofWords = endSampleAddr_words[i];
-            //uint32_t reqNofWords = expectedNextSamplingAddr_words;
+            //uint32_t reqNofWords = endSampleAddr_words[i];
+            uint32_t reqNofWords = expectedNextSamplingAddr_words;
             //INFO_i("reqNofWords",i,reqNofWords);
             this->readAdcChannelSinglePage(i,reqNofWords);
             //INFO_i("readLength[i]",i,readLength[i]);
@@ -872,6 +884,9 @@ int Sis3302V1410Module::writeToBuffer(Event *ev)
         dmx.setMultiEvent(false);
         dmx.setNofEvents(1);
     }
+
+    dmx.processRaw (ev, readBuffer, readLength);
+
     for(unsigned int i = 0; i < NOF_CHANNELS; i++)
     {
         //printf("sis3302: ch %d: Trying to write to buffer (ev = 0x%x)\n",i,ev);
@@ -886,9 +901,8 @@ bool Sis3302V1410Module::dataReady()
 {
     //bool dready = isNotArmedNotBusy();
     //bool dready = isArmedOrBusy();
-    int ret = this->waitForAddrThreshold();
-    if(ret == false) ERROR("timeout while waiting for address threshold flag\n",ret);
-    return true;
+
+    return isAboveAddressThreshold();
 }
 
 /*! This function does the readout of the ADC memory
@@ -937,7 +951,8 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
             addr+=4;
         }
         readLength[ch] = _reqNofWords;
-        break;}
+        }
+        break;
 
     case Sis3302V1410config::vme2E: {
         uint32_t words = 0;
@@ -957,7 +972,8 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
                   "mismatch of a:_reqNofWords and b:words",_reqNofWords,words);
         }
         readLength[ch] = words;
-        break;}
+        }
+        break;
 
     case Sis3302V1410config::vmeBLT32: {
         uint32_t words = 0;
@@ -971,12 +987,47 @@ int Sis3302V1410Module::readAdcChannelSinglePage(int ch, uint32_t _reqNofWords)
                   "mismatch of a:_reqNofWords and b:words",_reqNofWords,words);
         }
         readLength[ch] = words;
-        break;}
+        }
+        break;
+
+    case Sis3302V1410config::vmeMBLT64: {
+        uint32_t words = 0;
+        if(_reqNofWords & 0x1) ++_reqNofWords;
+        ret = iface->readA32MBLT64(addr,&readBuffer[ch][0],_reqNofWords,&words);
+        if(ret != 0) {
+            ERROR("readAdcChannelSinglePage with vmeMBLT64"
+                   "read error in ch = a, ret = b",ch,ret);
+        }
+        if(_reqNofWords != words) {
+            ERROR("readAdcChannelSinglePage with vmeMBLT64"
+                  "mismatch of a:_reqNofWords and b:words",_reqNofWords,words);
+        }
+        readLength[ch] = words;
+        }
+        break;
+
+    case Sis3302V1410config::vmeDMA32: {
+        uint32_t words = 0;
+        ret = iface->readA32DMA32(addr,&readBuffer[ch][0],_reqNofWords,&words);
+        if(ret != 0) {
+            ERROR("readAdcChannelSinglePage with vmeDMA32"
+                   "read error in ch = a, ret = b",ch,ret);
+        }
+        if(_reqNofWords != words) {
+            ERROR("readAdcChannelSinglePage with vmeDMA32"
+                  "mismatch of a:_reqNofWords and b:words",_reqNofWords,words);
+        }
+        readLength[ch] = words;
+        }
+        break;
 
     default:
         ret = false;
         break;
     }
+
+    // Store channel length in first word 0xTTTLLLI (T = time, L = Length, I = ID)
+    readBuffer[ch][0] |= (readLength[ch]  << 4);
 
     return ret;
 }

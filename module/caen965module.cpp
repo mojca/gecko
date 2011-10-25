@@ -213,6 +213,10 @@ int Caen965Module::acquire (Event* ev) {
     ret = acquireSingle (data, &rd);
     if (ret == 0) writeToBuffer(ev);
     else printf("Caen965Module::Error at acquireSingle\n");
+    //while(dataReady()) {
+    //    acquireSingle(data,&rd);
+    //    printf("Caen965Module: Error: Still DRDY after acquisistion\n");
+    //}
 
     return rd;
 }
@@ -230,6 +234,7 @@ int Caen965Module::acquireSingle (uint32_t *data, uint32_t *rd) {
     uint32_t addr = conf_.base_addr + CAEN965_MEB;
     //printf("caen965: acquireSingle from addr = 0x%08x",addr);
     int ret = getInterface ()->readA32MBLT64 (addr, data, CAEN_V965_MAX_NOF_WORDS, rd);
+    //int ret = getInterface ()->readA32BLT32(addr, data, CAEN_V965_MAX_NOF_WORDS, rd);
     if (!*rd && ret && !getInterface ()->isBusError (ret)) {
         printf ("Error %d at CAEN965_MEB\n", ret);
         return ret;
