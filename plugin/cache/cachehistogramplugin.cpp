@@ -204,6 +204,8 @@ void CacheHistogramPlugin::createSettings(QGridLayout * l)
         nofBinsBox->addItem("4096",4096);
         nofBinsBox->addItem("8192",8192);
         nofBinsBox->addItem("16384",16384);
+        nofBinsBox->addItem("32768",32768);
+        nofBinsBox->addItem("65536",65536);
         nofBinsBox->setCurrentIndex(nofBinsBox->findData(conf.nofBins,Qt::UserRole));
 
         numCountsLabel = new QLabel (tr ("0"));

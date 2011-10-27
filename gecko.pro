@@ -90,8 +90,8 @@ SOURCES += core/baseplugin.cpp \
     module/sis3302module_gamma_v1410.cpp \
     module/sis3302ui_gamma_v1410.cpp \
     module/sis3302dmx_gamma_v1410.cpp \
-    plugin/output/rawwritesis3302v1410plugin.cpp \
-    module/mesytecMadc32module.cpp
+    plugin/output/rawwritesis3302v1410plugin.cpp #\
+    #module/mesytecMadc32module.cpp
 HEADERS += core/addeditdlgs.h \
     core/geckoremote.h \
     core/pluginthread.h \
@@ -185,6 +185,6 @@ HEADERS += core/addeditdlgs.h \
     module/sis3302ui_gamma_v1410.h \
     module/sis3302dmx_gamma_v1410.h \
     plugin/output/rawwritesis3302v1410plugin.h \
-    module/mesytec_madc_32_v2.h \
-    module/mesytecMadc32module.h
-OTHER_FILES +=
+    #module/mesytec_madc_32_v2.h \
+    #module/mesytecMadc32module.h
+#OTHER_FILES +=

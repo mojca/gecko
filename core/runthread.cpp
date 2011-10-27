@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/types.h>
 #include <sys/resource.h>
 
-//#define GECKO_PROFILE_RUN
+#define GECKO_PROFILE_RUN
 
 #ifdef GECKO_PROFILE_RUN
 #include <time.h>

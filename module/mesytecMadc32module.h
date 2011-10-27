@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "basemodule.h"
 #include "baseplugin.h"
-#include "mesytecMadc32dmx.h"
+//#include "mesytecMadc32dmx.h"
 #include "pluginmanager.h"
 #include "mesytec_madc_32_v2.h"
 

@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "mesytecMadc32module.h"
-#include "mesytecMadc32ui.h"
+//#include "mesytecMadc32ui.h"
 #include "modulemanager.h"
 #include "runmanager.h"
 #include "confmap.h"

@@ -132,6 +132,8 @@ private:
     Caen792Module (int _id, const QString &, bool _isqdc);
     void writeToBuffer(Event *ev);
 
+    void REG_DUMP();
+
 public slots:
     void singleShot (uint32_t *data, uint32_t *rd);
     virtual void prepareForNextAcquisition () {}

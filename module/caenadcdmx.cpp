@@ -79,15 +79,25 @@ bool CaenADCDemux::processData (Event* ev, uint32_t *data, uint32_t len, bool si
 {
     //std::cout << "DemuxCaenADCPlugin Processing" << std::endl;
     it = data;
+    bool hasHeaderTwice = false;
 
     while(it != (data+len))
     {
+        //printf("0x%08x\n",*it);
+
         id = 0x0 | (((*it) >> 24) & 0x7 );
 
         if(id == 0x2)
         {
             if(!inEvent) startNewEvent();
-            else std::cout << "Already in event!" << std::endl;
+            else {
+#define CAENV775_V501_BUG_NO_EVENT_TRAILER
+#ifdef CAENV775_V501_BUG_NO_EVENT_TRAILER
+                hasHeaderTwice = true; // Handle bug in firmware 5.01 (v775)
+#else
+                std::cout << "Already in event!" << std::endl;
+#endif
+            }
         }
         else if(id == 0x0)
         {
@@ -107,7 +117,8 @@ bool CaenADCDemux::processData (Event* ev, uint32_t *data, uint32_t len, bool si
         else if(id == 0x6)
         {
             // invalid data
-            std::cout << "Invalid data word " << std::hex << (*it) << std::endl;
+            if(hasHeaderTwice) finishEvent(ev); // Handle bug in firmware 5.01 (v775)
+            else std::cout << "Invalid data word " << std::hex << (*it) << std::endl;
         }
         else
         {

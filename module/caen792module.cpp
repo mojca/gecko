@@ -128,6 +128,9 @@ int Caen792Module::configure () {
     }
 
     ret = counterReset ();
+
+    //REG_DUMP();
+
     return ret;
 }
 
@@ -169,6 +172,8 @@ int Caen792Module::reset () {
 uint16_t Caen792Module::getInfo () const {
 	if (!info_)
         getInterface ()->readA32D16 (conf_.base_addr + CAEN792_FIRMWARE, &info_);
+        //printf("caen792module: read firmware info from 0x%08x --> 0x%04x\n",conf_.base_addr+CAEN792_FIRMWARE,info_);
+        //fflush(stdout);
 	return info_;
 }
 
@@ -228,11 +233,19 @@ void Caen792Module::writeToBuffer(Event *ev)
 
 int Caen792Module::acquireSingle (uint32_t *data, uint32_t *rd) {
     *rd = 0;
-    int ret = getInterface ()->readA32MBLT64 (conf_.base_addr + CAEN792_MEB, data, 34, rd);
+    //int ret = getInterface ()->readA32MBLT64 (conf_.base_addr + CAEN792_MEB, data, 34, rd);
+    int ret = getInterface ()->readA32BLT32(conf_.base_addr + CAEN792_MEB, data, 34, rd);
     if (!*rd && ret && !getInterface ()->isBusError (ret)) {
         printf ("Error %d at CAEN792_MEB\n", ret);
         return ret;
     }
+
+//    printf("caen792/775 event dump (len == %d)\n",*rd);
+//    for(int i = 0; i < *rd; ++i) {
+//        printf("%d: 0x%08x\n",i,data[i]);
+//    }
+//    fflush(stdout);
+
     return 0;
 }
 
@@ -319,6 +332,25 @@ void Caen792Module::setBaseAddress (uint32_t baddr) {
 uint32_t Caen792Module::getBaseAddress () const {
     return conf_.base_addr;
 }
+
+void Caen792Module::REG_DUMP() {
+    int nof_reg_groups = 1;
+    uint32_t start_addr[] = {0x00001000};
+    uint32_t end_addr[]   = {0x000010BE};
+    uint16_t data;
+
+    printf("\nSis3302V1410Module::REG_DUMP:\n");
+    for(int i = 0; i < nof_reg_groups; ++i) {
+        for(uint32_t addr = conf_.base_addr + start_addr[i]; addr < conf_.base_addr + end_addr[i]; addr += 2) {
+            if(getInterface()->readA32D16(addr,&data) == 0) {
+                printf("0x%08x: 0x%04x\n",addr,data);
+            }
+        }
+        printf("*\n");
+    }
+    fflush(stdout);
+}
+
 /*!
 \page caen775mod Caen V775 TDC
 <b>Module name:</b> \c caen775

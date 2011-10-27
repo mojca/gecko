@@ -783,7 +783,7 @@ int Sis3302V1410Module::acquisitionStartSingle()
                 //ERROR_i("Expected next sample addr does not match",i,
                 //        expectedNextSamplingAddr_words,endSampleAddr_words[i]);
                 //INFO("waitCounter",waitCounter);
-                ERROR_i("Number of sample addr mismatches:",i,nof_adrr_mismatch);
+                //ERROR_i("Number of sample addr mismatches:",i,nof_adrr_mismatch);
 //		uint32_t debug_next_sample_addr[NOF_CHANNELS];
 //		for(int ch = 0; ch < NOF_CHANNELS; ++ch) {
 //                    this->getNextSampleAddr(ch,&debug_next_sample_addr[ch]);
