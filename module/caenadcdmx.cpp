@@ -91,7 +91,7 @@ bool CaenADCDemux::processData (Event* ev, uint32_t *data, uint32_t len, bool si
         {
             if(!inEvent) startNewEvent();
             else {
-#define CAENV775_V501_BUG_NO_EVENT_TRAILER
+//#define CAENV775_V501_BUG_NO_EVENT_TRAILER
 #ifdef CAENV775_V501_BUG_NO_EVENT_TRAILER
                 hasHeaderTwice = true; // Handle bug in firmware 5.01 (v775)
 #else
