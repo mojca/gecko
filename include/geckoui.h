@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef GECKOUI_H
 #define GECKOUI_H
 
+#include <iostream>
+
 #include <QWidget>
 #include <QGroupBox>
 #include <QLabel>
@@ -33,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QMutex>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QSignalMapper>
 #include <QSpinBox>
 #include <QStringList>
@@ -181,6 +184,49 @@ public:
         }
     }
 
+    void addRadioGroupToGroup(QString _tname, QString _gname,
+                              QString _name, QStringList _rnames, QStringList _cnames, QString _align = QString("h"))
+    {
+        QString identifier = _tname+_gname;
+        if (groups.contains(identifier)) {
+            QWidget* g = groups.value(identifier);
+            QGroupBox* b = new QGroupBox(_name,g);
+            QLayout* l;
+            if(_align == QString("h")) {
+                l = new QHBoxLayout;
+            } else {
+                l = new QVBoxLayout;
+            }
+            l->setMargin(0);
+            l->setSpacing(0);
+            b->setLayout(l);
+            g->layout()->addWidget(b);
+            identifier += _name;
+            groups.insert(identifier,b);
+            //cout << "Adding " << identifier.toStdString() << " to groups." << endl;
+            b->setObjectName(identifier);
+            if(!_cnames.isEmpty() && !_rnames.isEmpty())
+            {
+                int cnt = 0;
+                foreach(QString rname, _rnames) {
+                    if(cnt < _cnames.size()) {
+                        QRadioButton* rb = new QRadioButton(rname,b);
+                        QString _cname = _cnames.at(cnt);
+                        rb->setObjectName(_cname);
+                        widgets.insert(_cname,rb);
+                        sm.setMapping(rb,_cname);
+                        connect(rb,SIGNAL(toggled(bool)),&sm,SLOT(map()));
+                        l->addWidget(rb);
+                    } else {
+                        std::cout << "ERROR: No config name for radio button: "
+                                  << rname.toStdString() << std::endl;
+                    }
+                    ++cnt;
+                }
+            }
+        }
+    }
+
     void addUnnamedGroupToGroup(QString _tname, QString _gname, QString _name)
     {
         QString identifier = _tname+_gname;
@@ -307,9 +353,12 @@ public:
         QString identifier = _tname+_gname;
         if (groups.contains(identifier)) {
             QWidget* g = groups.value(identifier);
-            QLineEdit* b = new QLineEdit(g);
+            //QLineEdit* b = new QLineEdit(g);
+            QLabel* b = new QLabel(g);
+            b->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+            b->setAlignment(Qt::AlignRight);
             b->setText(_defaultText);
-            b->setReadOnly(true);
+            //b->setReadOnly(true);
             QWidget* w = attachLabel(b,_name);
             g->layout()->addWidget(w);
             sm.setMapping(b,_cname);

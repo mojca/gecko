@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "mesytecMadc32module.h"
-//#include "mesytecMadc32ui.h"
+#include "mesytecMadc32ui.h"
 #include "modulemanager.h"
 #include "runmanager.h"
 #include "confmap.h"
@@ -32,6 +32,7 @@ static ModuleRegistrar reg1 ("mesytecMadc32", MesytecMadc32Module::create);
 MesytecMadc32Module::MesytecMadc32Module (int i, const QString &n)
     : BaseModule (i, n)
     , firmware(0)
+    , module_id(0)
     , event_counter(0)
     , timestamp_counter(0)
     , adc_busy_counter(0)
@@ -239,15 +240,15 @@ int MesytecMadc32Module::counterResetAB(uint8_t counter) {
     return getInterface()->writeA32D16(conf_.base_addr + MADC32V2_RESET_COUNTER_AB,counter);
 }
 
-int MesytecMadc32Module::irqReset() () {
+int MesytecMadc32Module::irqReset() {
     return getInterface()->writeA32D16(conf_.base_addr + MADC32V2_IRQ_RESET, 1);
 }
 
-int MesytecMadc32Module::irqTest() () {
+int MesytecMadc32Module::irqTest() {
     return getInterface()->writeA32D16(conf_.base_addr + MADC32V2_IRQ_TEST, 1);
 }
 
-int MesytecMadc32Module::irqWithdraw() () {
+int MesytecMadc32Module::irqWithdraw() {
     return getInterface()->writeA32D16(conf_.base_addr + MADC32V2_IRQ_WITHDRAW, 1);
 }
 
@@ -281,7 +282,7 @@ int MesytecMadc32Module::reset () {
     counterResetAll();
     fifoReset();
     readoutReset();
-    dataReset();
+    //dataReset();
     return softReset ();
 
 }
@@ -292,18 +293,28 @@ uint16_t MesytecMadc32Module::getBufferDataLength() const {
         return data;
 }
 
-uint16_t MesytecMadc32Module::getFirmwareRevision() const {
+uint16_t MesytecMadc32Module::getFirmwareRevision() {
         if (!firmware)
         getInterface ()->readA32D16 (conf_.base_addr + MADC32V2_FIRMWARE_REVISION, &firmware);
+        conf_.firmware_revision_minor = firmware & 0xff;
+        conf_.firmware_revision_major = (firmware >> 16) & 0xff;
         return firmware;
 }
 
-bool MesytecMadc32Module::checkFirmware() const {
+uint16_t MesytecMadc32Module::getModuleIdConfigured() {
+        if (!module_id)
+        getInterface ()->readA32D16 (conf_.base_addr + MADC32V2_MODULE_ID, &module_id);
+        return module_id;
+}
+
+bool MesytecMadc32Module::checkFirmware()  {
     if(!firmware) getFirmwareRevision();
     if(firmware != conf_.firmware_expected) {
         printf("MesytecMadc32Module::checkFirmware : Firmware mismatch (0x%04x, expected: 0x%04x)\n",
                firmware,conf_.firmware_expected);
+        return false;
     }
+    return true;
 }
 
 int MesytecMadc32Module::getAllCounters() {
@@ -429,7 +440,7 @@ int MesytecMadc32Module::acquire (Event* ev) {
     if (ret == 0) writeToBuffer(ev);
     else printf("MesytecMadc32Module::Error at acquireSingle\n");
 
-    return rd;
+    return buffer_data_length;
 }
 
 void MesytecMadc32Module::writeToBuffer(Event *ev)
@@ -506,6 +517,19 @@ void MesytecMadc32Module::singleShot (uint32_t *data, uint32_t *rd) {
         acquireSingle (data, rd);
 
     stopAcquisition();
+
+    // Unpack the data
+
+}
+
+int MesytecMadc32Module::updateModuleInfo() {
+    uint16_t firmware_from_module = getFirmwareRevision();
+    uint16_t module_id_from_module = getModuleIdConfigured();
+
+    Q_UNUSED (firmware_from_module)
+    Q_UNUSED (module_id_from_module)
+
+    return 0;
 }
 
 typedef ConfMap::confmap_t<MesytecMadc32ModuleConfig> confmap_t;
@@ -517,6 +541,8 @@ static const confmap_t confmap [] = {
     confmap_t ("irq_level", &MesytecMadc32ModuleConfig::irq_level),
     confmap_t ("irq_vector", &MesytecMadc32ModuleConfig::irq_vector),
     confmap_t ("irq_threshold", &MesytecMadc32ModuleConfig::irq_threshold),
+    confmap_t ("rc_module_id_read", &MesytecMadc32ModuleConfig::rc_module_id_read),
+    confmap_t ("rc_module_id_write", &MesytecMadc32ModuleConfig::rc_module_id_write),
     confmap_t ("max_transfer_data", &MesytecMadc32ModuleConfig::max_transfer_data),
     confmap_t ("cblt_mcst_ctrl", &MesytecMadc32ModuleConfig::cblt_mcst_ctrl),
     confmap_t ("cblt_addr", &MesytecMadc32ModuleConfig::cblt_addr),
@@ -530,11 +556,15 @@ static const confmap_t confmap [] = {
     confmap_t ("enable_termination_input_gate0", &MesytecMadc32ModuleConfig::enable_termination_input_gate0),
     confmap_t ("enable_termination_input_fast_clear", &MesytecMadc32ModuleConfig::enable_termination_input_fast_clear),
     confmap_t ("time_stamp_divisor", &MesytecMadc32ModuleConfig::time_stamp_divisor),
+    confmap_t ("mcst_cblt_none", &MesytecMadc32ModuleConfig::mcst_cblt_none),
+    confmap_t ("enable_cblt_mode", &MesytecMadc32ModuleConfig::enable_cblt_mode),
+    confmap_t ("enable_mcst_mode", &MesytecMadc32ModuleConfig::enable_mcst_mode),
+    confmap_t ("enable_cblt_first", &MesytecMadc32ModuleConfig::enable_cblt_first),
+    confmap_t ("enable_cblt_last", &MesytecMadc32ModuleConfig::enable_cblt_last),
+    confmap_t ("enable_cblt_middle", &MesytecMadc32ModuleConfig::enable_cblt_middle),
     confmap_t ("pollcount", &MesytecMadc32ModuleConfig::pollcount),
-    confmap_t ("hold_delay_0", &MesytecMadc32ModuleConfig::hold_delay[0]),
-    confmap_t ("hold_delay_1", &MesytecMadc32ModuleConfig::hold_delay[1]),
-    confmap_t ("hold_width_0", &MesytecMadc32ModuleConfig::hold_width[0]),
-    confmap_t ("hold_width_1", &MesytecMadc32ModuleConfig::hold_width[1]),
+    confmap_t ("vme_mode", (uint16_t MesytecMadc32ModuleConfig::*)
+                &MesytecMadc32ModuleConfig::vme_mode),
     confmap_t ("addr_source", (uint16_t MesytecMadc32ModuleConfig::*)
                 &MesytecMadc32ModuleConfig::addr_source),
     confmap_t ("data_length_format", (uint16_t MesytecMadc32ModuleConfig::*)
@@ -587,6 +617,18 @@ void MesytecMadc32Module::applySettings (QSettings *settings) {
         if (settings->contains (key))
             conf_.enable_channel[i] = settings->value (key).toBool ();
     }
+    for (int i = 0; i < 2; ++i) {
+        QString key = QString ("hold_delay_%1").arg (i);
+        if (settings->contains (key)) {
+            conf_.hold_delay[i] = settings->value (key).toUInt ();
+            //printf("Found key %s with value %d\n",key.toStdString().c_str(),conf_.thresholds[i]);
+        }
+        key = QString ("hold_width_%1").arg (i);
+        if (settings->contains (key)) {
+            conf_.hold_width[i] = settings->value (key).toUInt ();
+            //printf("Found key %s with value %d\n",key.toStdString().c_str(),conf_.thresholds[i]);
+        }
+    }
 
     settings->endGroup ();
     std::cout << "done" << std::endl;
@@ -598,11 +640,17 @@ void MesytecMadc32Module::saveSettings (QSettings *settings) {
     std::cout << "Saving settings for " << getName ().toStdString () << "... ";
     settings->beginGroup (getName ());
     ConfMap::save (settings, &conf_, confmap);
-    for (int i = 0; i < 32; ++i) {
-            QString key = QString ("thresholds%1").arg (i);
-            settings->setValue (key, conf_.thresholds [i]);
-            key = QString ("enable_channel%1").arg (i);
-            settings->setValue (key, conf_.enable_channel [i]);
+    for (int i = 0; i < MADC32V2_NUM_CHANNELS; ++i) {
+        QString key = QString ("thresholds%1").arg (i);
+        settings->setValue (key, conf_.thresholds [i]);
+        key = QString ("enable_channel%1").arg (i);
+        settings->setValue (key, conf_.enable_channel [i]);
+    }
+    for (int i = 0; i < 2; ++i) {
+        QString key = QString ("hold_delay_%1").arg (i);
+        settings->setValue (key, conf_.hold_delay [i]);
+        key = QString ("hold_width_%1").arg (i);
+        settings->setValue (key, conf_.hold_width [i]);
     }
     settings->endGroup ();
     std::cout << "done" << std::endl;

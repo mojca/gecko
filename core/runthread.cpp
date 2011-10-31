@@ -108,7 +108,7 @@ void RunThread::run()
     printf("threadId: 0x%08x\n",(uint)threadId);
 
     QThread* thisThread = this->thread()->currentThread();
-    printf("thisThread: 0x%08p\n",(unsigned int*)thisThread);
+    printf("thisThread: 0x%8p\n",(unsigned int*)thisThread);
 
     pid_t tid;
     tid = syscall(SYS_gettid);
@@ -119,10 +119,10 @@ void RunThread::run()
 
     rlimit rl_nice;
     getrlimit(RLIMIT_NICE,&rl_nice);
-    printf("rlimit nice: %d, %d\n",rl_nice.rlim_cur,rl_nice.rlim_max);
+    printf("rlimit nice: %d, %d\n",(int)rl_nice.rlim_cur,(int)rl_nice.rlim_max);
     rlimit rl_prio;
     getrlimit(RLIMIT_RTPRIO,&rl_prio);
-    printf("rlimit rtprio: %d, %d\n",rl_prio.rlim_cur,rl_prio.rlim_max);
+    printf("rlimit rtprio: %d, %d\n",(int)rl_prio.rlim_cur,(int)rl_prio.rlim_max);
 
     struct sched_param old_param;
     sched_getparam(tid,&old_param);

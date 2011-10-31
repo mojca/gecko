@@ -315,7 +315,7 @@ void GeckoRemote::processQuery(QStringList query, QHostAddress sender)
 
         if(RunManager::ref().isRunning() && sender == Controller_) {
             datagram += "success ";
-            RunManager::ref ().stop ();
+            RunManager::ref ().stop ("REMOTE STOP");
         }
         else if(sender != Controller_){
             datagram += "failed ";

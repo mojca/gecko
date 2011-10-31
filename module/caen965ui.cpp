@@ -287,7 +287,7 @@ QWidget* Caen965UI::createThresholdsControls()
             thresholdSpinner[ch+1] = new QSpinBox();
             thresholdSpinner[ch+1]->setMaximum(0xffff);
 
-            h->addWidget(new QLabel(tr("Ch %1:").arg(ch)));
+            h->addWidget(new QLabel(tr("Ch %1:").arg(ch/2)));
             h->addWidget(killChannelBox[ch+1]);
             h->addWidget(thresholdSpinner[ch+1]);
             h->addWidget(killChannelBox[ch]);

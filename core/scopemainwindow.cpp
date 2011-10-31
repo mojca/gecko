@@ -856,7 +856,7 @@ void ScopeMainWindow::startAcquisition () {
 }
 
 void ScopeMainWindow::stopAcquisition () {
-    RunManager::ptr ()->stop ();
+    RunManager::ptr ()->stop (runInfoEdit->toPlainText ());
 }
 
 void ScopeMainWindow::applySettings()

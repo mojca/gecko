@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "basemodule.h"
 #include "baseplugin.h"
-//#include "mesytecMadc32dmx.h"
+#include "mesytecMadc32dmx.h"
 #include "pluginmanager.h"
 #include "mesytec_madc_32_v2.h"
 
@@ -46,6 +46,7 @@ struct MesytecMadc32ModuleConfig {
     enum TestPulserMode{tpOff,tpRes1,tpRes2,tpRes3,
                         tpAmp0,tpAmpLow,tpAmpHigh,tpToggle};
     enum TimeStampSource{tsVme,tsExternal};
+    enum VmeMode{vmSingle,vmFIFO,vmBLT32,vmBLT64};
 
     AddressSource addr_source;
     uint32_t base_addr;
@@ -53,6 +54,8 @@ struct MesytecMadc32ModuleConfig {
     uint8_t module_id;
 
     uint16_t firmware_expected;
+    uint8_t firmware_revision_major;
+    uint8_t firmware_revision_minor;
 
     uint8_t irq_level;
     uint8_t irq_vector;
@@ -62,6 +65,12 @@ struct MesytecMadc32ModuleConfig {
     uint8_t cblt_mcst_ctrl;
     uint8_t cblt_addr;
     uint8_t mcst_addr;
+    bool mcst_cblt_none;
+    bool enable_cblt_mode;
+    bool enable_mcst_mode;
+    bool enable_cblt_first;
+    bool enable_cblt_last;
+    bool enable_cblt_middle;
 
     uint16_t thresholds[32];
     bool enable_channel[32];
@@ -105,6 +114,11 @@ struct MesytecMadc32ModuleConfig {
     bool enable_external_time_stamp_reset;
     uint16_t time_stamp_divisor;
 
+    VmeMode vme_mode;
+
+    int rc_module_id_read;
+    int rc_module_id_write;
+
     unsigned int pollcount;
 
     MesytecMadc32ModuleConfig ()
@@ -139,6 +153,9 @@ struct MesytecMadc32ModuleConfig {
           test_pulser_mode(tpOff),
           time_stamp_source(tsVme),
           time_stamp_divisor(1),
+          vme_mode(vmSingle),
+          rc_module_id_read(0),
+          rc_module_id_write(0),
           pollcount (10000)
     {
         for (int i = 0; i < MADC32V2_NUM_CHANNELS; ++i) {
@@ -182,7 +199,8 @@ public:
 
     // getters
     inline uint16_t getFirmwareRevision();
-    inline uint16_t getBufferDataLength(); // Units are as set in data_length_format
+    uint16_t getModuleIdConfigured();
+    inline uint16_t getBufferDataLength() const; // Units are as set in data_length_format
     inline bool getDataReady();
     int getAllCounters();
     inline uint32_t getEventCounter();
@@ -190,6 +208,8 @@ public:
     inline uint32_t getAdcBusyTime();
     inline uint32_t getGate1Time();
     inline uint64_t getTime();
+
+    int updateModuleInfo();
 
     // checks
     bool checkFirmware();
@@ -227,10 +247,16 @@ public slots:
     virtual void prepareForNextAcquisition () {}
     void singleShot (uint32_t *data, uint32_t *rd);
 
-private:
+public:
     MesytecMadc32ModuleConfig conf_;
+    uint32_t current_module_id;
+    uint32_t current_energy[MADC32V2_NUM_CHANNELS];
+    uint32_t current_time_stamp;
+    uint32_t current_resolution;
 
+private:
     uint16_t firmware;
+    uint16_t module_id;
     uint32_t event_counter;
     uint32_t timestamp_counter;
     uint32_t adc_busy_counter;

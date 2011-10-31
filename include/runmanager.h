@@ -129,7 +129,7 @@ public slots:
     /*! Starts a run. The info string will be appended to the start info file*/
     void start(QString info);
     /*! Stops the currently active run. */
-    void stop();
+    void stop(QString info);
     /*! Changes the name of the run. */
     void setRunName(QString newValue);
     /*! Activates single event mode, where only the first event of each acquisition cycle is kept */
@@ -159,7 +159,7 @@ signals:
 
 private:
     void writeRunStartFile (QString info);
-    void writeRunStopFile ();
+    void writeRunStopFile (QString info);
     QString stateToString(State) const;
 
 private slots:
