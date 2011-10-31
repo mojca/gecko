@@ -315,12 +315,12 @@ bool Caen785Module::pollTrigger()
 
 int Caen785Module::acquire(Event *ev)
 {
-    int ret = 0;
-    ret = acquireSingleEventMBLT();
+    int nofRead = 0;
+    nofRead = acquireSingleEventMBLT();
     //ret =  acquireSingleEvent();
     //ret =  acquireSingleEventFIFO();
-    if(ret > 0) writeToBuffer(ev, ret);
-    return ret;
+    if(nofRead > 0) writeToBuffer(ev, nofRead);
+    return nofRead;
 }
 
 int Caen785Module::writeToBuffer(Event *ev, uint32_t nofWords)
@@ -360,7 +360,8 @@ int Caen785Module::acquireSingleEventMBLT()
 
     addr = conf.base_addr + CAEN785_MEB;
     ret = iface->readA32MBLT64(addr,data,34,&nofRead);      // 455 ms
-    if(ret != 0)
+    //ret = iface->readA32BLT32(addr,data,34,&nofRead);      // 455 ms
+    if(!nofRead && ret && !getInterface ()->isBusError (ret))
     {
         printf("Error %d at CAEN785_MEB readA32MBLT64\n",ret);fflush(stdout);
         return -1;

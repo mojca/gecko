@@ -129,6 +129,8 @@ public:
 
     Caen785config *getConfig () { return &conf; }
 
+    void runStartingEvent() { dmx.runStartingEvent(); }
+
     int singleShot();
     int acquireSingleEvent();
     int acquireSingleEventFIFO();

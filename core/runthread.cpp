@@ -207,9 +207,9 @@ bool RunThread::acquire(AbstractModule* _trg)
     {
         AbstractModule* curM = modules [i];
 
-        imgr->getMainInterface()->setOutput2(true);
+        //imgr->getMainInterface()->setOutput2(true);
         if (curM == _trg || curM->dataReady ()) {
-            imgr->getMainInterface()->setOutput2(false);
+            //imgr->getMainInterface()->setOutput2(false);
 
 
 #ifdef GECKO_PROFILE_RUN
