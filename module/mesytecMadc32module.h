@@ -46,7 +46,7 @@ struct MesytecMadc32ModuleConfig {
     enum TestPulserMode{tpOff,tpRes1,tpRes2,tpRes3,
                         tpAmp0,tpAmpLow,tpAmpHigh,tpToggle};
     enum TimeStampSource{tsVme,tsExternal};
-    enum VmeMode{vmSingle,vmFIFO,vmBLT32,vmBLT64};
+    enum VmeMode{vmSingle,vmDMA32,vmFIFO,vmBLT32,vmBLT64,vm2ESST};
 
     AddressSource addr_source;
     uint32_t base_addr;
@@ -156,7 +156,7 @@ struct MesytecMadc32ModuleConfig {
           vme_mode(vmSingle),
           rc_module_id_read(0),
           rc_module_id_write(0),
-          pollcount (10000)
+          pollcount (100000)
     {
         for (int i = 0; i < MADC32V2_NUM_CHANNELS; ++i) {
             enable_channel[i] = true;
@@ -198,16 +198,16 @@ public:
     inline int stopCounter(uint8_t counter);
 
     // getters
-    inline uint16_t getFirmwareRevision();
+    uint16_t getFirmwareRevision();
     uint16_t getModuleIdConfigured();
-    inline uint16_t getBufferDataLength() const; // Units are as set in data_length_format
-    inline bool getDataReady();
+    uint16_t getBufferDataLength() const; // Units are as set in data_length_format
+    bool getDataReady();
     int getAllCounters();
-    inline uint32_t getEventCounter();
-    inline uint32_t getTimestampCounter();
-    inline uint32_t getAdcBusyTime();
-    inline uint32_t getGate1Time();
-    inline uint64_t getTime();
+    uint32_t getEventCounter();
+    uint32_t getTimestampCounter();
+    uint32_t getAdcBusyTime();
+    uint32_t getGate1Time();
+    uint64_t getTime();
 
     int updateModuleInfo();
 
@@ -263,7 +263,9 @@ private:
     uint32_t gate1_time_counter;
     uint32_t time_counter;
     uint32_t buffer_data_length; // unit depends of conf_.data_length_format
-    uint32_t data [MADC32V2_NUM_CHANNELS];
+    uint32_t data [MADC32V2_LEN_EVENT_MAX];
+
+    void REG_DUMP();
 
     MesytecMadc32Demux dmx_;
     QVector<EventSlot*> evslots_;

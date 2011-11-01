@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cstdio>
 #include <cstring>
+#include <unistd.h> // usleep()
 
 using namespace std;
 static ModuleRegistrar reg1 ("mesytecMadc32", MesytecMadc32Module::create);
@@ -228,8 +229,28 @@ int MesytecMadc32Module::configure () {
         if (ret) printf ("Error %d at MADC32V2_THRESHOLD_MEM[%d]\n", ret, i);
     }
 
+    //REG_DUMP();
+
     ret = counterResetAll ();
     return ret;
+}
+
+void MesytecMadc32Module::REG_DUMP() {
+    int nof_reg_groups = 2;
+    uint32_t start_addr[] = {0x00004000, 0x00006000};
+    uint32_t end_addr[]   = {0x0000403e, 0x000060ae};
+    uint16_t data;
+
+    printf("MesytecMadc32Module::REG_DUMP:\n");
+    for(int i = 0; i < nof_reg_groups; ++i) {
+        for(uint32_t addr = conf_.base_addr + start_addr[i]; addr < conf_.base_addr + end_addr[i]; addr += 2) {
+            if(getInterface()->readA32D16(addr,&data) == 0) {
+                printf("0x%08x: 0x%04x\n",addr,data);
+            }
+        }
+        printf("*\n");
+    }
+    fflush(stdout);
 }
 
 int MesytecMadc32Module::counterResetAll () {
@@ -340,6 +361,8 @@ uint32_t MesytecMadc32Module::getEventCounter() {
     ret = iface->readA32D16 (conf_.base_addr + MADC32V2_EVENT_COUNTER_HIGH, &data);
     if (ret) printf ("Error %d at MADC32V2_EVENT_COUNTER_HIGH\n", ret);
     data32 |= (((uint32_t)(data) & 0x0000ffff) << 16);
+
+    printf("Event counter: %d\n",data32);
 
     return data32;
 }
@@ -458,6 +481,7 @@ int MesytecMadc32Module::acquireSingle (uint32_t *data, uint32_t *rd) {
     // Get buffer data length
     uint32_t words_to_read = 0;
     buffer_data_length = getBufferDataLength();
+    //printf("madc32: Event length (buffer_data_length): %d\n",buffer_data_length);
 
     // Translate buffer data length to number of words to read
     switch(conf_.data_length_format) {
@@ -475,24 +499,81 @@ int MesytecMadc32Module::acquireSingle (uint32_t *data, uint32_t *rd) {
         words_to_read = buffer_data_length;
     }
 
+    ++words_to_read;
+    //printf("madc32: Words to read: %d\n",words_to_read);
+
     // Read the data fifo
     uint32_t addr = conf_.base_addr + MADC32V2_DATA_FIFO;
-    printf("madc32: acquireSingle from addr = 0x%08x",addr);
-    int ret = getInterface ()->readA32MBLT64(addr, data, ++words_to_read, rd);
-    if (!*rd && ret && !getInterface ()->isBusError (ret)) {
-        printf ("Error %d at MADC32V2_DATA_FIFO\n", ret);
-        return ret;
+    //printf("madc32: acquireSingle from addr = 0x%08x\n",addr);
+
+    switch(conf_.vme_mode) {
+
+    case MesytecMadc32ModuleConfig::vmFIFO:
+    {
+        //printf("MesytecMadc32ModuleConfig::vmFIFO\n");
+        int ret = getInterface ()->readA32FIFO(addr, data, words_to_read, rd);
+        if (!*rd && ret && !getInterface ()->isBusError (ret)) {
+            printf ("Error %d at MADC32V2_DATA_FIFO with FIFO read\n", ret);
+            return ret;
+        }
+        break;
+    }
+    case MesytecMadc32ModuleConfig::vmDMA32:
+    {
+        //printf("MesytecMadc32ModuleConfig::vmDMA32\n");
+        int ret = getInterface ()->readA32DMA32(addr, data, words_to_read, rd);
+        if (!*rd && ret && !getInterface ()->isBusError (ret)) {
+            printf ("Error %d at MADC32V2_DATA_FIFO with DMA32\n", ret);
+            return ret;
+        }
+        break;
+    }
+    case MesytecMadc32ModuleConfig::vmBLT32:
+    {
+        //printf("MesytecMadc32ModuleConfig::vmBLT32\n");
+        int ret = getInterface ()->readA32BLT32(addr, data, words_to_read, rd);
+        if (!*rd && ret && !getInterface ()->isBusError (ret)) {
+            printf ("Error %d at MADC32V2_DATA_FIFO with BLT32\n", ret);
+            return ret;
+        }
+        break;
+    }
+    case MesytecMadc32ModuleConfig::vmBLT64:
+    {
+        //printf("MesytecMadc32ModuleConfig::vmBLT64\n");
+        int ret = getInterface ()->readA32MBLT64(addr, data, words_to_read, rd);
+        if (!*rd && ret && !getInterface ()->isBusError (ret)) {
+            printf ("Error %d at MADC32V2_DATA_FIFO with MBLT64\n", ret);
+            return ret;
+        }
+        break;
+    }
+    case MesytecMadc32ModuleConfig::vmSingle:
+    {
+        //printf("MesytecMadc32ModuleConfig::vmSingle\n");
+        int idx = 0;
+        for(uint i = 0; i < words_to_read-1; ++i) {
+            int ret = getInterface()->readA32D32(addr,&(data[idx]));
+            if(ret) {
+                printf ("Error %d at MADC32V2_DATA_FIFO with D32\n", ret);
+                return ret;
+            }
+            ++idx;
+        }
+        (*rd) = words_to_read-1;
+        break;
+    }
     }
 
     // Reset readout logic
     readoutReset();
 
     // Dump the data
-    printf("\nEvent dump:\n");
-    for(int i =0; i < (*rd); ++i) {
-        printf("<%d> 0x%08x\n",i,data[i]);
-    }
-    printf("\n"); fflush(stdout);
+//    printf("\nEvent dump:\n");
+//    for(int i = 0; i < (*rd); ++i) {
+//        printf("<%d> 0x%08x\n",i,data[i]);
+//    }
+//    printf("\n"); fflush(stdout);
 
     return 0;
 }
@@ -500,26 +581,97 @@ int MesytecMadc32Module::acquireSingle (uint32_t *data, uint32_t *rd) {
 void MesytecMadc32Module::singleShot (uint32_t *data, uint32_t *rd) {
     bool triggered = false;
 
+    if(!getInterface()->isOpen()) {
+        getInterface()->open();
+    }
+
+    reset();
+    configure();
+
+    usleep(500);
+
     fifoReset();
     startAcquisition();
     readoutReset();
 
+    uint tmp_poll_cnt = conf_.pollcount;
+    conf_.pollcount = 100000;
+
     for (unsigned int i = 0; i < conf_.pollcount; ++i) {
         if (dataReady ()) {
             triggered = true;
+            break;
         }
     }
 
     if (!triggered)
         std::cout << "MADC32: No data after " << conf_.pollcount
-                  << " trigger loops" << std::endl;
+                  << " trigger loops" << std::endl << std::flush;
     else
         acquireSingle (data, rd);
+
+    conf_.pollcount = tmp_poll_cnt;
 
     stopAcquisition();
 
     // Unpack the data
 
+    madc32_header_t header;
+    int idx = 0;
+    header.data = data[idx++];
+
+    if(header.bits.signature != MADC32V2_SIG_HEADER) {
+        printf("Invalid header word signature: %d\n",header.bits.signature);
+    }
+
+//    printf("Header info:\t(0x%08x)\n",header.data);
+//    printf("ADC resolution: %d\n",header.bits.adc_resolution);
+//    printf("Module ID: %d\n",header.bits.module_id);
+//    printf("Data length: %d\n",header.bits.data_length);
+
+//    printf("###############\n");
+
+    if(header.bits.data_length != (*rd)-1) {
+        printf("Data length mismatch: (header.bits.data_length = %d) (read-1 = %d)\n",
+               header.bits.data_length,(*rd)-1);
+        return;
+    }
+
+    for(int i = 0; i < header.bits.data_length-1; ++i) {
+        madc32_data_t datum;
+        datum.data = data[idx++];
+
+        if(datum.bits.signature != MADC32V2_SIG_DATA) {
+            printf("Invalid data word signature: %d\n",datum.bits.signature);
+        }
+
+        if(datum.bits.sub_signature == MADC32V2_SIG_DATA_EVENT) {
+//            printf("Energy (%d): %d\t(0x%08x)\n",datum.bits.channel,datum.bits.value,datum.data);
+        } else {
+            printf("Found word with sub-signature: %d\n",datum.bits.sub_signature);
+        }
+        current_energy[datum.bits.channel] = datum.bits.value;
+    }
+
+    madc32_end_of_event_t trailer;
+    trailer.data = data[idx++];
+
+    if(trailer.bits.signature != MADC32V2_SIG_END) {
+        printf("Invalid trailer word signature: %d\n",trailer.bits.signature);
+    }
+
+//    printf("###############\n");
+
+//    printf("Trailer info:\t(0x%08x)\n",trailer.data);
+//    printf("Trigger counter / Time stamp: %d\n",trailer.bits.trigger_counter);
+
+//    printf("###############\n\n");
+
+    current_module_id = header.bits.module_id;
+    current_resolution = header.bits.adc_resolution;
+    current_time_stamp = trailer.bits.trigger_counter;
+
+    fflush(stdout);
 }
 
 int MesytecMadc32Module::updateModuleInfo() {

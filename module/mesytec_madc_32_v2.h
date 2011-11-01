@@ -23,57 +23,114 @@
 
 typedef union {
     struct {
-        uint32_t signature      :2;
-        uint32_t zero           :6;
-        uint32_t module_id      :8;
-        uint32_t output_format  :1;
-        uint32_t adc_resolution :3;
         uint32_t data_length    :12;
+        uint32_t adc_resolution :3;
+        uint32_t output_format  :1;
+        uint32_t module_id      :8;
+        uint32_t zero           :6;
+        uint32_t signature      :2;
     }bits;
     uint32_t data;
 } madc32_header_t;
 
+//typedef union {
+//    struct {
+//        uint32_t signature      :2;
+//        uint32_t zero           :6;
+//        uint32_t module_id      :8;
+//        uint32_t output_format  :1;
+//        uint32_t adc_resolution :3;
+//        uint32_t data_length    :12;
+//    }bits;
+//    uint32_t data;
+//} madc32_header_t;
+
+
 typedef union {
     struct {
-        uint32_t signature      :2;
-        uint32_t sub_signature  :9;
-        uint32_t channel        :5;
-        uint32_t zero           :1;
-        uint32_t out_of_range   :1;
         uint32_t value          :14;
+        uint32_t out_of_range   :1;
+        uint32_t zero           :1;
+        uint32_t channel        :5;
+        uint32_t sub_signature  :9;
+        uint32_t signature      :2;
     }bits;
     uint32_t data;
 } madc32_data_t;
 
+//typedef union {
+//    struct {
+//        uint32_t signature      :2;
+//        uint32_t sub_signature  :9;
+//        uint32_t channel        :5;
+//        uint32_t zero           :1;
+//        uint32_t out_of_range   :1;
+//        uint32_t value          :14;
+//    }bits;
+//    uint32_t data;
+//} madc32_data_t;
+
+
 typedef union {
     struct {
-        uint32_t signature      :2;
-        uint32_t sub_signature  :9;
-        uint32_t zero           :5;
         uint32_t timestamp      :16;
+        uint32_t zero           :5;
+        uint32_t sub_signature  :9;
+        uint32_t signature      :2;
     } bits;
     uint32_t data;
 } madc32_extended_timestamp_t;
+
+//typedef union {
+//    struct {
+//        uint32_t signature      :2;
+//        uint32_t sub_signature  :9;
+//        uint32_t zero           :5;
+//        uint32_t timestamp      :16;
+//    } bits;
+//    uint32_t data;
+//} madc32_extended_timestamp_t;
+
 
 typedef union {
     uint32_t zero;
 } madc32_dummy_t;
 
+
 typedef union {
     struct {
-        uint32_t signature      :2;
         uint32_t trigger_counter:30;
+        uint32_t signature      :2;
     }bits;
     uint32_t data;
 } madc32_end_of_event_t;
 
+//typedef union {
+//    struct {
+//        uint32_t signature      :2;
+//        uint32_t trigger_counter:30;
+//    }bits;
+//    uint32_t data;
+//} madc32_end_of_event_t;
+
+
 typedef union {
     struct {
-        uint32_t zero           :3;
         uint32_t threshold      :13;
+        uint32_t zero           :3;
     }bits;
     uint32_t data;
 } madc32_threshold_t;
+
+//typedef union {
+//    struct {
+//        uint32_t zero           :3;
+//        uint32_t threshold      :13;
+//    }bits;
+//    uint32_t data;
+//} madc32_threshold_t;
+
+
 
 // Readout reset
 // Single  -> Allow new trigger

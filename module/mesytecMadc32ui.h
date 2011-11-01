@@ -93,6 +93,7 @@ public slots:
     void clicked_reset_button();
     void clicked_fifo_reset_button();
     void clicked_readout_reset_button();
+    void clicked_counter_update_button();
     void clicked_configure_button();
     void clicked_previewButton();
     void clicked_startStopPreviewButton();

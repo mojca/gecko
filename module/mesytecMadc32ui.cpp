@@ -29,7 +29,7 @@ MesytecMadc32UI::MesytecMadc32UI(MesytecMadc32Module* _module)
     createPreviewUI();
 
     previewTimer = new QTimer();
-    previewTimer->setInterval(100);
+    previewTimer->setInterval(50);
     previewTimer->setSingleShot(true);
 
     std::cout << "Instantiated" << _module->getName().toStdString() << "UI" << std::endl;
@@ -142,23 +142,22 @@ void MesytecMadc32UI::createUI()
     tn.append("Ctrl"); nt++; uif.addTab(tn[nt]);
     gn.append("Control"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addUnnamedGroupToGroup(tn[nt],gn[ng],"b0_");
-    uif.addButtonToGroup(tn[nt],gn[ng]+"b0_","Trigger","trigger_button");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b0_","Start","start_button");
     uif.addButtonToGroup(tn[nt],gn[ng]+"b0_","Stop","stop_button");
     uif.addUnnamedGroupToGroup(tn[nt],gn[ng],"b1_");
-    uif.addButtonToGroup(tn[nt],gn[ng]+"b1_","Arm","arm_button");
-    uif.addButtonToGroup(tn[nt],gn[ng]+"b1_","Disarm","disarm_button");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b1_","**Reserved**","reserved_button");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b1_","Readout Reset","readout_reset_button");
     uif.addUnnamedGroupToGroup(tn[nt],gn[ng],"b2_");
     uif.addButtonToGroup(tn[nt],gn[ng]+"b2_","Reset","reset_button");
-    uif.addButtonToGroup(tn[nt],gn[ng]+"b2_","Clear Timestamp","clear_button");
+    uif.addButtonToGroup(tn[nt],gn[ng]+"b2_","FIFO Reset","fifo_reset_button");
     uif.addUnnamedGroupToGroup(tn[nt],gn[ng],"b3_");
     uif.addButtonToGroup(tn[nt],gn[ng]+"b3_","Configure","configure_button");
     uif.addButtonToGroup(tn[nt],gn[ng]+"b3_","Single Shot","singleshot_button");
-    uif.getWidgets()->find("stop_button").value()->setEnabled(false);
 
     // TAB INPUT/OUTPUT Config
     tn.append("I/O"); nt++; uif.addTab(tn[nt]);
     gn.append("Input"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
-    uif.addPopupToGroup(tn[nt],gn[ng],"Input Range","intput_range",(QStringList()
+    uif.addPopupToGroup(tn[nt],gn[ng],"Input Range","input_range",(QStringList()
                                << "4 V" << "8 V" << "10 V" ));
     gn.append("ECL Outputs"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addPopupToGroup(tn[nt],gn[ng],"Gate1 Mode","ecl_gate1_mode",(QStringList()
@@ -237,10 +236,11 @@ void MesytecMadc32UI::createUI()
 
     gn.append("Counters"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addLineEditReadOnlyToGroup(tn[nt],gn[ng],"Event counter","event_counter","0");
-    uif.addLineEditReadOnlyToGroup(tn[nt],gn[ng],"Timestamp Counter","event_counter","0");
+    uif.addLineEditReadOnlyToGroup(tn[nt],gn[ng],"Timestamp Counter","timestamp_counter","0");
     uif.addLineEditReadOnlyToGroup(tn[nt],gn[ng],"ADC busy time","adc_busy_time","0");
     uif.addLineEditReadOnlyToGroup(tn[nt],gn[ng],"Gate 1 time","gate1_time","0");
     uif.addLineEditReadOnlyToGroup(tn[nt],gn[ng],"Time","time","0");
+    uif.addButtonToGroup(tn[nt],gn[ng],"Update","counter_update_button");
 
     // TAB RCBus
     tn.append("RCBus"); nt++; uif.addTab(tn[nt]);
@@ -328,6 +328,8 @@ void MesytecMadc32UI::createPreviewUI()
                     QGroupBox* b = new QGroupBox(tr("Ch: %1").arg(ch));
                     {
                         QGridLayout* lb = new QGridLayout();
+                        lb->setSpacing(0);
+                        lb->setMargin(0);
                         energyValueDisplay[ch] = new QLabel();
                         timestampDisplay[ch] = new QLabel();
                         resolutionDisplay[ch] = new QLabel();
@@ -430,6 +432,7 @@ void MesytecMadc32UI::uiInput(QString _name)
         }
         if(_name == "vme_mode") {
             module->conf_.vme_mode = static_cast<MesytecMadc32ModuleConfig::VmeMode>(cbb->currentIndex());
+            std::cout << "Changed vme_mode to" << module->conf_.vme_mode << std::endl;
         }
         if(_name == "time_stamp_source") {
             module->conf_.time_stamp_source = static_cast<MesytecMadc32ModuleConfig::TimeStampSource>(cbb->currentIndex());
@@ -624,6 +627,7 @@ void MesytecMadc32UI::uiInput(QString _name)
         if(_name == "fifo_reset_button") clicked_fifo_reset_button();
         if(_name == "readout_reset_button") clicked_readout_reset_button();
         if(_name == "configure_button") clicked_configure_button();
+        if(_name == "counter_update_button") clicked_counter_update_button();
         if(_name == "singleshot_button") clicked_singleshot_button();
         if(_name == "update_firmware_button") clicked_update_firmware_button();
     }
@@ -660,6 +664,15 @@ void MesytecMadc32UI::clicked_configure_button()
     module->configure();
 }
 
+void MesytecMadc32UI::clicked_counter_update_button()
+{
+    std::cout << "Clicked counter_update_button" << std::endl;
+    uint32_t ev_cnt = module->getEventCounter();
+    QLabel* ec = (QLabel*) uif.getWidgets()->find("event_counter").value();
+    ec->setText(tr("%1").arg(ev_cnt,2,10));
+    std::cout << "Event counter value: " << ev_cnt << std::endl;
+}
+
 void MesytecMadc32UI::clicked_singleshot_button()
 {
     if(!module->getInterface()) {
@@ -674,7 +687,7 @@ void MesytecMadc32UI::clicked_singleshot_button()
     uint32_t data[MADC32V2_LEN_EVENT_MAX];
     uint32_t rd = 0;
     module->singleShot(data,&rd);
-    printf("MesytecMadc32UI: singleShot: Read %d words:\n",rd);
+    //printf("MesytecMadc32UI: singleShot: Read %d words:\n",rd);
 
     updatePreview();
 
@@ -687,9 +700,9 @@ void MesytecMadc32UI::clicked_update_firmware_button()
 {
     module->updateModuleInfo();
     QLineEdit* m = (QLineEdit*) uif.getWidgets()->find("module_id").value();
-    QLineEdit* f = (QLineEdit*) uif.getWidgets()->find("firmware").value();
-    f->setText(tr("%1.%2").arg(module->conf_.firmware_revision_major,2,16).arg(module->conf_.firmware_revision_minor,2,16));
-    m->setText(tr("0x%1").arg(module->conf_.module_id,4,16));
+    QLabel* f = (QLabel*) uif.getWidgets()->find("firmware").value();
+    f->setText(tr("%1.%2").arg(module->conf_.firmware_revision_major,2,16,QChar('0')).arg(module->conf_.firmware_revision_minor,2,16,QChar('0')));
+    m->setText(tr("0x%1").arg(module->conf_.module_id,4,16,QChar('0')));
 }
 
 void MesytecMadc32UI::clicked_previewButton()
@@ -748,10 +761,11 @@ void MesytecMadc32UI::updatePreview()
             resolutionDisplay[ch]->setText(tr("%1").arg(module->current_resolution));
 
             // HIST data
-            int nof_bins = 160;
+            int nof_bins = 1024;
             previewData[ch].resize(nof_bins);
             //printf("Channel size: %d\n",previewData[ch].size());
-            int current_bin = ( 8192./((double)(module->current_energy[ch]) )) * nof_bins;
+            int current_bin = ((double)(nof_bins)/1024.)*((double)(module->current_energy[ch]) );
+            printf("Current bin: %d \n",current_bin);
             if(current_bin > 0 && current_bin < nof_bins) {
                 previewData[ch][current_bin]++;
             }
@@ -832,7 +846,14 @@ void MesytecMadc32UI::applySettings()
             if(w->objectName() == "ecl_busy_mode") w->setCurrentIndex(module->conf_.ecl_busy_mode);
             if(w->objectName() == "nim_gate1_mode") w->setCurrentIndex(module->conf_.nim_gate1_mode);
             if(w->objectName() == "nim_fclear_mode") w->setCurrentIndex(module->conf_.nim_fclear_mode);
-            if(w->objectName() == "input_range") w->setCurrentIndex(module->conf_.input_range);
+            if(w->objectName() == "input_range") {
+                switch (module->conf_.input_range){
+                case MesytecMadc32ModuleConfig::ir4V: w->setCurrentIndex(0); break;
+                case MesytecMadc32ModuleConfig::ir8V: w->setCurrentIndex(1); break;
+                case MesytecMadc32ModuleConfig::ir10V: w->setCurrentIndex(2); break;
+                default: w->setCurrentIndex(2); break;
+                }
+            }
             if(w->objectName() == "marking_type") w->setCurrentIndex(module->conf_.marking_type);
             if(w->objectName() == "bank_operation") w->setCurrentIndex(module->conf_.bank_operation);
             if(w->objectName() == "test_pulser_mode") w->setCurrentIndex(module->conf_.test_pulser_mode);
@@ -884,6 +905,9 @@ void MesytecMadc32UI::applySettings()
             it++;
         }
     }
+\
+    QLabel* b_addr = (QLabel*) uif.getWidgets()->find("base_addr").value();
+    b_addr->setText(tr("0x%1").arg(module->conf_.base_addr,2,16,QChar('0')));
 
     applyingSettings = false;
 }
