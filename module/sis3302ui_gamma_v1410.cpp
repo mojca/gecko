@@ -760,7 +760,7 @@ void Sis3302V1410UI::updatePreview()
                 //printf("Channel size: %d\n",previewEnergyData[ch].size());
                 for(int i = 0; i < previewEnergyData[ch].size(); ++i) {
                     previewEnergyData[ch][i] = module->currentEnergyBuffer[ch][i]
-                            - module->currentEnergyFirstValue[ch];
+                           /* - module->currentEnergyFirstValue[ch]*/;
                     //printf("%d,%d: %f\n",ch,i,previewEnergyData[ch][i]);
                 }
             } else {

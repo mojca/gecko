@@ -84,6 +84,7 @@ struct MesytecMadc32ModuleConfig {
     MarkingType marking_type;
     BankOperation bank_operation;
     AdcResolution adc_resolution;
+    AdcResolution adc_override_resolution;
     OutputFormat output_format;
 
     bool enable_adc_override;
@@ -135,6 +136,7 @@ struct MesytecMadc32ModuleConfig {
           marking_type(mtEventCounter),
           bank_operation(boConnected),
           adc_resolution(ar8kHiRes),
+          adc_override_resolution(ar8kHiRes),
           output_format(ofMesytec),
           enable_adc_override(false),
           enable_switch_off_sliding_scale(false),

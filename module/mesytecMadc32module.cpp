@@ -139,7 +139,8 @@ int MesytecMadc32Module::configure () {
 
     // set adc override
     ret = iface->writeA32D16(baddr + MADC32V2_ADC_OVERRIDE,
-                             (conf_.enable_adc_override ? 1 : 0));
+                             (conf_.enable_adc_override ?
+                                  conf_.adc_override_resolution : conf_.adc_resolution));
     if (ret) printf ("Error %d at MADC32V2_ADC_OVERRIDE", ret);
 
     // set sliding scale disable

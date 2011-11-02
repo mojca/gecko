@@ -77,7 +77,7 @@ void MesytecMadc32Demux::runStartingEvent() {
 
 bool MesytecMadc32Demux::processData (Event* ev, uint32_t *data, uint32_t len, bool singleev)
 {
-    std::cout << "DemuxMesytecMadc32Plugin Processing" << std::endl;
+    //std::cout << "DemuxMesytecMadc32Plugin Processing" << std::endl;
     it = data;
 
     while(it != (data+len))
@@ -120,7 +120,7 @@ bool MesytecMadc32Demux::processData (Event* ev, uint32_t *data, uint32_t len, b
 
 void MesytecMadc32Demux::startNewEvent()
 {
-    std::cout << "DemuxMesytecMadc32Plugin: Start" << std::endl;
+    //std::cout << "DemuxMesytecMadc32Plugin: Start" << std::endl;
     inEvent = true;
 
     header.data = (*it);
@@ -136,7 +136,7 @@ void MesytecMadc32Demux::startNewEvent()
         rawData[rawCnt++] = (*it);
     }
 
-    printHeader();
+    //printHeader();
 }
 
 void MesytecMadc32Demux::continueEvent()
@@ -178,7 +178,7 @@ bool MesytecMadc32Demux::finishEvent(Event *ev)
     if(enable_per_channel_output) {
         trailer.data = (*it);
         eventCounter = trailer.bits.trigger_counter;
-        printEob();
+        //printEob();
 
         for (std::map<uint8_t,uint16_t>::const_iterator i = chData.begin (); i != chData.end (); ++i) {
             // Publish event data
