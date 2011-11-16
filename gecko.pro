@@ -16,7 +16,8 @@ LIBS += -g \
     -lgsl \
     -lgslcblas \
     -lusb \
-    -lboost_filesystem
+    -lboost_filesystem \
+    -lboost_system
 INCLUDEPATH += include \
     lib/sis3150_calls \
     lib/sis3100_calls

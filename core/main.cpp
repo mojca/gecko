@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     a.setApplicationName("GECKO");
     a.setOrganizationName("Institut für Kernphysik, TU Darmstadt");
-    a.setApplicationVersion("0.6");
+    a.setApplicationVersion("0.8");
 
     QT_REQUIRE_VERSION(argc, argv, "4.4")
 
