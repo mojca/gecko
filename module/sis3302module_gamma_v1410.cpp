@@ -766,11 +766,19 @@ int Sis3302V1410Module::acquisitionStartSingle()
         readLength[i] = 0;
         currentTriggerCounter[i] = 0;
 
+        int trailerOffset = 1;
+
         if(conf.enable_ch[i]) {
             uint32_t expectedNextSamplingAddr_words = 2
                     + conf.raw_sample_length[i/2] / 2
                     + conf.energy_sample_length[i/2]
                     + 4;
+
+            // Check, if we expect an uneven amount of words in 2E mode
+            if((expectedNextSamplingAddr_words % 2) == 1 && conf.vmeMode == conf.vme2E) {
+                --expectedNextSamplingAddr_words;
+                //++trailerOffset;
+            }
 
             //INFO_i("Start reading on channel.",i);
             uint32_t nofSamplesRead = 0;
@@ -799,10 +807,10 @@ int Sis3302V1410Module::acquisitionStartSingle()
             //INFO_i("readLength[i]",i,readLength[i]);
 
             // Check event trailer
-            if(readLength[i] > 1 && readBuffer[i][readLength[i]-1] != SIS3302_V1410_MSK_EVENT_BUF_TRAILER) {
+            if(readLength[i] > 1 && readBuffer[i][readLength[i]-trailerOffset] != SIS3302_V1410_MSK_EVENT_BUF_TRAILER) {
                 ERROR_i("Event trailer does not match",i,readBuffer[i][readLength[i]-1]);
                 ERROR_i("reqNofWords, readLength[ch]",i,reqNofWords,readLength[i]);
-                //DUMP("readBuffer[i]",readBuffer[i],readLength[i]);
+                DUMP("readBuffer[i]",readBuffer[i],readLength[i]);
             }
             // Store channel information in highest 3 bits of readLength[i];
             readLength[i] |= (i << 29);
@@ -891,7 +899,7 @@ int Sis3302V1410Module::writeToBuffer(Event *ev)
     {
         //printf("sis3302: ch %d: Trying to write to buffer (ev = 0x%x)\n",i,ev);
         if(conf.enable_ch[i] == false) continue;
-        dmx.process (ev, readBuffer[i], readLength[i]);
+        dmx.process (ev, readBuffer[i], readLength[i], conf.raw_sample_length[i/2]);
         //printf("sis3302: ch %d: Success!\n",i);
     }
     return 0;
@@ -1204,7 +1212,7 @@ void Sis3302V1410Module::DUMP(const char* name, uint32_t* buf, uint32_t len) {
         if(cnt == 4) {
             cnt = 0;
             printf("\n");
-            printf("0x%04x:  ",i);
+            printf("0x%04x:  ",i+1);
         }
         ++cnt;
     }

@@ -42,7 +42,7 @@ class Sis3302V1410Demux
 public:
     Sis3302V1410Demux (const QList<EventSlot*> &);
 
-    virtual void process(Event *ev, uint32_t* _data, uint32_t _len);
+    virtual void process(Event *ev, uint32_t* _data, uint32_t _len, uint32_t raw_length);
     void processRaw(Event *ev, uint32_t _data[][SIS3302_V1410_MAX_NOF_LWORDS], uint32_t* _len);
     void setMetaData(uint32_t, EventDirEntry_t*, TimestampDir_t*);
 

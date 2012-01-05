@@ -151,7 +151,7 @@ void Sis3302V1410Demux::processRaw(Event *ev, uint32_t _data[][SIS3302_V1410_MAX
     }
 }
 
-void Sis3302V1410Demux::process (Event *ev, uint32_t *_data, uint32_t _len)
+void Sis3302V1410Demux::process (Event *ev, uint32_t *_data, uint32_t _len, uint32_t raw_length)
 {
 
     if(enable_per_channel_output) {
@@ -170,11 +170,8 @@ void Sis3302V1410Demux::process (Event *ev, uint32_t *_data, uint32_t _len)
         if(isMultiEvent) length_single = length / nofEvents;
         else length_single = length;
 
-        // Header
-        uint16_t header = _data[0] & 0xffff;
-
         // Compute data lengths
-        uint16_t length_raw             = header/2; // 16-bit samples
+        uint16_t length_raw             = raw_length; // 16-bit samples
         uint16_t length_header_trailer  = SIS3302_V1410_EVENT_LEN_MIN;
         uint16_t length_energy          = length_single
                                         - length_raw/2
@@ -185,10 +182,10 @@ void Sis3302V1410Demux::process (Event *ev, uint32_t *_data, uint32_t _len)
         uint16_t energyOffset       = rawOffset + (length_raw/2);
         uint16_t energyValueOffset  = energyOffset + length_energy;
 
-        //printf("sis3302dmx: Current channel: %d with %d lwords of data.\n",curCh,length);
-        //printf("sis3302dmx: MultiEvent: %d, nofEvents: %d with single length: %d\n",isMultiEvent,nofEvents,length_single);
-        //printf("sis3302dmx: raw: %d samples, energy: %d samples.\n",length_raw,length_energy);
-        //printf("sis3302dmx: raw: %d offset, energy: %d offset.\n",rawOffset,energyOffset);
+        printf("sis3302dmx: Current channel: %d with %d lwords of data.\n",curCh,length);
+        printf("sis3302dmx: MultiEvent: %d, nofEvents: %d with single length: %d\n",isMultiEvent,nofEvents,length_single);
+        printf("sis3302dmx: raw: %d samples, energy: %d samples.\n",length_raw,length_energy);
+        printf("sis3302dmx: raw: %d offset, energy: %d offset.\n",rawOffset,energyOffset);
 
         // Event data containers
         if(enabled_raw_sample_ch[curCh]) {
