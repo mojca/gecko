@@ -182,10 +182,10 @@ void Sis3302V1410Demux::process (Event *ev, uint32_t *_data, uint32_t _len, uint
         uint16_t energyOffset       = rawOffset + (length_raw/2);
         uint16_t energyValueOffset  = energyOffset + length_energy;
 
-        printf("sis3302dmx: Current channel: %d with %d lwords of data.\n",curCh,length);
-        printf("sis3302dmx: MultiEvent: %d, nofEvents: %d with single length: %d\n",isMultiEvent,nofEvents,length_single);
-        printf("sis3302dmx: raw: %d samples, energy: %d samples.\n",length_raw,length_energy);
-        printf("sis3302dmx: raw: %d offset, energy: %d offset.\n",rawOffset,energyOffset);
+        //printf("sis3302dmx: Current channel: %d with %d lwords of data.\n",curCh,length);
+        //printf("sis3302dmx: MultiEvent: %d, nofEvents: %d with single length: %d\n",isMultiEvent,nofEvents,length_single);
+        //printf("sis3302dmx: raw: %d samples, energy: %d samples.\n",length_raw,length_energy);
+        //printf("sis3302dmx: raw: %d offset, energy: %d offset.\n",rawOffset,energyOffset);
 
         // Event data containers
         if(enabled_raw_sample_ch[curCh]) {

@@ -212,7 +212,7 @@ void DspQdcSpecPlugin::saveSettings(QSettings* settings)
 
 void DspQdcSpecPlugin::userProcess()
 {
-    int tmp = 0;
+    double tmp = 0;
     int baselineArea = 0;
     int hiCnt = 0;
     int loCnt = 0;
@@ -244,18 +244,18 @@ void DspQdcSpecPlugin::userProcess()
     {
         tmp += idata[i];
         if(idata[i] == 0) loCnt++;
-        if(idata[i] == 4095) hiCnt++;
+        if(idata[i] == 64535) hiCnt++;
     }
 
     // Check for clipping
     if(hiCnt > 1)
     {
-        //std::cout << "hiclip" << std::endl;
+        std::cout << "hiclip" << std::endl;
         nofHiClip++;
     }
     else if(loCnt > 1)
     {
-        //std::cout << "loclip" << std::endl;
+        std::cout << "loclip" << std::endl;
         nofLowClip++;
     }
     else
@@ -264,16 +264,17 @@ void DspQdcSpecPlugin::userProcess()
         tmp -= baselineArea;
 
         // Correct polarity
-        if(tmp < 0)
-        {
-            tmp *= -1;
-        }
+        //if(tmp < 0)
+        //{
+        //    tmp *= -1;
+        //}
 
         outputs->at(1)->setData (QVariant::fromValue (QVector<double> () << tmp));
 
         // Determine bin
         tmp -= conf.min;
-        bin = floor(((conf.nofBins * tmp) / conf.max) + (rand()/(RAND_MAX+1.0))-0.5);
+        tmp /= (conf.width/10);
+        bin = floor((((double)(conf.nofBins) / (double)(conf.max)) * tmp) + (rand()/(RAND_MAX+1.0))-0.5);
 
         // Sort into histogram
         if(bin > 0 && bin < conf.nofBins)
@@ -283,7 +284,7 @@ void DspQdcSpecPlugin::userProcess()
         }
         else
         {
-            //std::cout << "out of range: " << std::dec << bin << std::endl;
+            std::cout << "out of range: " << std::dec << bin << std::endl;
         }
     }
 

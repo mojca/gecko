@@ -638,6 +638,10 @@ void MesytecMadc32Module::singleShot (uint32_t *data, uint32_t *rd) {
         return;
     }
 
+    for(int i = 0; i < MADC32V2_NUM_CHANNELS; ++i) {
+        current_energy[i] = 0;
+    }
+
     for(int i = 0; i < header.bits.data_length-1; ++i) {
         madc32_data_t datum;
         datum.data = data[idx++];
@@ -649,7 +653,7 @@ void MesytecMadc32Module::singleShot (uint32_t *data, uint32_t *rd) {
         if(datum.bits.sub_signature == MADC32V2_SIG_DATA_EVENT) {
 //            printf("Energy (%d): %d\t(0x%08x)\n",datum.bits.channel,datum.bits.value,datum.data);
         } else {
-            printf("Found word with sub-signature: %d\n",datum.bits.sub_signature);
+            //printf("Found word with sub-signature: %d\n",datum.bits.sub_signature);
         }
         current_energy[datum.bits.channel] = datum.bits.value;
     }

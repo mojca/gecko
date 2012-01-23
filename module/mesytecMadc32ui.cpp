@@ -764,8 +764,8 @@ void MesytecMadc32UI::updatePreview()
             int nof_bins = 1024;
             previewData[ch].resize(nof_bins);
             //printf("Channel size: %d\n",previewData[ch].size());
-            int current_bin = ((double)(nof_bins)/1024.)*((double)(module->current_energy[ch]) );
-            printf("Current bin: %d \n",current_bin);
+            int current_bin = ((double)(nof_bins)/8192.)*((double)(module->current_energy[ch]) );
+            // printf("Current bin: %d \n",current_bin);
             if(current_bin > 0 && current_bin < nof_bins) {
                 previewData[ch][current_bin]++;
             }

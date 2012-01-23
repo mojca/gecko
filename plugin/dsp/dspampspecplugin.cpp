@@ -180,11 +180,11 @@ void DspAmpSpecPlugin::userProcess()
         pol = -1.;
     }
 
-    //std::cout << peak[TIME] << "  " << peak[AMP] << std::endl;
+    std::cout << peak[TIME] << "  " << peak[AMP] << std::endl;
 
     if(peak[TIME] > 0 && peak[TIME] < (data.size()-1))
     {
-        if(peak[AMP] >= 4095)
+        if(peak[AMP] >= 65535)
         {
 
             if(    (data[peak[TIME]-1] == peak[AMP])
@@ -219,9 +219,9 @@ void DspAmpSpecPlugin::userProcess()
     estimateForAmplitude = (tmp / conf.width)*pol ;
 
     // Sort into histogram
-    if(estimateForAmplitude > 1 && estimateForAmplitude < 4095)
+    if(estimateForAmplitude > 1 && estimateForAmplitude < 65535)
     {
-        //std::cout << "amp: "  << estimateForAmplitude << std::endl;
+        std::cout << "amp: "  << estimateForAmplitude << std::endl;
         (*outData) [(int)(estimateForAmplitude)]++;
     }
 
