@@ -444,7 +444,7 @@ uint64_t MesytecMadc32Module::getTime() {
     return data64;
 }
 
- bool MesytecMadc32Module::getDataReady() {
+bool MesytecMadc32Module::getDataReady() {
     int ret;
     uint16_t data;
     ret = getInterface ()->readA32D16 (conf_.base_addr + MADC32V2_DATA_READY, &data);
@@ -454,7 +454,8 @@ uint64_t MesytecMadc32Module::getTime() {
 }
 
 bool MesytecMadc32Module::dataReady () {
-    return getDataReady();
+    //return getDataReady();
+    return (getBufferDataLength() > 0);
 }
 
 int MesytecMadc32Module::acquire (Event* ev) {
@@ -549,6 +550,7 @@ int MesytecMadc32Module::acquireSingle (uint32_t *data, uint32_t *rd) {
         }
         break;
     }
+    case MesytecMadc32ModuleConfig::vm2ESST: // Not handled by the module
     case MesytecMadc32ModuleConfig::vmSingle:
     {
         //printf("MesytecMadc32ModuleConfig::vmSingle\n");
@@ -566,8 +568,19 @@ int MesytecMadc32Module::acquireSingle (uint32_t *data, uint32_t *rd) {
     }
     }
 
+
     // Reset readout logic
-    readoutReset();
+//    int ret = fifoReset();
+//    if(ret) {
+//        printf ("Error %d at MADC32V2_FIFO_RESET with D32\n", ret);
+//    }
+    //usleep(1000);
+    //int ret = readoutReset();
+    //usleep(1000);
+    int ret = readoutReset();
+    if(ret) {
+        printf ("Error %d at MADC32V2_READOUT_RESET with D32\n", ret);
+    }
 
     // Dump the data
 //    printf("\nEvent dump:\n");

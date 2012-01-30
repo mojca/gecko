@@ -248,6 +248,7 @@ private:
 public slots:
     virtual void prepareForNextAcquisition () {}
     void singleShot (uint32_t *data, uint32_t *rd);
+    void REG_DUMP();
 
 public:
     MesytecMadc32ModuleConfig conf_;
@@ -267,7 +268,6 @@ private:
     uint32_t buffer_data_length; // unit depends of conf_.data_length_format
     uint32_t data [MADC32V2_LEN_EVENT_MAX];
 
-    void REG_DUMP();
 
     MesytecMadc32Demux dmx_;
     QVector<EventSlot*> evslots_;
