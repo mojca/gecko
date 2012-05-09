@@ -25,8 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static PluginRegistrar registrar ("cachesignalplugin", CacheSignalPlugin::create, AbstractPlugin::GroupCache);
 
 CacheSignalPlugin::CacheSignalPlugin(int _id, QString _name)
-        : BasePlugin(_id, _name),
-        BaseCachePlugin(_id, _name)
+        : BaseCachePlugin(_id, _name)
 {
     lastRead.setTime_t(0);
 

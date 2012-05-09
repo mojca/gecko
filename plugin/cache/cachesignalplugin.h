@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class BaseCachePlugin;
 class BasePlugin;
 
-class CacheSignalPlugin : public virtual BaseCachePlugin
+class CacheSignalPlugin : public BaseCachePlugin
 {
 
 private:

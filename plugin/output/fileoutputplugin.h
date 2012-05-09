@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class BasePlugin;
 
-class FileOutputPlugin : public virtual BasePlugin
+class FileOutputPlugin : public BasePlugin
 {
     Q_OBJECT
 

@@ -51,7 +51,7 @@ struct BaseCachePluginConfig
  *  This class provides for easily creating cache plugins, e.g. histograms.
  *  \todo More Doc!
  */
-class BaseCachePlugin : public virtual BasePlugin
+class BaseCachePlugin : public BasePlugin
 {
     Q_OBJECT
 

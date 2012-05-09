@@ -91,7 +91,7 @@ public:
 
 };
 
-class Sis3350Module : public virtual BaseModule
+class Sis3350Module : public BaseModule
 {
     Q_OBJECT
 

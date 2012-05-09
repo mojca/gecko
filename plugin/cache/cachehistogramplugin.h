@@ -46,7 +46,7 @@ struct CacheHistogramPluginConfig
     {}
 };
 
-class CacheHistogramPlugin : public virtual BaseCachePlugin
+class CacheHistogramPlugin : public BaseCachePlugin
 {
     Q_OBJECT
 

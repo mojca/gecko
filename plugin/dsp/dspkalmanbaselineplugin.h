@@ -38,7 +38,7 @@ struct DspKalmanBaselinePluginConfig
     double delta;
 };
 
-class DspKalmanBaselinePlugin : public virtual BasePlugin
+class DspKalmanBaselinePlugin : public BasePlugin
 {
     Q_OBJECT
 

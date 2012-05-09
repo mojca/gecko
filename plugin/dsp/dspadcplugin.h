@@ -33,7 +33,7 @@ struct DspAdcPluginConfig
 {
 };
 
-class DspAdcPlugin : public virtual BasePlugin
+class DspAdcPlugin : public BasePlugin
 {
     Q_OBJECT
 

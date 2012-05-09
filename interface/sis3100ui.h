@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class Sis3100Module;
 
-class Sis3100UI : public virtual BaseUI
+class Sis3100UI : public BaseUI
 {
     Q_OBJECT
 public:

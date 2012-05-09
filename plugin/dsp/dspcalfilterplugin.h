@@ -43,7 +43,7 @@ struct DspCalFilterPluginConfig
     {}
 };
 
-class DspCalFilterPlugin : public virtual BasePlugin
+class DspCalFilterPlugin : public BasePlugin
 {
     Q_OBJECT
 

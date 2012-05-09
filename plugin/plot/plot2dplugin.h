@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class BasePlugin;
 
-class Plot2DPlugin : public virtual BasePlugin
+class Plot2DPlugin : public BasePlugin
 {
     Q_OBJECT
 

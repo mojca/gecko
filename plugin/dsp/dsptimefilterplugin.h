@@ -36,7 +36,7 @@ struct DspTimeFilterPluginConfig
     int spacing;
 };
 
-class DspTimeFilterPlugin : public virtual BasePlugin
+class DspTimeFilterPlugin : public BasePlugin
 {
     Q_OBJECT
 

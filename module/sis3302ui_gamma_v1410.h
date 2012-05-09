@@ -47,7 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class Sis3302V1410Module;
 
-class Sis3302V1410UI : public virtual BaseUI
+class Sis3302V1410UI : public BaseUI
 {
     Q_OBJECT
 

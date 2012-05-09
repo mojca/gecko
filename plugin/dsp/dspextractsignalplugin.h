@@ -38,7 +38,7 @@ struct DspExtractSignalPluginConfig
     bool invert;
 };
 
-class DspExtractSignalPlugin : public virtual BasePlugin
+class DspExtractSignalPlugin : public BasePlugin
 {
     Q_OBJECT
 

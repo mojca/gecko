@@ -49,7 +49,7 @@ struct DspQdcSpecPluginConfig
 };
 
 
-class DspQdcSpecPlugin : public virtual BasePlugin
+class DspQdcSpecPlugin : public BasePlugin
 {
     Q_OBJECT
 

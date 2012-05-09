@@ -39,7 +39,7 @@ struct DspPileUpCorrectionPluginConfig
     int samplesRight;
 };
 
-class DspPileUpCorrectionPlugin : public virtual BasePlugin
+class DspPileUpCorrectionPlugin : public BasePlugin
 {
     Q_OBJECT
 

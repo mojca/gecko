@@ -38,7 +38,7 @@ struct DspTriggerLMAXPluginConfig
     bool positive;
 };
 
-class DspTriggerLMAXPlugin : public virtual BasePlugin
+class DspTriggerLMAXPlugin : public BasePlugin
 {
     Q_OBJECT
 

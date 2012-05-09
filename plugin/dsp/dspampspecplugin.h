@@ -38,7 +38,7 @@ struct DspAmpSpecPluginConfig
     int pointsForBaseline;
 };
 
-class DspAmpSpecPlugin : public virtual BasePlugin
+class DspAmpSpecPlugin : public BasePlugin
 {
     Q_OBJECT
 

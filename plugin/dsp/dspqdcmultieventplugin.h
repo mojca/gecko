@@ -45,7 +45,7 @@ struct DspQdcMultiEventPluginConfig
     {}
 };
 
-class DspQdcMultiEventPlugin : public virtual BasePlugin
+class DspQdcMultiEventPlugin : public BasePlugin
 {
     Q_OBJECT
 public:

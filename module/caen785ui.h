@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class Caen785Module;
 
-class Caen785UI : public virtual BaseUI
+class Caen785UI : public BaseUI
 {
     Q_OBJECT
 

@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class BasePlugin;
 class VectorOutputConfig;
 
-class VectorOutputPlugin : public virtual BasePlugin
+class VectorOutputPlugin : public BasePlugin
 {
     Q_OBJECT
 

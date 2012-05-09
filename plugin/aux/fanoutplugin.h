@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class BasePlugin;
 
 template<class T>
-class FanOutPlugin : public virtual BasePlugin
+class FanOutPlugin : public BasePlugin
 {
 protected:
 

@@ -11,15 +11,15 @@ QMAKE_CXXFLAGS_RELEASE += -g -march=native \
 LIBS += -g \
     -L$$PWD/lib/sis3150_calls \
     -L$$PWD/lib/sis3100_calls \
-    -l_sis3150 \
+    #-l_sis3150 \
     -l_sis3100 \
     -lgsl \
     -lgslcblas \
-    -lusb \
+    #-lusb \
     -lboost_filesystem \
     -lboost_system
 INCLUDEPATH += include \
-    lib/sis3150_calls \
+    #lib/sis3150_calls \
     lib/sis3100_calls
 SOURCES += core/baseplugin.cpp \
     core/eventbuffer.cpp \
@@ -40,8 +40,8 @@ SOURCES += core/baseplugin.cpp \
     core/viewport.cpp \
     interface/sis3100module.cpp \
     interface/sis3100ui.cpp \
-    interface/sis3150module.cpp \
-    interface/sis3150ui.cpp \
+    #interface/sis3150module.cpp \
+    #interface/sis3150ui.cpp \
     module/caen1290dmx.cpp \
     module/caen1290module.cpp \
     module/caen1290ui.cpp \
@@ -128,8 +128,8 @@ HEADERS += core/addeditdlgs.h \
     include/viewport.h \
     interface/sis3100module.h \
     interface/sis3100ui.h \
-    interface/sis3150module.h \
-    interface/sis3150ui.h \
+    #interface/sis3150module.h \
+    #interface/sis3150ui.h \
     module/caen1290dmx.h \
     module/caen1290module.h \
     module/caen1290ui.h \

@@ -31,8 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static PluginRegistrar registrar ("cachehistogramplugin", CacheHistogramPlugin::create, AbstractPlugin::GroupCache);
 
 CacheHistogramPlugin::CacheHistogramPlugin(int _id, QString _name)
-    : BasePlugin(_id, _name),
-    BaseCachePlugin(_id, _name),
+    : BaseCachePlugin(_id, _name),
     binWidth(1),
     writeToFile(false),
     fileCount(0)

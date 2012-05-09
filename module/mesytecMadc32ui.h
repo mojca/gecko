@@ -47,7 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class MesytecMadc32Module;
 
-class MesytecMadc32UI : public virtual BaseUI
+class MesytecMadc32UI : public BaseUI
 {
     Q_OBJECT
 

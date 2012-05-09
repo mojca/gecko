@@ -36,7 +36,7 @@ struct DspClippingDetectorPluginConfig
     int high;
 };
 
-class DspClippingDetectorPlugin : public virtual BasePlugin
+class DspClippingDetectorPlugin : public BasePlugin
 {
     Q_OBJECT
 
