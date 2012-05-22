@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/types.h>
 #include <sys/resource.h>
 
-#define GECKO_PROFILE_RUN
+// #define GECKO_PROFILE_RUN
 
 #ifdef GECKO_PROFILE_RUN
 #include <time.h>
@@ -87,7 +87,7 @@ RunThread::~RunThread()
 
 void RunThread::run()
 {
-    cpu_set_t cpuset;
+/*    cpu_set_t cpuset;
 
     CPU_ZERO(&cpuset);
     CPU_SET(3, &cpuset);
@@ -128,7 +128,7 @@ void RunThread::run()
     sched_getparam(tid,&old_param);
     int old_priority = old_param.__sched_priority;
     printf("old prio: %d\n",old_priority);
-
+*/
     /*int new_priority = rl_nice.rlim_max;
     int new_scheduler = SCHED_FIFO;
     struct sched_param new_param;

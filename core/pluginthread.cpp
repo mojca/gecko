@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "runmanager.h"
 #include "eventbuffer.h"
 
-#define GECKO_PROFILE_PLUGIN
+//#define GECKO_PROFILE_PLUGIN
 
 #ifdef GECKO_PROFILE_PLUGIN
 #include <time.h>
