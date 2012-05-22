@@ -348,6 +348,18 @@ public:
         }
     }
 
+    void addFileBrowserToGroup(QString _tname, QString _gname, QString _name, QString _cname, QString _fileNotSelectedText, QString _buttonText)
+    {
+        QString identifier = _tname+_gname;
+        if (groups.contains(identifier)) {
+            QWidget* g = groups.value(identifier);
+            QLabel* b = new QLabel(g);
+            b->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+            b->setAlignment(Qt::AlignRight);
+            b->setText(_fileNotSelectedText);
+        }
+    }
+
     void addLineEditReadOnlyToGroup(QString _tname, QString _gname, QString _name, QString _cname, QString _defaultText)
     {
         QString identifier = _tname+_gname;
