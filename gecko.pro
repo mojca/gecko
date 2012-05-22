@@ -194,3 +194,7 @@ HEADERS += core/addeditdlgs.h \
     module/mesytecMadc32ui.h
 #OTHER_FILES +=
 
+RCC_DIR     = "build/RCCFiles"
+UI_DIR      = "build/UICFiles"
+MOC_DIR     = "build/MOCFiles"
+OBJECTS_DIR = "build/ObjFiles"
