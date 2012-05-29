@@ -53,14 +53,14 @@ FileReaderModule::FileReaderModule (int i, const QString &n)
 }
 
 void FileReaderModule::setChannels () {
-    // EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
+    EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
     // 
     // // Per channel outputs
     // for(int i = 0; i < MADC32V2_NUM_CHANNELS; i++)
     //     evslots_ << evbuf->registerSlot (this, tr("out %1").arg(i,1,10), PluginConnector::VectorUint32);
     // 
-    // // Output for raw data -> to event builder
-    // evslots_ << evbuf->registerSlot(this, "raw out", PluginConnector::VectorUint32);
+    // Output for raw data -> to event builder
+    evslots_ << evbuf->registerSlot(this, "raw out", PluginConnector::VectorUint32);
 }
 
 int FileReaderModule::configure () {
@@ -469,9 +469,11 @@ bool FileReaderModule::getDataReady() {
     return (data == 1);
 }
 
+// TODO: implement this; high priority; it needs to return true as soon as file exists
 bool FileReaderModule::dataReady () {
     //return getDataReady();
     return (getBufferDataLength() > 0);
+    // return true;
 }
 
 int FileReaderModule::acquire (Event* ev) {

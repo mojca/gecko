@@ -878,8 +878,8 @@ void FileReaderUI::applySettings()
         }
     }
 \
-    QLabel* b_addr = (QLabel*) uif.getWidgets()->find("base_addr").value();
-    b_addr->setText(tr("0x%1").arg(module->conf_.base_addr,2,16,QChar('0')));
+    //QLabel* b_addr = (QLabel*) uif.getWidgets()->find("base_addr").value();
+    //b_addr->setText(tr("0x%1").arg(module->conf_.base_addr,2,16,QChar('0')));
 
     applyingSettings = false;
 }
