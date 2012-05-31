@@ -43,6 +43,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTimer>
 #include "hexspinbox.h"
 
+#include <QDebug>
+
 class GeckoUiFactory : public QObject
 {
     Q_OBJECT
@@ -348,15 +350,85 @@ public:
         }
     }
 
-    void addFileBrowserToGroup(QString _tname, QString _gname, QString _name, QString _cname, QString _fileNotSelectedText, QString _buttonText)
+    void addFileBrowserToGroup(QString _tname, QString _gname, QString _name, QString _cname_filename, QString _cname_button, QString _buttonText)
     {
         QString identifier = _tname+_gname;
         if (groups.contains(identifier)) {
             QWidget* g = groups.value(identifier);
-            QLabel* b = new QLabel(g);
-            b->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-            b->setAlignment(Qt::AlignRight);
-            b->setText(_fileNotSelectedText);
+            qDebug() << "creating file group for " << identifier;
+
+            QWidget* container = new QWidget();
+            {
+                QWidget* w = new QWidget(g); // top widget
+                QGridLayout* cl = new QGridLayout(w);
+
+                QLabel* fileLabel = new QLabel(_name); // File Name:
+                // why do we need QLabel(g) here?
+                QLabel* fileName  = new QLabel(w); // to be set up later: <file_not_found or actual file>; it could/should be QLineEdit
+
+                QPushButton* buttonBrowseFile = new QPushButton(_buttonText,w); // Browse ...
+
+                cl->addWidget(fileLabel,0,0);
+                cl->addWidget(fileName,0,2);
+                cl->addWidget(buttonBrowseFile,0,4);
+
+                cl->setColumnMinimumWidth(1,10);
+                cl->setColumnMinimumWidth(3,10);
+
+                cl->setContentsMargins(0,0,0,0);
+                cl->setSpacing(0);
+                cl->setColumnStretch(2,1);
+
+                g->layout()->addWidget(w);
+                g->layout()->setSpacing(0);
+
+                fileName->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+                fileName->setAlignment(Qt::AlignLeft);
+                // TODO: change this to setFilename
+                fileName->setText(tr("no file selected"));
+
+                sm.setMapping(fileName, _cname_filename);
+                sm.setMapping(buttonBrowseFile, _cname_button);
+                widgets.insert(_cname_filename, fileName);
+                widgets.insert(_cname_button, buttonBrowseFile);
+                fileName->setObjectName(_cname_filename);
+                buttonBrowseFile->setObjectName(_cname_button);
+                connect(buttonBrowseFile,SIGNAL(clicked()),&sm,SLOT(map()));
+            }
+            /*
+            QWidget* g = groups.value(identifier);
+
+            QWidget* w = new QWidget(); // top widget
+            QGridLayout* l = new QGridLayout(w); // grid layout for top widget
+
+            QLabel* label = new QLabel(_name); // File Name
+            QLabel* filename = new QLabel(g); // <file / file_not_found>
+            QPushButton* buttonLoadFile = new QPushButton(_buttonText,w); // Browse ...
+
+            l->addWidget(label,0,0);
+            l->addWidget(filename,0,2);
+            l->addWidget(buttonLoadFile,0,4);
+
+            l->setColumnMinimumWidth(1,50);
+            l->setColumnMinimumWidth(3,50);
+            l->setContentsMargins(0,0,0,0);
+            l->setSpacing(0);
+            l->setColumnStretch(2,1);
+
+            g->layout()->addWidget(w);
+            g->layout()->setSpacing(0);
+
+            // file not selected
+            filename->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+            filename->setAlignment(Qt::AlignLeft);
+            filename->setText(_fileNotSelectedText);
+
+            sm.setMapping(filename,_cname); // I don't know what this does
+            widgets.insert(_cname,filename);
+            // TODO
+            //connect(b,SIGNAL());
+            connect(buttonLoadFile,SIGNAL(clicked()),this,SLOT(map()));
+*/
         }
     }
 

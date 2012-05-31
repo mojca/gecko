@@ -52,8 +52,8 @@ void FileReaderUI::createUI()
     gn.append("Event Setup"); uif.addGroupToTab(tn[nt],gn[ng],"","v");
     uif.addPopupToGroup(tn[nt],gn[ng],"Mode","multi_event_mode",
                         (QStringList()
-                         << "Single Event"
-                         << "Multi Event"));
+                         << "Single long trace"
+                         << "Multiple short events"));
     uif.addPopupToGroup(tn[nt],gn[ng],"Data Format","data_length_format",
                         (QStringList()
                          << "8 bit"
@@ -69,7 +69,7 @@ void FileReaderUI::createUI()
     //                      << "8k HiRes"));
 
     gn.append("File"); ng++; uif.addGroupToTab(tn[nt],gn[ng],"","v");
-    uif.addFileBrowserToGroup(tn[nt],gn[ng],"File name","file_name","no file", "Load");
+    uif.addFileBrowserToGroup(tn[nt],gn[ng],"File name:","input_file_name","input_file_browse_button", "Browse ...");
 
     // // TAB Addressing
     // tn.append("Addr"); nt++; uif.addTab(tn[nt]);
@@ -251,7 +251,7 @@ void FileReaderUI::createUI()
     l->addWidget(bottomButtons);
     
     this->setLayout(l);
-    // connect(uif.getSignalMapper(),SIGNAL(mapped(QString)),this,SLOT(uiInput(QString)));
+    connect(uif.getSignalMapper(),SIGNAL(mapped(QString)),this,SLOT(uiInput(QString)));
 
    QList<QWidget*> li = this->findChildren<QWidget*>();
    foreach(QWidget* w, li)
@@ -589,9 +589,16 @@ void FileReaderUI::uiInput(QString _name)
             module->conf_.enable_cblt_middle = true;
         }
     }
+    QLabel* lb = findChild<QLabel*>(_name);
+    if(lb != 0) {
+        if(_name == "input_file_name") {
+            // not sure if I would have to do something here or not
+        }
+    }
     QPushButton* pb = findChild<QPushButton*>(_name);
     if(pb != 0)
     {
+        qDebug() << "findChild<QPushButton> " << _name;
         if(_name == "trigger_button") clicked_start_button();
         if(_name == "stop_button") clicked_start_button();
         if(_name == "stop_button") clicked_stop_button();
@@ -602,6 +609,8 @@ void FileReaderUI::uiInput(QString _name)
         if(_name == "counter_update_button") clicked_counter_update_button();
         if(_name == "singleshot_button") clicked_singleshot_button();
         if(_name == "update_firmware_button") clicked_update_firmware_button();
+
+        if(_name == "input_file_browse_button") clicked_input_file_browse_button();
     }
 
 }
@@ -668,13 +677,38 @@ void FileReaderUI::clicked_singleshot_button()
     }
 }
 
+// remove this function
 void FileReaderUI::clicked_update_firmware_button()
-{
+{/*
     module->updateModuleInfo();
     QLineEdit* m = (QLineEdit*) uif.getWidgets()->find("module_id").value();
     QLabel* f = (QLabel*) uif.getWidgets()->find("firmware").value();
     f->setText(tr("%1.%2").arg(module->conf_.firmware_revision_major,2,16,QChar('0')).arg(module->conf_.firmware_revision_minor,2,16,QChar('0')));
     m->setText(tr("0x%1").arg(module->conf_.module_id,4,16,QChar('0')));
+*/
+}
+
+void FileReaderUI::clicked_input_file_browse_button()
+{
+    qDebug() << "Clicked browse button.";
+    setFileName(QFileDialog::getOpenFileName(this,tr("Choose data file"),
+        RunManager::ref().getRunName(), tr("Data files (*.*)"), 0, QFileDialog::DontResolveSymlinks));
+    // settings_changed = true;
+}
+
+void FileReaderUI::setFileName(QString _filename)
+{
+    qDebug() << "FileReaderUI::setFileName " << _filename;
+
+    // TODO: a few sanity checks about filename; we might want to write tr("no filename selected")
+    module->conf_.input_file_name = _filename;
+    QLabel* fileName = (QLabel*) uif.getWidgets()->find("input_file_name").value();
+    if (_filename.isNull() || _filename.isEmpty()) {
+        qDebug() << "FileReaderUI::setFileName(null=" << _filename.isNull() << ",empty=" << _filename.isEmpty() << ")";
+        fileName->setText(tr("(no file selected)"));
+    } else {
+        fileName->setText(_filename);
+    }
 }
 
 void FileReaderUI::clicked_previewButton()

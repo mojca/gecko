@@ -122,6 +122,9 @@ struct FileReaderModuleConfig {
 
     unsigned int pollcount;
 
+    // mojca's
+    QString input_file_name;
+
     FileReaderModuleConfig ()
         : addr_source(asBoard), base_addr(0),
           base_addr_register(0),module_id(0xFF),
@@ -158,7 +161,8 @@ struct FileReaderModuleConfig {
           vme_mode(vmSingle),
           rc_module_id_read(0),
           rc_module_id_write(0),
-          pollcount (100000)
+          pollcount (100000),
+          input_file_name("") // TODO: is this the proper way to initialize strings?
     {
         for (int i = 0; i < MADC32V2_NUM_CHANNELS; ++i) {
             enable_channel[i] = true;

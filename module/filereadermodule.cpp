@@ -723,6 +723,7 @@ int FileReaderModule::updateModuleInfo() {
 
 typedef ConfMap::confmap_t<FileReaderModuleConfig> confmap_t;
 static const confmap_t confmap [] = {
+    confmap_t ("input_file_name", &FileReaderModuleConfig::input_file_name), // mojca
     // confmap_t ("base_addr", &FileReaderModuleConfig::base_addr),
     // confmap_t ("base_addr_register", &FileReaderModuleConfig::base_addr_register),
     // confmap_t ("module_id", &FileReaderModuleConfig::module_id),
@@ -791,10 +792,10 @@ static const confmap_t confmap [] = {
 };
 
 void FileReaderModule::applySettings (QSettings *settings) {
-    // std::cout << "Applying settings for " << getName ().toStdString () << "... ";
-    // settings->beginGroup (getName ());
-    // 
-    // ConfMap::apply (settings, &conf_, confmap);
+     std::cout << "Applying settings for " << getName ().toStdString () << "... ";
+     settings->beginGroup (getName ());
+
+     ConfMap::apply (settings, &conf_, confmap);
     // 
     // for (int i = 0; i < MADC32V2_NUM_CHANNELS; ++i) {
     //     QString key = QString ("thresholds%1").arg (i);
@@ -819,16 +820,16 @@ void FileReaderModule::applySettings (QSettings *settings) {
     //     }
     // }
     // 
-    // settings->endGroup ();
-    // std::cout << "done" << std::endl;
-    // 
-    // if(getUI()) getUI ()->applySettings ();
+     settings->endGroup ();
+     std::cout << "done" << std::endl;
+
+     if(getUI()) getUI ()->applySettings ();
 }
 
 void FileReaderModule::saveSettings (QSettings *settings) {
-    // std::cout << "Saving settings for " << getName ().toStdString () << "... ";
-    // settings->beginGroup (getName ());
-    // ConfMap::save (settings, &conf_, confmap);
+     std::cout << "Saving settings for " << getName ().toStdString () << "... ";
+     settings->beginGroup (getName ());
+     ConfMap::save (settings, &conf_, confmap);
     // for (int i = 0; i < MADC32V2_NUM_CHANNELS; ++i) {
     //     QString key = QString ("thresholds%1").arg (i);
     //     settings->setValue (key, conf_.thresholds [i]);
@@ -841,8 +842,8 @@ void FileReaderModule::saveSettings (QSettings *settings) {
     //     key = QString ("hold_width_%1").arg (i);
     //     settings->setValue (key, conf_.hold_width [i]);
     // }
-    // settings->endGroup ();
-    // std::cout << "done" << std::endl;
+     settings->endGroup ();
+     std::cout << "done" << std::endl;
 }
 
 void FileReaderModule::setBaseAddress (uint32_t baddr) {
