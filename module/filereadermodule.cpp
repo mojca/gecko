@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "runmanager.h"
 #include "confmap.h"
 
+#include <Qfile>
+
 #include <cstdio>
 #include <cstring>
 #include <unistd.h> // usleep()
@@ -471,8 +473,19 @@ bool FileReaderModule::getDataReady() {
 
 // TODO: implement this; high priority; it needs to return true as soon as file exists
 bool FileReaderModule::dataReady () {
+    QString fileName = conf_.input_file_name;
+    qDebug() << "FileReaderModule::dataReady: " << fileName;
+    QFile file(fileName);
+    if (!file.open (QIODevice::ReadOnly)) {
+        qDebug() << "cannot open";
+         return false;
+    } else {
+        qDebug() << "opening is possible";
+        file.close();
+        return true;
+    }
     //return getDataReady();
-    return (getBufferDataLength() > 0);
+//    return (getBufferDataLength() > 0);
     // return true;
 }
 

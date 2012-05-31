@@ -243,7 +243,7 @@ void FileReaderUI::createUI()
     startStopPreviewButton = new QPushButton("Start");
     startStopPreviewButton->setCheckable(true);
     // connect(singleShotPreviewButton,SIGNAL(clicked()),this,SLOT(clicked_singleshot_button()));
-    // connect(startStopPreviewButton,SIGNAL(clicked()),this,SLOT(clicked_startStopPreviewButton()));
+    connect(startStopPreviewButton,SIGNAL(clicked()),this,SLOT(clicked_startStopPreviewButton()));
     l->addWidget(singleShotPreviewButton);
     l->addWidget(startStopPreviewButton);
     bottomButtons->setLayout(l);
@@ -334,7 +334,7 @@ void FileReaderUI::createPreviewUI()
     l->addWidget(t);
 
     previewWindow.setLayout(l);
-    previewWindow.setWindowTitle("MADC Preview");
+    previewWindow.setWindowTitle("File Preview");
     previewWindow.resize(640,480);
 }
 
@@ -726,6 +726,27 @@ void FileReaderUI::clicked_previewButton()
 void FileReaderUI::clicked_startStopPreviewButton()
 {
     if(previewRunning) {
+        startStopPreviewButton->setText("Start");
+//        previewTimer->stop();
+        previewRunning = false;
+    } else {
+    // do a few redouts from the file
+        if(!module->getInterface()) {
+            // TODO: what exactly is this?
+            qDebug() << "FileReaderUI::clicked_startStopPreviewButtor: no interface";
+            return;
+        }
+        if(!module->getInterface()->isOpen()) {
+            // TODO: what is this?
+            qDebug() << "FileReaderUI::clicked_startStopPreviewButtor: not open";
+        }
+        if(previewWindow.isHidden()) {
+            previewWindow.show();
+        }
+        previewRunning = true;
+    }
+/*
+    if(previewRunning) {
         // Stopping
         startStopPreviewButton->setText("Start");
         previewTimer->stop();
@@ -751,6 +772,7 @@ void FileReaderUI::clicked_startStopPreviewButton()
         previewTimer->start();
         connect(previewTimer,SIGNAL(timeout()),this,SLOT(timeout_previewTimer()));
     }
+*/
 }
 
 void FileReaderUI::updatePreview()
