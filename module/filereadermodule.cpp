@@ -475,15 +475,18 @@ bool FileReaderModule::getDataReady() {
 bool FileReaderModule::dataReady () {
     QString fileName = conf_.input_file_name;
     qDebug() << "FileReaderModule::dataReady: " << fileName;
+    if(fileName.isEmpty()) {
+        qDebug() << "empty filename, sorry";
+        return false;
+    }
+
     QFile file(fileName);
     if (!file.open (QIODevice::ReadOnly)) {
         qDebug() << "cannot open";
          return false;
-    } else {
-        qDebug() << "opening is possible";
-        file.close();
-        return true;
     }
+    qDebug() << "opening is possible";
+    file.close();
     //return getDataReady();
 //    return (getBufferDataLength() > 0);
     // return true;
