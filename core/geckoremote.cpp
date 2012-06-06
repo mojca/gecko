@@ -44,14 +44,14 @@ GeckoRemote::GeckoRemote (uint16_t localport)
     TcpSock_ = new QTcpSocket (this);
     TcpServ_ = new QTcpServer (this);
 
-    if (!UdpSock_->bind (LocalPort_, QUdpSocket::ShareAddress)) {
-        throw std::invalid_argument (QString ("could not bind port %1").arg (LocalPort_).toStdString());
-    }
+//    if (!UdpSock_->bind (LocalPort_, QUdpSocket::ShareAddress)) {
+//        throw std::invalid_argument (QString ("could not bind port %1").arg (LocalPort_).toStdString());
+//    }
 
-    TcpServ_->listen (QHostAddress::Any, LocalPort_ + 1);
+//    TcpServ_->listen (QHostAddress::Any, LocalPort_ + 1);
 
-    connect (UdpSock_, SIGNAL(readyRead ()), SLOT(readUdpDatagram ()));
-    connect (TcpServ_, SIGNAL(newConnection()), SLOT(tcpServerNewConnection()));
+//    connect (UdpSock_, SIGNAL(readyRead ()), SLOT(readUdpDatagram ()));
+//    connect (TcpServ_, SIGNAL(newConnection()), SLOT(tcpServerNewConnection()));
 
     LocalAddrs_ = getLocalAddresses ();
 }
