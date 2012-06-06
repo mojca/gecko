@@ -701,13 +701,17 @@ void FileReaderUI::setFileName(QString _filename)
     qDebug() << "FileReaderUI::setFileName " << _filename;
 
     // TODO: a few sanity checks about filename; we might want to write tr("no filename selected")
-    module->conf_.input_file_name = _filename;
-    QLabel* fileName = (QLabel*) uif.getWidgets()->find("input_file_name").value();
-    if (_filename.isNull() || _filename.isEmpty()) {
-        qDebug() << "FileReaderUI::setFileName(null=" << _filename.isNull() << ",empty=" << _filename.isEmpty() << ")";
-        fileName->setText(tr("(no file selected)"));
+    QLabel* fileNameLabel = (QLabel*) uif.getWidgets()->find("input_file_name").value();
+
+    if (!_filename.isEmpty()) {
+        module->conf_.input_file_name = _filename;
+    }
+    //qDebug() << "FileReaderUI::setFileName(null=" << _filename.isNull() << ",empty=" << _filename.isEmpty() << ")";
+
+    if (module->conf_.input_file_name.isEmpty()) {
+        fileNameLabel->setText(tr("(no file selected)"));
     } else {
-        fileName->setText(_filename);
+        fileNameLabel->setText(module->conf_.input_file_name);
     }
 }
 
@@ -933,7 +937,25 @@ void FileReaderUI::applySettings()
             it++;
         }
     }
-\
+    QList<QLabel*> clb = findChildren<QLabel*>();
+    if(!clb.empty())
+    {
+        qDebug() << "some QLabel here";
+        QList<QLabel*>::const_iterator it = clb.begin();
+        while(it != clb.end())
+        {
+            qDebug() << "    iterator step";
+            QLabel *w = (*it);
+
+            if(w->objectName() == "input_file_name") {
+                QString fileName = module->conf_.input_file_name;
+                qDebug() << "input file name found inside apply settings.";
+                w->setText(fileName.isEmpty() ? tr("no file selected") : fileName);
+            }
+            it++;
+        }
+    }
+
     //QLabel* b_addr = (QLabel*) uif.getWidgets()->find("base_addr").value();
     //b_addr->setText(tr("0x%1").arg(module->conf_.base_addr,2,16,QChar('0')));
 
