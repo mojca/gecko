@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "filereaderdmx.h"
 #include "pluginmanager.h"
 #include "mesytec_madc_32_v2.h"
+#include "filereader.h"
 
 struct FileReaderModuleConfig {
     enum AddressSource{asBoard,asRegister};
@@ -271,6 +272,7 @@ private:
     uint32_t time_counter;
     uint32_t buffer_data_length; // unit depends of conf_.data_length_format
     uint32_t data [MADC32V2_LEN_EVENT_MAX];
+    bool finish_reading;
 
 
     FileReaderDemux dmx_;
