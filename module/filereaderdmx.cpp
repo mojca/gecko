@@ -49,6 +49,8 @@ FileReaderDemux::FileReaderDemux(const QVector<EventSlot*>& _evslots,
     // rawData.resize(MADC32V2_LEN_EVENT_MAX);
     // enable_ch.resize(MADC32V2_NUM_CHANNELS);
 
+    rawData.resize(FILEREADER_TEMP_MAX_SIZE);
+    enable_ch.resize(nofChannels);
     std::cout << "Instantiated FileReaderDemux" << std::endl;
 }
 
@@ -61,7 +63,7 @@ void FileReaderDemux::runStartingEvent() {
     
     int cnt = 0;
     // for(int ch = 0; ch < MADC32V2_NUM_CHANNELS; ++ch) {
-    for(int ch = 0; ch < 4; ++ch) {
+    for(int ch = 0; ch < FILEREADER_NUM_CHANNELS; ++ch) {
         if (owner->getOutputPlugin ()->isSlotConnected (evslots.at(ch))) {
             enable_per_channel_output = true;
             enable_ch[ch] = true;
@@ -76,9 +78,31 @@ void FileReaderDemux::runStartingEvent() {
     printf("FileReaderDemux::runStartingEvent: enable_per_channel_output %d\n",enable_per_channel_output);
 }
 
-bool FileReaderDemux::processData (Event* ev, uint32_t *data, uint32_t len, bool singleev)
+//bool FileReaderDemux::processData (Event* ev, uint32_t *data, uint32_t len, bool singleev)
+bool FileReaderDemux::processData (Event* ev, QFile *file, uint32_t len, bool singleev)
 {
-    // //std::cout << "DemuxFileReaderPlugin Processing" << std::endl;
+    std::cout << "DemuxFileReaderPlugin Processing" << std::endl;
+
+//    short *bytedata = new short[len]
+//    int length_read = file->read(bytedata, 2*len);
+    short a;
+    int length_read;
+    for(int i=0; i<len; i++) {
+        length_read = file->read((char *)&a, sizeof(a));
+        if(length_read > 0) {
+            if(a>0) {
+                // TODO: not OK
+                rawData[i] = 0;
+            } else {
+                rawData[i] = -(a>>8);
+            }
+            if(rawData[i])
+            printf("    %d: %d\n", i, rawData[i]);
+        } else {
+            // TODO: throw an error
+        }
+    }
+    ev->put(evslots.last(), QVariant::fromValue(rawData));
     // it = data;
     // 
     // while(it != (data+len))
@@ -121,7 +145,7 @@ bool FileReaderDemux::processData (Event* ev, uint32_t *data, uint32_t len, bool
 
 void FileReaderDemux::startNewEvent()
 {
-    // //std::cout << "DemuxFileReaderPlugin: Start" << std::endl;
+    std::cout << "DemuxFileReaderPlugin::startNewEvent" << std::endl;
     // inEvent = true;
     // 
     // header.data = (*it);
@@ -209,5 +233,5 @@ void FileReaderDemux::printHeader()
 
 void FileReaderDemux::printEob()
 {
-    // printf("event counter %u, channels %d, module id %u\n",eventCounter,cnt,header.bits.module_id);fflush(stdout);
+    printf("event counter %u, channels %d, module id %u\n",eventCounter,cnt,header.bits.module_id);fflush(stdout);
 }

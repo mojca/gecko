@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "runmanager.h"
 #include "confmap.h"
 
+#include "filereader.h"
+
 #include <Qfile>
 
 #include <cstdio>
@@ -43,6 +45,7 @@ FileReaderModule::FileReaderModule (int i, const QString &n)
     , time_counter(0)
     , buffer_data_length(0)
     , dmx_ (evslots_, this)
+    , finish_reading(false)
 {
     std::cout << "Before starting FileReader module" << std::endl;
     setChannels ();
@@ -56,11 +59,12 @@ FileReaderModule::FileReaderModule (int i, const QString &n)
 
 void FileReaderModule::setChannels () {
     EventBuffer *evbuf = RunManager::ref ().getEventBuffer ();
-    // 
-    // // Per channel outputs
-    // for(int i = 0; i < MADC32V2_NUM_CHANNELS; i++)
-    //     evslots_ << evbuf->registerSlot (this, tr("out %1").arg(i,1,10), PluginConnector::VectorUint32);
-    // 
+
+    // TODO: I probably don't need this for now
+/*    // Per channel outputs
+    for(int i = 0; i < FILEREADER_NUM_CHANNELS; i++)
+        evslots_ << evbuf->registerSlot (this, tr("out %1").arg(i,1,10), PluginConnector::VectorUint32);
+*/
     // Output for raw data -> to event builder
     evslots_ << evbuf->registerSlot(this, "raw out", PluginConnector::VectorUint32);
 }
@@ -290,11 +294,13 @@ int FileReaderModule::readoutReset () {
 }
 
 int FileReaderModule::startAcquisition() {
+    qDebug() << "FileReaderModule::startAcquisition";
     // return getInterface()->writeA32D16(conf_.base_addr + MADC32V2_START_ACQUISITION, 1);
     return 0;
 }
 
 int FileReaderModule::stopAcquisition() {
+    qDebug() << "FileReaderModule::stopAcquisition";
     // return getInterface()->writeA32D16(conf_.base_addr + MADC32V2_START_ACQUISITION, 0);
     return 0;
 }
@@ -473,6 +479,10 @@ bool FileReaderModule::getDataReady() {
 
 // TODO: implement this; high priority; it needs to return true as soon as file exists
 bool FileReaderModule::dataReady () {
+    if(finish_reading) {
+        return false;
+    }
+
     QString fileName = conf_.input_file_name;
     qDebug() << "FileReaderModule::dataReady: " << fileName;
     if(fileName.isEmpty()) {
@@ -489,18 +499,45 @@ bool FileReaderModule::dataReady () {
     file.close();
     //return getDataReady();
 //    return (getBufferDataLength() > 0);
-    // return true;
+    return true;
 }
 
 int FileReaderModule::acquire (Event* ev) {
-    // int ret;
-    // 
-    // ret = acquireSingle (data, &buffer_data_length);
-    // if (ret == 0) writeToBuffer(ev);
-    // else printf("FileReaderModule::Error at acquireSingle\n");
-    // 
-    // return buffer_data_length;
-    return 0;
+    int ret;
+    qDebug() << "FileReaderModule::acquire + stop acquisition";
+/*
+    ret = acquireSingle (data, &buffer_data_length);
+    if (ret == 0) writeToBuffer(ev);
+    else printf("FileReaderModule::Error at acquireSingle\n");
+*/
+    //RunManager::ref().getMainWindow()->stopAcquisition();
+//    RunManager::ref().stop("mojca is stopping");
+//    RunManager::ref().abortFromModule();
+    if(finish_reading) {
+        return 0;
+    } else {
+        int length = 0;
+        QString fileName = conf_.input_file_name;
+        // TODO: some checks
+        QFile file(fileName);
+        if(!file.open(QIODevice::ReadOnly)) {
+            // TODO: throw something more serious than that debug
+            qDebug() << "Cannot open file " << fileName << " for reading.";
+            finish_reading = true;
+            return 0;
+        }
+        length = file.size() / 2; // TODO: divided by two because of 16 bits
+        // TODO: remove this limitation
+        if(length > FILEREADER_TEMP_MAX_SIZE) {
+            length = FILEREADER_TEMP_MAX_SIZE;
+        }
+        bool go_on = dmx_.processData(ev, &file, length, true); // last: single event
+        file.close();
+        buffer_data_length = length; // TODO
+
+        finish_reading = true;
+        return buffer_data_length;
+    }
 }
 
 void FileReaderModule::writeToBuffer(Event *ev)

@@ -25,8 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstdio>
 #include <stdint.h>
 #include "mesytec_madc_32_v2.h"
+#include "filereader.h"
 
 #include <QVector>
+#include <QFile>
 
 class Event;
 class EventSlot;
@@ -70,10 +72,12 @@ private:
 
 public:
     FileReaderDemux(const QVector<EventSlot*>& _evslots, const AbstractModule* op,
-                 uint chans = MADC32V2_NUM_CHANNELS,
-                 uint bits = MADC32V2_NUM_BITS);
+                 uint chans = FILEREADER_NUM_CHANNELS,
+                 uint bits = FILEREADER_NUM_BITS);
+//    FileReaderDemux(const QVector<EventSlot*>& _evslots, const AbstractModule* op);
 
-    bool processData (Event *ev, uint32_t* data, uint32_t len, bool singleev);
+//    bool processData (Event *ev, uint32_t* data, uint32_t len, bool singleev);
+    bool processData (Event *ev, QFile *file, uint32_t len, bool singleev);
     void runStartingEvent();
 };
 
