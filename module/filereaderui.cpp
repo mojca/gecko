@@ -690,9 +690,13 @@ void FileReaderUI::clicked_update_firmware_button()
 
 void FileReaderUI::clicked_input_file_browse_button()
 {
-    qDebug() << "Clicked browse button.";
-    setFileName(QFileDialog::getOpenFileName(this,tr("Choose data file"),
-        RunManager::ref().getRunName(), tr("Data files (*.*)"), 0, QFileDialog::DontResolveSymlinks));
+    // qDebug() << "Clicked browse button.";
+    QDir oldFilePath(QFileInfo(module->conf_.input_file_name).absoluteDir());
+    if (!oldFilePath.exists() || module->conf_.input_file_name.isEmpty()) {
+        oldFilePath = QDir::home();
+    }
+    // qDebug() << "FileReaderUI::clicked_input_file_browse_button " << module->conf_.input_file_name << " " << oldFilePath.absolutePath();
+    setFileName(QFileDialog::getOpenFileName(this,tr("Choose data file"),oldFilePath.absolutePath(), tr("Data files (*.*)"), 0, QFileDialog::DontResolveSymlinks));
     // settings_changed = true;
 }
 
