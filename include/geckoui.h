@@ -383,6 +383,8 @@ public:
                 g->layout()->setSpacing(0);
 
                 fileName->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+                // this doesn't want to work
+                // fileName->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
                 fileName->setAlignment(Qt::AlignLeft);
                 // TODO: change this to setFilename
                 fileName->setText(tr("no file selected"));
