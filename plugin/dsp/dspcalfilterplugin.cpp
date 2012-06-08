@@ -58,6 +58,9 @@ void DspCalFilterPlugin::createSettings(QGridLayout * l)
         shiftSpinner->setValue(conf.shift);
         gainSpinner->setValue(conf.gain);
 
+        widthSpinner->setMinimum(1);
+        widthSpinner->setMaximum(10000);
+
         gainSpinner->setMaximum(5.0);
         gainSpinner->setMinimum(-5.0);
         gainSpinner->setSingleStep(0.1);
