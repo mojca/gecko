@@ -2165,13 +2165,13 @@ public:
             double a = 1.0/width;
             for(unsigned int i = 1; i < width+1; i++)
             {
-                sum += v[i] * a;
+                sum += v[i];
             }
-            v[0] = sum;
+            v[0] = sum * a;
             for(unsigned int i = width+1; i < n; i++)
             {
-                sum += (v[i] - v[i-width]) * a;
-                v[i-width] = sum;
+                sum += v[i] - v[i-width];
+                v[i-width] = sum * a;
             }
         }
         else
