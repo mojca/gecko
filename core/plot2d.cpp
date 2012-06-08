@@ -389,7 +389,7 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
 
         //cout << "Bounds: (" << curChan->xmin << "," << curChan->xmax << ") (" << curChan->ymin << "," << curChan->ymax << ") " << endl;
 
-        QPolygon poly;
+        QPolygonF poly;
         double stepX = (curChan->xmax*1. - curChan->xmin)/(double)(width()/viewport.width());
         if (stepX > 1) { // there are multiple points per pixel
             long lastX = 0;
@@ -402,19 +402,19 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
             for (unsigned int i = curChan->xmin + 1; (i < nofPoints && i < curChan->xmax); ++i) {
                 long x = lrint ((i - curChan->xmin) / stepX);
                 if (lastX != x) { // begin drawing a new pixel
-                    poly.push_back(QPoint (coord, -dataFirst));
+                    poly.push_back(QPointF (coord, -dataFirst));
                     if (dataLast == dataMin) { // save a point by drawing the min last
                         if (dataMax != dataFirst)
-                            poly.push_back (QPoint (coord, -dataMax));
+                            poly.push_back (QPointF (coord, -dataMax));
                         if (dataMin != dataMax)
-                            poly.push_back (QPoint (coord, -dataMin));
+                            poly.push_back (QPointF (coord, -dataMin));
                     } else {
                         if (dataMin != dataFirst)
-                            poly.push_back (QPoint (coord, -dataMin));
+                            poly.push_back (QPointF (coord, -dataMin));
                         if (dataMax != dataMin)
-                            poly.push_back (QPoint (coord, -dataMax));
+                            poly.push_back (QPointF (coord, -dataMax));
                         if (dataLast != dataMin)
-                            poly.push_back (QPoint (coord, -dataLast));
+                            poly.push_back (QPointF (coord, -dataLast));
                     }
                     lastX = x;
                     coord = i;
@@ -429,13 +429,13 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
             }
 
             //finish last pixel
-            poly.push_back(QPoint (coord, -dataFirst));
+            poly.push_back(QPointF (coord, -dataFirst));
             if (dataMin != dataFirst)
-                poly.push_back (QPoint (coord, -dataMin));
+                poly.push_back (QPointF (coord, -dataMin));
             if (dataMax != dataMin)
-                poly.push_back (QPoint (coord, -dataMax));
+                poly.push_back (QPointF (coord, -dataMax));
             if (dataLast != dataMin)
-                poly.push_back (QPoint (coord, -dataLast));
+                poly.push_back (QPointF (coord, -dataLast));
         } else {
             int lastX = 0;
             int delta = 0;
@@ -456,8 +456,8 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
                      //poly.push_back(QPoint(i,-data[i]));
                      //poly.push_back(QPoint(i+1,-data[i]));
                      lastData += delta;
-                     poly.push_back(QPoint(i,-data[deltaX]));
-                     poly.push_back(QPoint(i+1,-data[deltaX]));
+                     poly.push_back(QPointF(i,-data[deltaX]));
+                     poly.push_back(QPointF(i+1,-data[deltaX]));
                      lastX = i;
                      delta=0;
                 }
@@ -465,7 +465,7 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
         }
 
         painter.setPen(QPen(isEnabled () ? curChan->getColor() : Qt::darkGray));
-        painter.drawText(QPoint(0,id*20),tr("%1").arg(id,1,10));
+        painter.drawText(QPointF(0,id*20),tr("%1").arg(id,1,10));
 
         // Scale and move to display complete signals
         if(max-min < 0.00000001) max++;
