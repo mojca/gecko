@@ -31,7 +31,7 @@ DspCalFilterPlugin::DspCalFilterPlugin(int _id, QString _name)
 {
     createSettings(settingsLayout);
 
-    addConnector(new PluginConnectorQVUint(this,ScopeCommon::in,"in"));
+    addConnector(new PluginConnectorQVDouble(this,ScopeCommon::in,"in"));
     addConnector(new PluginConnectorQVDouble(this,ScopeCommon::out,"calorimetry"));
 
     std::cout << "Instantiated DspTimeFilterPlugin" << std::endl;
@@ -139,7 +139,7 @@ void DspCalFilterPlugin::saveSettings(QSettings* settings)
 void DspCalFilterPlugin::userProcess()
 {
     //std::cout << "DspCalFilterPlugin Processing" << std::endl;
-    QVector<uint32_t> idata = inputs->first()->getData().value< QVector<uint32_t> > ();
+    QVector<double> idata = inputs->first()->getData().value< QVector<double> > ();
     SamDSP dsp;
 
     // Convert to double
