@@ -165,10 +165,11 @@ struct FileReaderModuleConfig {
           pollcount (100000),
           input_file_name("") // TODO: is this the proper way to initialize strings?
     {
-        for (int i = 0; i < MADC32V2_NUM_CHANNELS; ++i) {
-            enable_channel[i] = true;
+        for (int i = 0; i < FILEREADER_NUM_CHANNELS; ++i) {
+            enable_channel[i] = false;
             thresholds[i] = 0;
         }
+
         hold_delay[0] = (20);
         hold_delay[1] = (20);
         hold_width[0] = (50);
@@ -258,7 +259,7 @@ public slots:
 public:
     FileReaderModuleConfig conf_;
     uint32_t current_module_id;
-    uint32_t current_energy[MADC32V2_NUM_CHANNELS];
+    uint32_t current_energy[FILEREADER_NUM_CHANNELS];
     uint32_t current_time_stamp;
     uint32_t current_resolution;
 
