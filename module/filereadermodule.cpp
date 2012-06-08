@@ -63,10 +63,11 @@ void FileReaderModule::setChannels () {
     // TODO: I probably don't need this for now
 /*    // Per channel outputs
     for(int i = 0; i < FILEREADER_NUM_CHANNELS; i++)
-        evslots_ << evbuf->registerSlot (this, tr("out %1").arg(i,1,10), PluginConnector::VectorUint32);
+        evslots_ << evbuf->registerSlot (this, tr("out %1").arg(i,1,10), PluginConnector::VectorDouble);
 */
+
     // Output for raw data -> to event builder
-    evslots_ << evbuf->registerSlot(this, "raw out", PluginConnector::VectorUint32);
+    evslots_ << evbuf->registerSlot(this, "raw out", PluginConnector::VectorDouble);
 }
 
 int FileReaderModule::configure () {

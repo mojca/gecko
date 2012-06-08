@@ -51,8 +51,8 @@ private:
     uint32_t eventCounter;
     uint8_t id;
 
-    std::map<uint8_t, uint16_t> chData;
-    QVector<uint32_t> rawData;
+    std::map<uint8_t, double> chData;
+    QVector<double> rawData;
     uint32_t rawCnt;
     QVector<bool> enable_ch;
 

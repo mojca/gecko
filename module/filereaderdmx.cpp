@@ -90,14 +90,7 @@ bool FileReaderDemux::processData (Event* ev, QFile *file, uint32_t len, bool si
     for(int i=0; i<len; i++) {
         length_read = file->read((char *)&a, sizeof(a));
         if(length_read > 0) {
-            if(a>0) {
-                // TODO: not OK
-                rawData[i] = 0;
-            } else {
-                rawData[i] = -(a>>8);
-            }
-            if(rawData[i])
-            printf("    %d: %d\n", i, rawData[i]);
+            rawData[i] = (double)(-(a>>8));
         } else {
             // TODO: throw an error
         }
