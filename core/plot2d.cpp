@@ -391,6 +391,7 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
 
         QPolygonF poly;
         double stepX = (curChan->xmax*1. - curChan->xmin)/(double)(width()/viewport.width());
+        //cout << "stepX = (" << curChan->xmax << " - " << curChan->xmin << ")/(" << width() << "/" << viewport.width() << ") = " << stepX << endl;
         if (stepX > 1) { // there are multiple points per pixel
             long lastX = 0;
             int coord = curChan->xmin;
