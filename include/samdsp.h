@@ -2285,15 +2285,8 @@ public:
     template<typename T>
     int fast_pad(T & v, int left, int right, double value)
     {
-        for(int i = 0; i < left; i++)
-        {
-            v.insert(v.begin(), value);
-        }
-        for(int i = 0; i < right; i++)
-        {
-            v.push_back(value);
-        }
-
+        v.insert(v.begin(), left, value);
+        v.insert(v.end(), right, value);
         return 0;
     }
 
