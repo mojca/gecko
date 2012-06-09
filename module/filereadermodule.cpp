@@ -324,11 +324,12 @@ int FileReaderModule::softReset () {
 
 int FileReaderModule::reset () {
     // irqReset();
-    // counterResetAll();
+    //counterResetAll();
     // fifoReset();
-    // readoutReset();
+    //readoutReset();
     // //dataReset();
     // return softReset ();
+    finish_reading = false;
     return 0;
 }
 
@@ -514,9 +515,9 @@ int FileReaderModule::acquire (Event* ev) {
     //RunManager::ref().getMainWindow()->stopAcquisition();
 //    RunManager::ref().stop("mojca is stopping");
 //    RunManager::ref().abortFromModule();
-    if(finish_reading) {
-        return 0;
-    } else {
+    //if(finish_reading) {
+    //    return 0;
+    //} else {
         int length = 0;
         QString fileName = conf_.input_file_name;
         // TODO: some checks
@@ -524,6 +525,7 @@ int FileReaderModule::acquire (Event* ev) {
         if(!file.open(QIODevice::ReadOnly)) {
             // TODO: throw something more serious than that debug
             qDebug() << "Cannot open file " << fileName << " for reading.";
+            emit endOfFile();
             finish_reading = true;
             return 0;
         }
@@ -536,9 +538,10 @@ int FileReaderModule::acquire (Event* ev) {
         file.close();
         buffer_data_length = length; // TODO
 
+        emit endOfFile();
         finish_reading = true;
         return buffer_data_length;
-    }
+    //}
 }
 
 void FileReaderModule::writeToBuffer(Event *ev)

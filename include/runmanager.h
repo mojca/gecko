@@ -121,6 +121,7 @@ public:
      */
     void setMainWindow (ScopeMainWindow *mw) { mainwnd = mw; }
     void setRemoteControlled(bool val) { state.setBit(StateRemoteControlled, val); }
+    ScopeMainWindow *getMainWindow() { return mainwnd; }
 
     ~RunManager();
 

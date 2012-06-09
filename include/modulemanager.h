@@ -33,6 +33,7 @@ class AbstractInterface;
 struct ModuleTypeDesc;
 class AbstractModule;
 class EventSlot;
+class ScopeMainWindow;
 
 template<typename T> class ThreadBuffer;
 
@@ -107,6 +108,9 @@ public:
     /*! returns a set of all modules that act as triggers. */
     const QSet<AbstractModule*>& getTriggers () const { return triggers; }
 
+    void setMainWindow (ScopeMainWindow *mw) { mainWindow = mw; }
+    ScopeMainWindow *getMainWindow() const { return mainWindow; }
+
 signals:
     void moduleAdded (AbstractModule *); /*!< signalled when a module is added. */
     void moduleRemoved (AbstractModule *); /*!< signalled when a module is removed. */
@@ -120,6 +124,7 @@ private:
     int getNextId ();
 
 private:
+    ScopeMainWindow *mainWindow;
     list_type* items;
     QMap<QString, ModuleTypeDesc> registry;
     QSet<AbstractModule*> triggers;

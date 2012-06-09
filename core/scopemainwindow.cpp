@@ -49,6 +49,8 @@ ScopeMainWindow::ScopeMainWindow(QWidget *parent) :
     mmgr = ModuleManager::ptr();
     pmgr = PluginManager::ptr();
     rmgr = RunManager::ptr();
+    mmgr->setMainWindow (this);
+    //pmgr->setMainWindow (this);
     rmgr->setMainWindow (this);
 
     settings = new QSettings(fileName,QSettings::IniFormat);

@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mesytec_madc_32_v2.h"
 #include "filereader.h"
 
+class ScopeMainWindow;
+
 struct FileReaderModuleConfig {
     enum AddressSource{asBoard,asRegister};
     enum DataLengthFormat{dl8bit,dl16bit,dl32bit,dl64bit};
@@ -250,6 +252,9 @@ public:
 private:
     FileReaderModule (int _id, const QString &);
     void writeToBuffer(Event *ev);
+
+signals:
+    void endOfFile();
 
 public slots:
     virtual void prepareForNextAcquisition () {}
