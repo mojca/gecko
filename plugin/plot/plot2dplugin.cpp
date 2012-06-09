@@ -39,11 +39,11 @@ Plot2DPlugin::Plot2DPlugin(int _id, QString _name)
     plot->addChannel(0,tr("ch0"),QVector<double>(1,0),
                      QColor(Qt::red),Channel::line,1);
     plot->addChannel(1,tr("ch1"),QVector<double>(1,0),
-                     QColor(Qt::green),Channel::line,1);
+                     QColor(Qt::darkBlue),Channel::line,1);
     plot->addChannel(2,tr("ch2"),QVector<double>(1,0),
-                     QColor(Qt::blue),Channel::line,1);
+                     QColor(Qt::darkGreen),Channel::line,1);
     plot->addChannel(3,tr("ch3"),QVector<double>(1,0),
-                     QColor(Qt::magenta),Channel::line,1);
+                     QColor(Qt::darkYellow),Channel::line,1);
 
     connect(plot,SIGNAL(histogramCleared(uint,uint)),this,SLOT(resetData(uint,uint)));
 
