@@ -32,7 +32,7 @@ DspTimeFilterPlugin::DspTimeFilterPlugin(int _id, QString _name)
 {
     createSettings(settingsLayout);
 
-    addConnector(new PluginConnectorQVUint(this,ScopeCommon::in,"in"));
+    addConnector(new PluginConnectorQVDouble(this,ScopeCommon::in,"in"));
     addConnector(new PluginConnectorQVDouble(this,ScopeCommon::out,"timing"));
 
     std::cout << "Instantiated DspTimeFilterPlugin" << std::endl;
@@ -119,7 +119,7 @@ void DspTimeFilterPlugin::saveSettings(QSettings* settings)
 void DspTimeFilterPlugin::userProcess()
 {
     //std::cout << "DspTimeFilterPlugin Processing" << std::endl;
-    QVector<uint32_t> data = inputs->first()->getData().value< QVector<uint32_t> > ();
+    QVector<double> data = inputs->first()->getData().value< QVector<double> > ();
     QVector<double> odata (data.size (), 0);
     SamDSP dsp;
 
