@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "pluginmanager.h"
 #include "pluginconnectorqueued.h"
 
+#include <algorithm>
+
 #include <QGridLayout>
 #include <QLabel>
 
@@ -153,10 +155,16 @@ void DspCalFilterPlugin::userProcess()
 
     if(conf.width > 1)
     {
-        dsp.fast_pad(outData,conf.width,0,outData[0]);
+        // add some padding to beginning and the end //dsp.fast_pad(outData,conf.width,0,outData[0]);
+        outData.insert(outData.begin(),conf.width,outData.front());
+        outData.insert(outData.end(),conf.width,outData.back());
+        // moving average
         dsp.fast_boxfilter(outData,conf.width);
+        // align back to the center
+        std::rotate(outData.begin(),outData.begin()+conf.width/2,outData.end());
         outData.resize(idata.size());
     }
+    // why not a simple rotate function?
     if(conf.shift != 0) dsp.fast_shift(outData,conf.shift);
     if(conf.gain != 1.0) dsp.fast_scale(outData,conf.gain);
 
