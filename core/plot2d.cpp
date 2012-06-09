@@ -370,7 +370,7 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
     Channel::plotType curType = curChan->getType();
     double nofPoints = data.size();
 
-    //cout << "Drawing ch " << id << " with size " << data.size() << endl;
+    cout << "Drawing ch " << id << " with size " << data.size() << endl;
 
     if(nofPoints > 0)
     {
@@ -387,7 +387,7 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
             min = 0;
         }
 
-        //cout << "Bounds: (" << curChan->xmin << "," << curChan->xmax << ") (" << curChan->ymin << "," << curChan->ymax << ") " << endl;
+        cout << "Bounds: (" << curChan->xmin << "," << curChan->xmax << ") (" << curChan->ymin << "," << curChan->ymax << ") " << endl;
 
         QPolygonF poly;
         double stepX = (curChan->xmax*1. - curChan->xmin)/(double)(width()/viewport.width());
