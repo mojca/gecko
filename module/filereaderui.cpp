@@ -944,16 +944,13 @@ void FileReaderUI::applySettings()
     QList<QLabel*> clb = findChildren<QLabel*>();
     if(!clb.empty())
     {
-        qDebug() << "some QLabel here";
         QList<QLabel*>::const_iterator it = clb.begin();
         while(it != clb.end())
         {
-            qDebug() << "    iterator step";
             QLabel *w = (*it);
 
             if(w->objectName() == "input_file_name") {
                 QString fileName = module->conf_.input_file_name;
-                qDebug() << "input file name found inside apply settings.";
                 w->setText(fileName.isEmpty() ? tr("no file selected") : fileName);
             }
             it++;
