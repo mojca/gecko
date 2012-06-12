@@ -20,7 +20,8 @@ LIBS += -g \
     -lboost_system
 INCLUDEPATH += include \
     #lib/sis3150_calls \
-    lib/sis3100_calls
+    lib/sis3100_calls \
+    core
 SOURCES += core/baseplugin.cpp \
     core/eventbuffer.cpp \
     core/geckoremote.cpp \

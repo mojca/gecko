@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "pluginmanager.h"
 #include "mesytec_madc_32_v2.h"
 #include "filereader.h"
-#include "../core/scopemainwindow.h"
+#include "scopemainwindow.h"
 
 struct FileReaderModuleConfig {
     enum AddressSource{asBoard,asRegister};
