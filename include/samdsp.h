@@ -2207,7 +2207,7 @@ public:
                 double sum = 0;
                 double a = 1.0;
                 //double a = 1.0/width; //FIXME (this would be right, but must be propagated
-                for(unsigned int i = 1; i < width+1; i++)
+                for(unsigned int i = 1; i <= width; i++)
                 {
                     sum += (v[delay+i] - v[i]) * a;
                 }
