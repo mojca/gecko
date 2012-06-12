@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "filereader.h"
 
-#include <Qfile>
+#include <QFile>
 
 #include <cstdio>
 #include <cstring>
@@ -55,6 +55,9 @@ FileReaderModule::FileReaderModule (int i, const QString &n)
 
     setUI (new FileReaderUI (this));
     std::cout << "Instantiated FileReader module" << std::endl;
+
+    ScopeMainWindow* mw = ModuleManager::ref().getMainWindow();
+    QObject::connect(this, SIGNAL(endOfFile()), mw, SLOT(stopAcquisition()));
 }
 
 void FileReaderModule::setChannels () {
