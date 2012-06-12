@@ -372,7 +372,7 @@ void plot2d::drawChannel(QPainter &painter, unsigned int id)
 
     cout << "Drawing ch " << id << " with size " << data.size() << endl;
 
-    if(nofPoints > 0)
+    if(nofPoints > 1)
     {
         painter.save ();
         painter.setWindow(QRectF (viewport.x () * width (), viewport.y () * height (),
