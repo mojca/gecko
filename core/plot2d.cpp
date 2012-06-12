@@ -597,6 +597,8 @@ void plot2d::createActions()
     connect(clearHistogramAction, SIGNAL(triggered()), this, SLOT(clearHistogram()));
     saveChannelAction = new QAction(tr("Save channel..."), this);
     connect(saveChannelAction, SIGNAL(triggered()), this, SLOT(saveChannel()));
+    printAction = new QAction(tr("Save PDF..."), this);
+    connect(printAction, SIGNAL(triggered()), this, SLOT(savePDF()));
 }
 
 void plot2d::contextMenuEvent(QContextMenuEvent *event)
@@ -604,6 +606,7 @@ void plot2d::contextMenuEvent(QContextMenuEvent *event)
     QMenu menu(this);
     menu.addAction(this->clearHistogramAction);
     menu.addAction(this->saveChannelAction);
+    menu.addAction(this->printAction);
     QMenu* sub = menu.addMenu("Axes for");
     sub->addActions(setCurTickChActions);
     QAction* curAct = menu.exec(event->globalPos());
@@ -662,4 +665,20 @@ void plot2d::saveChannel()
         return;
     QVector<double> data = channels->first()->getData();
     dsp->vectorToFile(data,fileName.toStdString());
+}
+
+void plot2d::savePDF()
+{
+    QPrinter printer;
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setOrientation(QPrinter::Landscape);
+    printer.setOutputFileName("/tmp/gecko.pdf");
+    QPainter painter;
+    if (! painter.begin(&printer)) { // failed to open file
+        qWarning("failed to open file, is it writable?");
+    } else {
+        drawChannels(painter);
+        painter.drawText(10,10,"put-filename-here.dat");
+        painter.end();
+    }
 }

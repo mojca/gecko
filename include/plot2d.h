@@ -31,6 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMouseEvent>
 #include <QToolTip>
 #include <QReadWriteLock>
+#include <QPrinter>
+#include <QPainter>
 #include <vector>
 #include <samdsp.h>
 
@@ -132,6 +134,7 @@ public:
 public slots:
     void clearHistogram();
     void saveChannel();
+    void savePDF();
     void setMaximumExtends(int,int,int,int);
     void toggleExternalBoundaries(bool);
     void zoomExtends(bool);
@@ -176,6 +179,7 @@ private:
     QList<Channel*>* channels;
     QAction* clearHistogramAction;
     QAction* saveChannelAction;
+    QAction* printAction;
     QList<QAction*> setCurTickChActions;
 
     enum {ScaleX, ScaleY, ScaleOff} scalemode;
