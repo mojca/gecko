@@ -30,10 +30,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class BasePlugin;
 class QSpinBox;
+class QDoubleSpinBox;
 
 struct DspTriggerLMAXPluginConfig
 {
-    int threshold;
+    double threshold;
     int holdoff;
     bool positive;
 };
@@ -47,7 +48,7 @@ protected:
 
     DspTriggerLMAXPluginConfig conf;
 
-    QSpinBox* thresholdSpinner;
+    QDoubleSpinBox* thresholdSpinner;
     QSpinBox* holdoffSpinner;
     QCheckBox* polarityBox;
 

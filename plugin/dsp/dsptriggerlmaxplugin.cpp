@@ -54,7 +54,7 @@ void DspTriggerLMAXPlugin::createSettings(QGridLayout * l)
         QLabel* hlabel = new QLabel(tr("Holdoff"));
         QLabel* plabel = new QLabel(tr("Positive"));
 
-        thresholdSpinner = new QSpinBox();
+        thresholdSpinner = new QDoubleSpinBox();
         holdoffSpinner = new QSpinBox();
 
         thresholdSpinner->setValue(5);
@@ -66,7 +66,7 @@ void DspTriggerLMAXPlugin::createSettings(QGridLayout * l)
         polarityBox = new QCheckBox();
         polarityBox->setChecked(true);
 
-        connect(thresholdSpinner,SIGNAL(valueChanged(int)),this,SLOT(thresholdChanged()));
+        connect(thresholdSpinner,SIGNAL(valueChanged(double)),this,SLOT(thresholdChanged()));
         connect(holdoffSpinner,SIGNAL(valueChanged(int)),this,SLOT(holdoffChanged()));
         connect(polarityBox,SIGNAL(toggled(bool)),this,SLOT(polarityChanged(bool)));
 
@@ -88,7 +88,7 @@ void DspTriggerLMAXPlugin::createSettings(QGridLayout * l)
 
 void DspTriggerLMAXPlugin::thresholdChanged()
 {
-    int newValue = thresholdSpinner->value();
+    double newValue = thresholdSpinner->value();
     this->conf.threshold = newValue;
 }
 
@@ -108,7 +108,7 @@ void DspTriggerLMAXPlugin::applySettings(QSettings* settings)
 {
     QString set;
     settings->beginGroup(getName());
-        set = "threshold";   if(settings->contains(set)) conf.threshold = settings->value(set).toInt();
+        set = "threshold";   if(settings->contains(set)) conf.threshold = settings->value(set).toDouble();
         set = "holdoff";     if(settings->contains(set)) conf.holdoff = settings->value(set).toInt();
         set = "positive";    if(settings->contains(set)) conf.positive = settings->value(set).toBool();
     settings->endGroup();
